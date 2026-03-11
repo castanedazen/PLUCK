@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
-import { getListings, getMessages, getSeller } from './api'
+import { createListing, getListings, getMessages, getSeller } from './api'
 import type { Listing, Message, SellerProfile } from './types'
 
 type Tab = 'home' | 'map' | 'favorites' | 'messages' | 'store' | 'profile'
@@ -19,7 +19,7 @@ const fallbackListings: Listing[] = [
     inventory: 7,
     sellerId: 's1',
     sellerName: 'Elena',
-    description: 'Picked this morning. Sweet, juicy, and perfect for juice or snacks.',
+    description: 'Picked this morning. Sweet, juicy, and ideal for snacking or fresh juice.',
     pickupWindows: ['Today 5–7 PM', 'Tomorrow 9–11 AM'],
     isFavorite: true,
   },
@@ -36,7 +36,7 @@ const fallbackListings: Listing[] = [
     inventory: 11,
     sellerId: 's2',
     sellerName: 'Marco',
-    description: 'Bright and floral. Great for cooking, cocktails, and lemon bars.',
+    description: 'Bright, floral lemons with strong color and a clean finish for cooking or cocktails.',
     pickupWindows: ['Today 6–8 PM', 'Saturday 10 AM–1 PM'],
   },
   {
@@ -52,7 +52,7 @@ const fallbackListings: Listing[] = [
     inventory: 4,
     sellerId: 's3',
     sellerName: 'Jules',
-    description: 'Soft, honey-sweet persimmons from a mature backyard tree.',
+    description: 'Honey-sweet persimmons from a mature backyard tree, packed for quick pickup.',
     pickupWindows: ['Tomorrow 8–10 AM', 'Sunday 4–6 PM'],
   },
 ]
@@ -83,7 +83,7 @@ const fallbackSeller: SellerProfile = {
   avatar:
     'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80',
   heroFruit:
-    'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=1400&q=80',
 }
 
 type ListingFormState = {
@@ -129,6 +129,9 @@ function App() {
   const [seller, setSeller] = useState<SellerProfile>(fallbackSeller)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [form, setForm] = useState<ListingFormState>(emptyForm)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [saveSuccess, setSaveSuccess] = useState('')
 
   useEffect(() => {
     getListings().then(setListings).catch(() => setListings(fallbackListings))
@@ -203,37 +206,49 @@ function App() {
   function openCreateListing() {
     setTab('home')
     setShowCreateForm(true)
+    setSaveError('')
+    setSaveSuccess('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  function handleCreateListing(e: FormEvent) {
+  async function handleCreateListing(e: FormEvent) {
     e.preventDefault()
+    setIsSaving(true)
+    setSaveError('')
+    setSaveSuccess('')
 
-    const pickupWindows = [form.pickup1, form.pickup2].map((x) => x.trim()).filter(Boolean)
+    try {
+      const pickupWindows = [form.pickup1, form.pickup2].map((x) => x.trim()).filter(Boolean)
 
-    const nextListing: Listing = {
-      id: crypto.randomUUID(),
-      title: form.title.trim() || `${form.fruit.trim()} Listing`,
-      fruit: form.fruit.trim() || 'Fruit',
-      price: Number(form.price) || 0,
-      unit: form.unit.trim() || 'basket',
-      image:
-        form.imagePreview ||
-        'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80',
-      location: form.location.trim() || 'Mission Hills',
-      distance: 'Just added',
-      inventory: Number(form.inventory) || 1,
-      sellerId: seller.id,
-      sellerName: seller.name,
-      description: form.description.trim() || 'Fresh local fruit available for pickup.',
-      pickupWindows: pickupWindows.length ? pickupWindows : ['Pickup by message'],
-      isFavorite: false,
+      const payload: Omit<Listing, 'id'> = {
+        title: form.title.trim() || `${form.fruit.trim()} Listing`,
+        fruit: form.fruit.trim() || 'Fruit',
+        price: Number(form.price) || 0,
+        unit: form.unit.trim() || 'basket',
+        image:
+          form.imagePreview ||
+          'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80',
+        location: form.location.trim() || 'Mission Hills',
+        distance: 'Just added',
+        inventory: Number(form.inventory) || 1,
+        sellerId: seller.id,
+        sellerName: seller.name,
+        description: form.description.trim() || 'Fresh local fruit available for pickup.',
+        pickupWindows: pickupWindows.length ? pickupWindows : ['Pickup by message'],
+        isFavorite: false,
+      }
+
+      const saved = await createListing(payload)
+      setListings((current) => [saved, ...current])
+      setForm(emptyForm)
+      setShowCreateForm(false)
+      setTab('store')
+      setSaveSuccess('Listing created successfully.')
+    } catch (error) {
+      setSaveError('Unable to save listing right now.')
+    } finally {
+      setIsSaving(false)
     }
-
-    setListings((current) => [nextListing, ...current])
-    setForm(emptyForm)
-    setShowCreateForm(false)
-    setTab('store')
   }
 
   return (
@@ -256,11 +271,11 @@ function App() {
 
       <section className="hero-band">
         <div className="hero-copy">
-          <p className="eyebrow">Premium neighborhood commerce</p>
-          <h2>Turn extra fruit into a local, elegant marketplace experience.</h2>
+          <p className="eyebrow">Refined neighborhood commerce</p>
+          <h2>Turn extra fruit into a polished local marketplace experience.</h2>
           <p>
-            Pluck is designed to feel more like a modern consumer startup than a utility tool — cleaner browsing,
-            stronger seller identity, better listing flow, and a more premium local-shopping vibe.
+            Pluck is evolving into a premium neighborhood product: stronger seller presence, tighter cards,
+            better listing quality, and a cleaner path from harvest to pickup.
           </p>
           <div className="hero-cta-row">
             <button className="primary" onClick={openCreateListing}>
@@ -330,7 +345,7 @@ function App() {
               <div>
                 <p className="eyebrow">Today nearby</p>
                 <h2>Backyard harvests, same-day pickup</h2>
-                <p>Browse fruit from local growers, reserve by message, and coordinate an easy pickup window.</p>
+                <p>Browse fruit from local growers, reserve by message, and coordinate a clear pickup window.</p>
               </div>
               <button className="primary" onClick={() => setShowCreateForm((v) => !v)}>
                 {showCreateForm ? 'Close form' : 'Create listing'}
@@ -344,7 +359,7 @@ function App() {
                     <p className="eyebrow">New listing</p>
                     <h2>Create a premium fruit listing</h2>
                     <p>
-                      A stronger title, cleaner image, and more specific pickup windows make the listing feel polished.
+                      Better titles, cleaner imagery, and clearer pickup windows produce a more credible listing.
                     </p>
                   </div>
                 </div>
@@ -459,11 +474,17 @@ function App() {
                     </label>
                   </div>
 
+                  {(saveError || saveSuccess) && (
+                    <div className={saveError ? 'status-banner error' : 'status-banner success'}>
+                      {saveError || saveSuccess}
+                    </div>
+                  )}
+
                   <div className="action-row">
-                    <button type="submit" className="primary">
-                      Save listing
+                    <button type="submit" className="primary" disabled={isSaving}>
+                      {isSaving ? 'Saving...' : 'Save listing'}
                     </button>
-                    <button type="button" className="ghost" onClick={() => setForm(emptyForm)}>
+                    <button type="button" className="ghost" onClick={() => setForm(emptyForm)} disabled={isSaving}>
                       Reset
                     </button>
                   </div>
@@ -546,14 +567,14 @@ function App() {
               <div className="map-header-row">
                 <div>
                   <p className="eyebrow">Discovery map</p>
-                  <h3>Google Maps-ready neighborhood view</h3>
+                  <h3>Location-first neighborhood browsing</h3>
                 </div>
                 <button className="ghost" onClick={openCreateListing}>
                   Add your harvest
                 </button>
               </div>
               <p>
-                This is the premium fallback map state. Next we can wire real pins, neighborhoods, and distance-driven discovery.
+                This is the refined map state. The next layer will be real pins, neighborhoods, and distance-based discovery.
               </p>
               <div className="pin-list">
                 {filtered.map((item) => (
