@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
 import { getListings, getMessages, getSeller } from './api'
 import type { Listing, Message, SellerProfile } from './types'
 
@@ -90,7 +90,7 @@ type ListingFormState = {
   fruit: string
   price: string
   unit: string
-  image: string
+  imagePreview: string
   location: string
   inventory: string
   description: string
@@ -103,7 +103,7 @@ const emptyForm: ListingFormState = {
   fruit: '',
   price: '',
   unit: 'basket',
-  image: '',
+  imagePreview: '',
   location: 'Mission Hills',
   inventory: '',
   description: '',
@@ -129,6 +129,7 @@ function App() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return listings
+
     return listings.filter((item) =>
       [item.title, item.fruit, item.location, item.sellerName]
         .join(' ')
@@ -143,6 +144,18 @@ function App() {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
+  function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : ''
+      updateForm('imagePreview', result)
+    }
+    reader.readAsDataURL(file)
+  }
+
   function handleCreateListing(e: FormEvent) {
     e.preventDefault()
 
@@ -155,7 +168,7 @@ function App() {
       price: Number(form.price) || 0,
       unit: form.unit.trim() || 'basket',
       image:
-        form.image.trim() ||
+        form.imagePreview ||
         'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80',
       location: form.location.trim() || 'Mission Hills',
       distance: 'Just added',
@@ -285,13 +298,22 @@ function App() {
                     </label>
 
                     <label className="full">
-                      Image URL
-                      <input
-                        value={form.image}
-                        onChange={(e) => updateForm('image', e.target.value)}
-                        placeholder="Paste an image URL"
-                      />
+                      Upload photo
+                      <input type="file" accept="image/*" onChange={handleImageUpload} />
                     </label>
+
+                    {form.imagePreview && (
+                      <div className="image-preview-wrap full">
+                        <img className="image-preview" src={form.imagePreview} alt="Preview" />
+                        <button
+                          type="button"
+                          className="ghost"
+                          onClick={() => updateForm('imagePreview', '')}
+                        >
+                          Remove image
+                        </button>
+                      </div>
+                    )}
 
                     <label className="full">
                       Description

@@ -242,7 +242,8 @@ img {
   font-weight: 600;
 }
 
-.listing-form label.full {
+.listing-form label.full,
+.image-preview-wrap.full {
   grid-column: 1 / -1;
 }
 
@@ -267,6 +268,20 @@ img {
 .listing-form textarea {
   resize: vertical;
   min-height: 120px;
+}
+
+.image-preview-wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.image-preview {
+  width: 100%;
+  max-width: 320px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 1px solid #dde4d8;
 }
 
 .map-fallback {
