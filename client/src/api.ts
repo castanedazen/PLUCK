@@ -23,6 +23,22 @@ export async function createListing(
   return res.json()
 }
 
+export async function updateListing(
+  id: string,
+  payload: Omit<Listing, 'id'>,
+): Promise<Listing> {
+  const res = await fetch(`${API_BASE}/listings/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!res.ok) throw new Error('Failed to update listing')
+  return res.json()
+}
+
 export async function getMessages(): Promise<Message[]> {
   const res = await fetch(`${API_BASE}/messages`)
   if (!res.ok) throw new Error('Failed to load messages')

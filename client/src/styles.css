@@ -39,6 +39,10 @@ img {
   max-width: 100%;
 }
 
+a {
+  text-decoration: none;
+}
+
 .app-shell {
   max-width: 1120px;
   margin: 0 auto;
@@ -56,7 +60,8 @@ img {
 .hero-band,
 .stat-card,
 .dashboard-card,
-.activity-card {
+.activity-card,
+.tool-card {
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(14px);
   border: 1px solid rgba(16, 24, 40, 0.06);
@@ -144,7 +149,8 @@ img {
 
 .stats-grid,
 .dashboard-stats,
-.mini-grid {
+.mini-grid,
+.tool-grid {
   display: grid;
   gap: 14px;
 }
@@ -158,9 +164,14 @@ img {
   margin-bottom: 18px;
 }
 
+.tool-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .stat-card,
 .dashboard-card,
-.activity-card {
+.activity-card,
+.tool-card {
   border-radius: 22px;
   padding: 18px;
 }
@@ -180,6 +191,14 @@ img {
   color: #243423;
   font-weight: 760;
   letter-spacing: -0.03em;
+}
+
+.stat-link,
+.dashboard-link,
+.tool-card {
+  border: 0;
+  text-align: left;
+  cursor: pointer;
 }
 
 .search-wrap {
@@ -230,7 +249,10 @@ img {
 .ghost:hover,
 .primary:hover,
 .nav-item:hover,
-.filter-chip:hover {
+.filter-chip:hover,
+.tool-card:hover,
+.stat-link:hover,
+.dashboard-link:hover {
   transform: translateY(-1px);
 }
 
@@ -579,7 +601,9 @@ img {
 
 .pin-row,
 .thread,
-.mini-card {
+.mini-card,
+.listing-row,
+.inventory-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -589,21 +613,43 @@ img {
 }
 
 .premium-pin-row p,
-.mini-card-copy span {
+.mini-card-copy span,
+.listing-row-copy span {
   margin: 6px 0 0;
   color: #667085;
 }
 
 .mini-card img,
-.avatar {
+.avatar,
+.listing-row-image {
   width: 72px;
   height: 72px;
   border-radius: 18px;
   object-fit: cover;
 }
 
-.mini-card-copy {
+.mini-card-copy,
+.listing-row-copy {
   flex: 1;
+}
+
+.listing-row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inventory-table,
+.analytics-note {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(16, 24, 40, 0.05);
+  border-radius: 20px;
+  padding: 18px;
+}
+
+.analytics-note p {
+  margin-bottom: 0;
+  color: #667085;
 }
 
 .profile-card .hero-fruit {
@@ -658,7 +704,8 @@ img {
   }
 
   .dashboard-stats,
-  .stats-grid {
+  .stats-grid,
+  .tool-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -689,8 +736,17 @@ img {
 
   .form-grid,
   .dashboard-stats,
-  .stats-grid {
+  .stats-grid,
+  .tool-grid {
     grid-template-columns: 1fr;
+  }
+
+  .listing-row,
+  .inventory-row,
+  .mini-card,
+  .thread {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .bottom-nav {

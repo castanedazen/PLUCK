@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 8080
 app.use(
   cors({
     origin: true,
-    methods: ['GET', 'POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
     allowedHeaders: ['Content-Type'],
   }),
 )
@@ -30,21 +30,9 @@ function writeDb(data) {
   fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8')
 }
 
-app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'pluck-server' })
-})
-
-app.get('/api/listings', (_req, res) => {
-  const db = readDb()
-  res.json(db.listings || [])
-})
-
-app.post('/api/listings', (req, res) => {
-  const db = readDb()
-  const body = req.body || {}
-
-  const newListing = {
-    id: crypto.randomUUID(),
+function normalizeListing(body = {}, existingId = null) {
+  return {
+    id: existingId || crypto.randomUUID(),
     title: body.title || 'Untitled listing',
     fruit: body.fruit || 'Fruit',
     price: Number(body.price) || 0,
@@ -59,11 +47,49 @@ app.post('/api/listings', (req, res) => {
     pickupWindows: Array.isArray(body.pickupWindows) ? body.pickupWindows : ['Pickup by message'],
     isFavorite: Boolean(body.isFavorite),
   }
+}
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, service: 'pluck-server' })
+})
+
+app.get('/api/listings', (_req, res) => {
+  const db = readDb()
+  res.json(db.listings || [])
+})
+
+app.post('/api/listings', (req, res) => {
+  const db = readDb()
+  const newListing = normalizeListing(req.body)
 
   db.listings = [newListing, ...(db.listings || [])]
   writeDb(db)
 
   res.status(201).json(newListing)
+})
+
+app.put('/api/listings/:id', (req, res) => {
+  const db = readDb()
+  const listingId = req.params.id
+  const listings = db.listings || []
+  const existing = listings.find((item) => item.id === listingId)
+
+  if (!existing) {
+    return res.status(404).json({ error: 'Listing not found' })
+  }
+
+  const updated = normalizeListing(
+    {
+      ...existing,
+      ...req.body,
+    },
+    listingId,
+  )
+
+  db.listings = listings.map((item) => (item.id === listingId ? updated : item))
+  writeDb(db)
+
+  res.json(updated)
 })
 
 app.get('/api/messages', (_req, res) => {
