@@ -13,14 +13,44 @@ export type Listing = {
   description: string
   pickupWindows: string[]
   isFavorite?: boolean
+  status?: 'active' | 'archived'
 }
 
 export type Message = {
   id: string
+  conversationId: string
+  senderId: string
+  senderName: string
+  content: string
+  timestamp: string
+}
+
+export type Conversation = {
+  id: string
   listingId: string
+  sellerId: string
   sellerName: string
-  preview: string
+  buyerId: string
+  buyerName: string
+  listingTitle: string
+  lastMessage: string
   updatedAt: string
+}
+
+export type Favorite = {
+  id: string
+  userId: string
+  listingId: string
+}
+
+export type PickupReservation = {
+  id: string
+  listingId: string
+  buyerId: string
+  buyerName: string
+  sellerId: string
+  pickupWindow: string
+  createdAt: string
 }
 
 export type SellerProfile = {

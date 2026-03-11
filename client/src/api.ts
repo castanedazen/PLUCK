@@ -1,4 +1,11 @@
-import type { Listing, Message, SellerProfile } from './types'
+import type {
+  Listing,
+  Message,
+  SellerProfile,
+  Favorite,
+  Conversation,
+  PickupReservation,
+} from './types'
 
 const API_BASE = '/api'
 
@@ -13,7 +20,7 @@ async function parseResponse<T>(res: Response, fallbackMessage: string): Promise
     const body = await res.json()
     if (body?.error) detail = body.error
   } catch {
-    // ignore parse failure
+    // ignore
   }
 
   throw new Error(detail)
@@ -24,50 +31,122 @@ export async function getListings(): Promise<Listing[]> {
   return parseResponse<Listing[]>(res, 'Failed to load listings')
 }
 
-export async function createListing(
-  payload: Omit<Listing, 'id'>,
-): Promise<Listing> {
+export async function createListing(payload: Omit<Listing, 'id'>): Promise<Listing> {
   const res = await fetch(`${API_BASE}/listings`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
 
   return parseResponse<Listing>(res, 'Failed to create listing')
 }
 
-export async function updateListing(
-  id: string,
-  payload: Omit<Listing, 'id'>,
-): Promise<Listing> {
-  try {
-    const res = await fetch(`${API_BASE}/listings/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
+export async function updateListing(id: string, payload: Omit<Listing, 'id'>): Promise<Listing> {
+  const res = await fetch(`${API_BASE}/listings/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
 
-    if (res.ok) {
-      return res.json()
-    }
+  if (res.ok) return res.json()
 
-    if (res.status === 404 || res.status === 502) {
-      return createListing(payload)
-    }
-
-    return parseResponse<Listing>(res, 'Failed to update listing')
-  } catch {
+  if (res.status === 404 || res.status === 502) {
     return createListing(payload)
   }
+
+  return parseResponse<Listing>(res, 'Failed to update listing')
+}
+
+export async function deleteListing(id: string): Promise<{ ok: true }> {
+  const res = await fetch(`${API_BASE}/listings/${id}`, {
+    method: 'DELETE',
+  })
+
+  return parseResponse<{ ok: true }>(res, 'Failed to delete listing')
 }
 
 export async function getMessages(): Promise<Message[]> {
   const res = await fetch(`${API_BASE}/messages`)
   return parseResponse<Message[]>(res, 'Failed to load messages')
+}
+
+export async function getMessagesByConversation(conversationId: string): Promise<Message[]> {
+  const res = await fetch(`${API_BASE}/messages/${conversationId}`)
+  return parseResponse<Message[]>(res, 'Failed to load thread messages')
+}
+
+export async function sendMessage(payload: {
+  conversationId: string
+  senderId: string
+  senderName: string
+  content: string
+}): Promise<Message> {
+  const res = await fetch(`${API_BASE}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<Message>(res, 'Failed to send message')
+}
+
+export async function getConversations(): Promise<Conversation[]> {
+  const res = await fetch(`${API_BASE}/conversations`)
+  return parseResponse<Conversation[]>(res, 'Failed to load conversations')
+}
+
+export async function createOrGetConversation(payload: {
+  listingId: string
+  listingTitle: string
+  sellerId: string
+  sellerName: string
+  buyerId: string
+  buyerName: string
+}): Promise<Conversation> {
+  const res = await fetch(`${API_BASE}/conversations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<Conversation>(res, 'Failed to open conversation')
+}
+
+export async function getFavorites(): Promise<Favorite[]> {
+  const res = await fetch(`${API_BASE}/favorites`)
+  return parseResponse<Favorite[]>(res, 'Failed to load favorites')
+}
+
+export async function toggleFavorite(payload: {
+  userId: string
+  listingId: string
+}): Promise<{ active: boolean }> {
+  const res = await fetch(`${API_BASE}/favorites/toggle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<{ active: boolean }>(res, 'Failed to update favorite')
+}
+
+export async function reservePickup(payload: {
+  listingId: string
+  buyerId: string
+  buyerName: string
+  sellerId: string
+  pickupWindow: string
+}): Promise<{ listing: Listing; reservation: PickupReservation }> {
+  const res = await fetch(`${API_BASE}/pickups/reserve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<{ listing: Listing; reservation: PickupReservation }>(
+    res,
+    'Failed to reserve pickup',
+  )
 }
 
 export async function getSeller(): Promise<SellerProfile> {

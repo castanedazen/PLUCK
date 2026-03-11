@@ -8,8 +8,27 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom'
-import { createListing, getListings, getMessages, getSeller, updateListing } from './api'
-import type { Listing, Message, SellerProfile } from './types'
+import {
+  createListing,
+  createOrGetConversation,
+  deleteListing,
+  getConversations,
+  getFavorites,
+  getListings,
+  getMessagesByConversation,
+  getSeller,
+  reservePickup,
+  sendMessage,
+  toggleFavorite,
+  updateListing,
+} from './api'
+import type {
+  Listing,
+  Message,
+  SellerProfile,
+  Favorite,
+  Conversation,
+} from './types'
 
 type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
 
@@ -30,6 +49,7 @@ const fallbackListings: Listing[] = [
     description: 'Picked this morning. Sweet, juicy, and ideal for snacking or fresh juice.',
     pickupWindows: ['Today 5–7 PM', 'Tomorrow 9–11 AM'],
     isFavorite: true,
+    status: 'active',
   },
   {
     id: '2',
@@ -46,39 +66,7 @@ const fallbackListings: Listing[] = [
     sellerName: 'Marco',
     description: 'Bright, floral lemons with strong color and a clean finish for cooking or cocktails.',
     pickupWindows: ['Today 6–8 PM', 'Saturday 10 AM–1 PM'],
-  },
-  {
-    id: '3',
-    title: 'Persimmon Porch Basket',
-    fruit: 'Persimmons',
-    price: 8,
-    unit: 'basket',
-    image:
-      'https://images.unsplash.com/photo-1471943311424-646960669fbc?auto=format&fit=crop&w=1200&q=80',
-    location: 'Northridge',
-    distance: '2.4 mi',
-    inventory: 4,
-    sellerId: 's3',
-    sellerName: 'Jules',
-    description: 'Honey-sweet persimmons from a mature backyard tree, packed for quick pickup.',
-    pickupWindows: ['Tomorrow 8–10 AM', 'Sunday 4–6 PM'],
-  },
-]
-
-const fallbackMessages: Message[] = [
-  {
-    id: 'm1',
-    listingId: '1',
-    sellerName: 'Elena',
-    preview: 'Yes, I can hold two bags until 6 PM.',
-    updatedAt: '2h ago',
-  },
-  {
-    id: 'm2',
-    listingId: '2',
-    sellerName: 'Marco',
-    preview: 'Pickup near the front gate works for me.',
-    updatedAt: 'Yesterday',
+    status: 'active',
   },
 ]
 
@@ -204,6 +192,7 @@ function ListingForm({
         description: form.description.trim() || 'Fresh local fruit available for pickup.',
         pickupWindows: pickupWindows.length ? pickupWindows : ['Pickup by message'],
         isFavorite: initialValues?.isFavorite || false,
+        status: initialValues?.status || 'active',
       }
 
       await onSubmitListing(payload, existingId)
@@ -212,8 +201,9 @@ function ListingForm({
       setTimeout(() => {
         navigate('/store/listings')
       }, 500)
-    } catch {
-      setSaveError('Unable to save listing right now.')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to save listing right now.'
+      setSaveError(message)
     } finally {
       setIsSaving(false)
     }
@@ -300,11 +290,7 @@ function ListingForm({
           {form.imagePreview && (
             <div className="image-preview-wrap full">
               <img className="image-preview" src={form.imagePreview} alt="Preview" />
-              <button
-                type="button"
-                className="ghost"
-                onClick={() => updateForm('imagePreview', '')}
-              >
+              <button type="button" className="ghost" onClick={() => updateForm('imagePreview', '')}>
                 Remove image
               </button>
             </div>
@@ -358,20 +344,210 @@ function ListingForm({
   )
 }
 
+function ListingDetailRoute({
+  listings,
+  seller,
+  favorites,
+  onEdit,
+  onToggleFavorite,
+  onReserve,
+  onStartConversation,
+}: {
+  listings: Listing[]
+  seller: SellerProfile
+  favorites: Favorite[]
+  onEdit: (id: string) => void
+  onToggleFavorite: (listingId: string) => Promise<void>
+  onReserve: (listing: Listing) => Promise<void>
+  onStartConversation: (listing: Listing) => Promise<void>
+}) {
+  const { id } = useParams()
+  const listing = listings.find((item) => item.id === id)
+
+  if (!listing) {
+    return (
+      <section className="stack">
+        <h2>Listing not found</h2>
+      </section>
+    )
+  }
+
+  const isFavorite = favorites.some((fav) => fav.listingId === listing.id)
+
+  return (
+    <section className="stack">
+      <div className="listing-detail-hero">
+        <img className="listing-detail-image" src={listing.image} alt={listing.title} />
+        <div className="listing-detail-copy">
+          <p className="eyebrow">{listing.fruit}</p>
+          <h2>{listing.title}</h2>
+          <p className="listing-detail-price">
+            ${listing.price}/{listing.unit}
+          </p>
+          <p className="desc">{listing.description}</p>
+          <p className="meta">
+            {listing.location} · {listing.inventory} left · {listing.sellerName}
+          </p>
+
+          <div className="trust-row">
+            <span className="trust-pill">Trusted grower</span>
+            <span className="trust-pill">Local pickup</span>
+            <span className="trust-pill">Repeat seller</span>
+          </div>
+
+          <div className="pill-row">
+            {listing.pickupWindows.map((slot, index) => (
+              <span className="pill" key={`${listing.id}-${slot}-${index}`}>
+                {slot}
+              </span>
+            ))}
+          </div>
+
+          <div className="action-row">
+            <button className="primary" onClick={() => onReserve(listing)} disabled={listing.inventory <= 0}>
+              {listing.inventory <= 0 ? 'Sold out' : 'Reserve pickup'}
+            </button>
+            <button className="ghost" onClick={() => onStartConversation(listing)}>
+              Message seller
+            </button>
+            <button className="ghost" onClick={() => onToggleFavorite(listing.id)}>
+              {isFavorite ? 'Unfavorite' : 'Favorite'}
+            </button>
+            <button className="ghost" onClick={() => onEdit(listing.id)}>
+              Edit listing
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function MessagesPage({
+  conversations,
+  threadMessages,
+  seller,
+  onSelectConversation,
+  onSendMessage,
+}: {
+  conversations: Conversation[]
+  threadMessages: Message[]
+  seller: SellerProfile
+  onSelectConversation: (id: string) => Promise<void>
+  onSendMessage: (conversationId: string, content: string) => Promise<void>
+}) {
+  const [draft, setDraft] = useState('')
+  const activeConversation = conversations[0]
+
+  return (
+    <section className="messages-layout">
+      <div className="stack">
+        <div className="section-heading compact-heading">
+          <div>
+            <p className="eyebrow">Conversations</p>
+            <h2>Inbox</h2>
+          </div>
+          <span className="section-meta">{conversations.length} threads</span>
+        </div>
+
+        {conversations.length ? (
+          conversations.map((conversation) => (
+            <button
+              key={conversation.id}
+              className="thread thread-button"
+              onClick={() => onSelectConversation(conversation.id)}
+            >
+              <div>
+                <strong>{conversation.sellerName}</strong>
+                <p>{conversation.lastMessage}</p>
+              </div>
+              <span>{new Date(conversation.updatedAt).toLocaleDateString()}</span>
+            </button>
+          ))
+        ) : (
+          <p>No conversations yet.</p>
+        )}
+      </div>
+
+      <div className="stack">
+        <div className="section-heading compact-heading">
+          <div>
+            <p className="eyebrow">Thread</p>
+            <h2>{activeConversation ? activeConversation.listingTitle : 'Select a conversation'}</h2>
+          </div>
+        </div>
+
+        <div className="message-thread">
+          {threadMessages.length ? (
+            threadMessages.map((msg) => (
+              <div
+                key={msg.id}
+                className={msg.senderId === seller.id ? 'message-bubble mine' : 'message-bubble'}
+              >
+                <strong>{msg.senderName}</strong>
+                <p>{msg.content}</p>
+              </div>
+            ))
+          ) : (
+            <p>No messages yet.</p>
+          )}
+        </div>
+
+        {activeConversation && (
+          <div className="message-compose">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Write a message..."
+              rows={3}
+            />
+            <button
+              className="primary"
+              onClick={async () => {
+                if (!draft.trim()) return
+                await onSendMessage(activeConversation.id, draft)
+                setDraft('')
+              }}
+            >
+              Send
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 type AppLayoutProps = {
   listings: Listing[]
   setListings: React.Dispatch<React.SetStateAction<Listing[]>>
-  messages: Message[]
   seller: SellerProfile
+  favorites: Favorite[]
+  setFavorites: React.Dispatch<React.SetStateAction<Favorite[]>>
+  conversations: Conversation[]
+  setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>
+  threadMessages: Message[]
+  setThreadMessages: React.Dispatch<React.SetStateAction<Message[]>>
 }
 
-function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) {
+function AppLayout({
+  listings,
+  setListings,
+  seller,
+  favorites,
+  setFavorites,
+  conversations,
+  setConversations,
+  threadMessages,
+  setThreadMessages,
+}: AppLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<QuickFilter>('all')
 
-  const favorites = listings.filter((item) => item.isFavorite)
+  const favoriteListingIds = new Set(favorites.map((fav) => fav.listingId))
+  const favoriteListings = listings.filter((item) => favoriteListingIds.has(item.id))
   const myListings = listings.filter((item) => item.sellerName === seller.name)
   const justAdded = listings.filter((item) => item.distance === 'Just added')
   const totalInventory = myListings.reduce((sum, item) => sum + item.inventory, 0)
@@ -419,9 +595,107 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
   }
 
   async function handleUpdate(payload: Omit<Listing, 'id'>, listingId?: string) {
-    if (!listingId) throw new Error('Missing listing id')
+    if (!listingId) {
+      const saved = await createListing(payload)
+      setListings((current) => [saved, ...current])
+      return
+    }
+
     const updated = await updateListing(listingId, payload)
-    setListings((current) => current.map((item) => (item.id === listingId ? updated : item)))
+
+    setListings((current) => {
+      const exists = current.some((item) => item.id === listingId)
+      if (exists) {
+        return current.map((item) => (item.id === listingId ? updated : item))
+      }
+      return [updated, ...current]
+    })
+  }
+
+  async function handleArchive(listingId: string) {
+    const confirmed = window.confirm('Archive this listing?')
+    if (!confirmed) return
+
+    await deleteListing(listingId)
+    setListings((current) => current.filter((item) => item.id !== listingId))
+  }
+
+  async function handleToggleFavorite(listingId: string) {
+    const result = await toggleFavorite({ userId: seller.id, listingId })
+
+    if (result.active) {
+      setFavorites((current) => [
+        { id: crypto.randomUUID(), userId: seller.id, listingId },
+        ...current,
+      ])
+    } else {
+      setFavorites((current) => current.filter((fav) => fav.listingId !== listingId))
+    }
+  }
+
+  async function handleReserve(listing: Listing) {
+    const pickupWindow = listing.pickupWindows?.[0] || 'Pickup by message'
+    const result = await reservePickup({
+      listingId: listing.id,
+      buyerId: seller.id,
+      buyerName: seller.name,
+      sellerId: listing.sellerId,
+      pickupWindow,
+    })
+
+    setListings((current) =>
+      current.map((item) => (item.id === listing.id ? result.listing : item)),
+    )
+
+    window.alert(`Pickup reserved for ${pickupWindow}`)
+  }
+
+  async function handleStartConversation(listing: Listing) {
+    const conversation = await createOrGetConversation({
+      listingId: listing.id,
+      listingTitle: listing.title,
+      sellerId: listing.sellerId,
+      sellerName: listing.sellerName,
+      buyerId: seller.id,
+      buyerName: seller.name,
+    })
+
+    const refreshed = await getConversations()
+    setConversations(refreshed)
+
+    const thread = await getMessagesByConversation(conversation.id)
+    setThreadMessages(thread)
+
+    navigate('/messages')
+  }
+
+  async function handleSelectConversation(conversationId: string) {
+    const thread = await getMessagesByConversation(conversationId)
+    setThreadMessages(thread)
+
+    const selected = conversations.find((item) => item.id === conversationId)
+    if (selected) {
+      const ordered = [
+        selected,
+        ...conversations.filter((item) => item.id !== conversationId),
+      ]
+      setConversations(ordered)
+    }
+  }
+
+  async function handleSendMessage(conversationId: string, content: string) {
+    await sendMessage({
+      conversationId,
+      senderId: seller.id,
+      senderName: seller.name,
+      content,
+    })
+
+    const refreshedConversations = await getConversations()
+    const thread = await getMessagesByConversation(conversationId)
+
+    setConversations(refreshedConversations)
+    setThreadMessages(thread)
   }
 
   function isActivePath(path: string) {
@@ -471,7 +745,7 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
           </button>
           <button className="stat-card stat-link" onClick={() => navigate('/favorites')}>
             <span>Saved items</span>
-            <strong>{favorites.length}</strong>
+            <strong>{favoriteListings.length}</strong>
           </button>
           <button className="stat-card stat-link" onClick={() => navigate('/store/inventory')}>
             <span>Your inventory</span>
@@ -479,7 +753,7 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
           </button>
           <button className="stat-card stat-link" onClick={() => navigate('/messages')}>
             <span>Inbox threads</span>
-            <strong>{messages.length}</strong>
+            <strong>{conversations.length}</strong>
           </button>
         </div>
       </section>
@@ -541,41 +815,48 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
                 </section>
 
                 <section className="grid">
-                  {filtered.map((item) => (
-                    <article className="card premium-card" key={item.id}>
-                      <div className="card-image-wrap">
-                        <img src={item.image} alt={item.title} />
-                        <span className="card-badge">{item.distance}</span>
-                      </div>
-                      <div className="card-body">
-                        <div className="price-row">
-                          <h3>{item.title}</h3>
-                          <span>
-                            ${item.price}/{item.unit}
-                          </span>
+                  {filtered.map((item) => {
+                    const isFavorite = favoriteListingIds.has(item.id)
+
+                    return (
+                      <article className="card premium-card" key={item.id}>
+                        <div className="card-image-wrap">
+                          <img src={item.image} alt={item.title} />
+                          <span className="card-badge">{item.distance}</span>
                         </div>
-                        <p className="meta">
-                          {item.location} · {item.inventory} left · {item.sellerName}
-                        </p>
-                        <p className="desc">{item.description}</p>
-                        <div className="pill-row">
-                          {item.pickupWindows.map((slot) => (
-                            <span className="pill" key={slot}>
-                              {slot}
+                        <div className="card-body">
+                          <div className="price-row">
+                            <h3>{item.title}</h3>
+                            <span>
+                              ${item.price}/{item.unit}
                             </span>
-                          ))}
+                          </div>
+                          <p className="meta">
+                            {item.location} · {item.inventory} left · {item.sellerName}
+                          </p>
+                          <p className="desc">{item.description}</p>
+                          <div className="pill-row">
+                            {item.pickupWindows.map((slot, index) => (
+                              <span className="pill" key={`${item.id}-${slot}-${index}`}>
+                                {slot}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="action-row">
+                            <button className="primary" onClick={() => handleStartConversation(item)}>
+                              Message
+                            </button>
+                            <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
+                              View
+                            </button>
+                            <button className="ghost" onClick={() => handleToggleFavorite(item.id)}>
+                              {isFavorite ? 'Saved' : 'Save'}
+                            </button>
+                          </div>
                         </div>
-                        <div className="action-row">
-                          <button className="primary" onClick={() => navigate('/messages')}>
-                            Message seller
-                          </button>
-                          <button className="ghost" onClick={() => navigate('/store/edit/' + item.id)}>
-                            View
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    )
+                  })}
                 </section>
 
                 <section className="section-heading section-gap-top">
@@ -640,6 +921,21 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
           />
 
           <Route
+            path="/listing/:id"
+            element={
+              <ListingDetailRoute
+                listings={listings}
+                seller={seller}
+                favorites={favorites}
+                onEdit={(id) => navigate('/store/edit/' + id)}
+                onToggleFavorite={handleToggleFavorite}
+                onReserve={handleReserve}
+                onStartConversation={handleStartConversation}
+              />
+            }
+          />
+
+          <Route
             path="/favorites"
             element={
               <section className="stack">
@@ -648,11 +944,11 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
                     <p className="eyebrow">Saved for later</p>
                     <h2>Favorites</h2>
                   </div>
-                  <span className="section-meta">{favorites.length} saved</span>
+                  <span className="section-meta">{favoriteListings.length} saved</span>
                 </div>
 
-                {favorites.length ? (
-                  favorites.map((item) => (
+                {favoriteListings.length ? (
+                  favoriteListings.map((item) => (
                     <div className="mini-card premium-mini-card" key={item.id}>
                       <img src={item.image} alt={item.title} />
                       <div className="mini-card-copy">
@@ -662,7 +958,7 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
                         </p>
                         <span>{item.pickupWindows[0]}</span>
                       </div>
-                      <button className="ghost" onClick={() => navigate('/store/edit/' + item.id)}>
+                      <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
                         View
                       </button>
                     </div>
@@ -677,25 +973,13 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
           <Route
             path="/messages"
             element={
-              <section className="stack">
-                <div className="section-heading compact-heading">
-                  <div>
-                    <p className="eyebrow">Conversations</p>
-                    <h2>Inbox</h2>
-                  </div>
-                  <span className="section-meta">{messages.length} threads</span>
-                </div>
-
-                {messages.map((msg) => (
-                  <div className="thread premium-thread" key={msg.id}>
-                    <div>
-                      <strong>{msg.sellerName}</strong>
-                      <p>{msg.preview}</p>
-                    </div>
-                    <span>{msg.updatedAt}</span>
-                  </div>
-                ))}
-              </section>
+              <MessagesPage
+                conversations={conversations}
+                threadMessages={threadMessages}
+                seller={seller}
+                onSelectConversation={handleSelectConversation}
+                onSendMessage={handleSendMessage}
+              />
             }
           />
 
@@ -776,11 +1060,14 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
                         <span>{item.pickupWindows[0]}</span>
                       </div>
                       <div className="listing-row-actions">
+                        <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
+                          View
+                        </button>
                         <button className="ghost" onClick={() => navigate('/store/edit/' + item.id)}>
                           Edit
                         </button>
-                        <button className="ghost" onClick={() => navigate('/messages')}>
-                          View messages
+                        <button className="ghost" onClick={() => handleArchive(item.id)}>
+                          Archive
                         </button>
                       </div>
                     </div>
@@ -850,7 +1137,7 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
 
                 <div className="analytics-note">
                   <strong>Next upgrade:</strong>
-                  <p>We can add seller conversion metrics, saved-to-message ratios, and hottest fruit categories.</p>
+                  <p>Next we add alerts, grower followers, and location intelligence.</p>
                 </div>
               </section>
             }
@@ -902,11 +1189,11 @@ function AppLayout({ listings, setListings, messages, seller }: AppLayoutProps) 
                   </div>
                   <div className="dashboard-card">
                     <span>Favorites</span>
-                    <strong>{favorites.length}</strong>
+                    <strong>{favoriteListings.length}</strong>
                   </div>
                   <div className="dashboard-card">
                     <span>Messages</span>
-                    <strong>{messages.length}</strong>
+                    <strong>{conversations.length}</strong>
                   </div>
                 </div>
 
@@ -959,6 +1246,7 @@ function EditListingRoute({
     return (
       <section className="stack">
         <h2>Listing not found</h2>
+        <p>This listing may have been created before persistence was enabled. Create a fresh listing instead.</p>
       </section>
     )
   }
@@ -976,16 +1264,31 @@ function EditListingRoute({
 
 function App() {
   const [listings, setListings] = useState<Listing[]>(fallbackListings)
-  const [messages, setMessages] = useState<Message[]>(fallbackMessages)
   const [seller, setSeller] = useState<SellerProfile>(fallbackSeller)
+  const [favorites, setFavorites] = useState<Favorite[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [threadMessages, setThreadMessages] = useState<Message[]>([])
 
   useEffect(() => {
     getListings().then(setListings).catch(() => setListings(fallbackListings))
-    getMessages().then(setMessages).catch(() => setMessages(fallbackMessages))
     getSeller().then(setSeller).catch(() => setSeller(fallbackSeller))
+    getFavorites().then(setFavorites).catch(() => setFavorites([]))
+    getConversations().then(setConversations).catch(() => setConversations([]))
   }, [])
 
-  return <AppLayout listings={listings} setListings={setListings} messages={messages} seller={seller} />
+  return (
+    <AppLayout
+      listings={listings}
+      setListings={setListings}
+      seller={seller}
+      favorites={favorites}
+      setFavorites={setFavorites}
+      conversations={conversations}
+      setConversations={setConversations}
+      threadMessages={threadMessages}
+      setThreadMessages={setThreadMessages}
+    />
+  )
 }
 
 export default App
