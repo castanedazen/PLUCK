@@ -3,6 +3,7 @@ import { getListings, getMessages, getSeller } from './api'
 import type { Listing, Message, SellerProfile } from './types'
 
 type Tab = 'home' | 'map' | 'favorites' | 'messages' | 'store' | 'profile'
+type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
 
 const fallbackListings: Listing[] = [
   {
@@ -111,9 +112,18 @@ const emptyForm: ListingFormState = {
   pickup2: '',
 }
 
+const quickFilters: { key: QuickFilter; label: string }[] = [
+  { key: 'all', label: 'All harvests' },
+  { key: 'just-added', label: 'Just added' },
+  { key: 'under-5', label: 'Under $5' },
+  { key: 'citrus', label: 'Citrus' },
+  { key: 'high-stock', label: 'High stock' },
+]
+
 function App() {
   const [tab, setTab] = useState<Tab>('home')
   const [query, setQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState<QuickFilter>('all')
   const [listings, setListings] = useState<Listing[]>(fallbackListings)
   const [messages, setMessages] = useState<Message[]>(fallbackMessages)
   const [seller, setSeller] = useState<SellerProfile>(fallbackSeller)
@@ -126,19 +136,53 @@ function App() {
     getSeller().then(setSeller).catch(() => setSeller(fallbackSeller))
   }, [])
 
+  const myListings = useMemo(
+    () => listings.filter((item) => item.sellerName === seller.name),
+    [listings, seller.name],
+  )
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return listings
 
-    return listings.filter((item) =>
-      [item.title, item.fruit, item.location, item.sellerName]
+    let result = listings.filter((item) =>
+      [item.title, item.fruit, item.location, item.sellerName, item.description]
         .join(' ')
         .toLowerCase()
         .includes(q),
     )
-  }, [listings, query])
+
+    if (activeFilter === 'just-added') {
+      result = result.filter((item) => item.distance === 'Just added')
+    }
+
+    if (activeFilter === 'under-5') {
+      result = result.filter((item) => item.price <= 5)
+    }
+
+    if (activeFilter === 'citrus') {
+      result = result.filter((item) =>
+        ['orange', 'oranges', 'lemon', 'lemons', 'lime', 'limes', 'grapefruit'].includes(
+          item.fruit.toLowerCase(),
+        ),
+      )
+    }
+
+    if (activeFilter === 'high-stock') {
+      result = result.filter((item) => item.inventory >= 6)
+    }
+
+    return result
+  }, [listings, query, activeFilter])
 
   const favorites = listings.filter((item) => item.isFavorite)
+  const justAdded = listings.filter((item) => item.distance === 'Just added')
+  const totalInventory = myListings.reduce((sum, item) => sum + item.inventory, 0)
+  const averagePrice =
+    myListings.length > 0
+      ? (
+          myListings.reduce((sum, item) => sum + item.price, 0) / myListings.length
+        ).toFixed(2)
+      : '0.00'
 
   function updateForm<K extends keyof ListingFormState>(key: K, value: ListingFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }))
@@ -159,6 +203,7 @@ function App() {
   function openCreateListing() {
     setTab('home')
     setShowCreateForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function handleCreateListing(e: FormEvent) {
@@ -197,23 +242,84 @@ function App() {
         <div>
           <p className="eyebrow">Pluck</p>
           <h1>Fresh fruit from neighbors</h1>
+          <p className="subtle-copy">
+            A beautifully local marketplace for backyard harvests, same-day pickup, and neighborhood discovery.
+          </p>
         </div>
-        <button className="ghost">Mission Hills</button>
+        <div className="topbar-actions">
+          <button className="ghost">Mission Hills</button>
+          <button className="primary" onClick={openCreateListing}>
+            + New listing
+          </button>
+        </div>
       </header>
+
+      <section className="hero-band">
+        <div className="hero-copy">
+          <p className="eyebrow">Premium neighborhood commerce</p>
+          <h2>Turn extra fruit into a local, elegant marketplace experience.</h2>
+          <p>
+            Pluck is designed to feel more like a modern consumer startup than a utility tool — cleaner browsing,
+            stronger seller identity, better listing flow, and a more premium local-shopping vibe.
+          </p>
+          <div className="hero-cta-row">
+            <button className="primary" onClick={openCreateListing}>
+              Create premium listing
+            </button>
+            <button className="ghost" onClick={() => setTab('map')}>
+              Explore nearby map
+            </button>
+          </div>
+        </div>
+
+        <div className="stats-grid">
+          <div className="stat-card">
+            <span>Nearby listings</span>
+            <strong>{listings.length}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Saved items</span>
+            <strong>{favorites.length}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Your inventory</span>
+            <strong>{totalInventory}</strong>
+          </div>
+          <div className="stat-card">
+            <span>Inbox threads</span>
+            <strong>{messages.length}</strong>
+          </div>
+        </div>
+      </section>
 
       <div className="search-wrap">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search oranges, avocados, lemons..."
+          placeholder="Search oranges, avocados, lemons, neighborhoods..."
         />
-        <div className="toggle-row">
-          <button className={tab === 'home' ? 'toggle active' : 'toggle'} onClick={() => setTab('home')}>
-            List
-          </button>
-          <button className={tab === 'map' ? 'toggle active' : 'toggle'} onClick={() => setTab('map')}>
-            Map
-          </button>
+
+        <div className="search-bottom-row">
+          <div className="toggle-row">
+            <button className={tab === 'home' ? 'toggle active' : 'toggle'} onClick={() => setTab('home')}>
+              List
+            </button>
+            <button className={tab === 'map' ? 'toggle active' : 'toggle'} onClick={() => setTab('map')}>
+              Map
+            </button>
+          </div>
+
+          <div className="filter-chip-row">
+            {quickFilters.map((filter) => (
+              <button
+                key={filter.key}
+                className={activeFilter === filter.key ? 'filter-chip active' : 'filter-chip'}
+                onClick={() => setActiveFilter(filter.key)}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -232,11 +338,14 @@ function App() {
             </section>
 
             {showCreateForm && (
-              <section className="stack form-stack">
+              <section className="stack form-stack premium-form-shell">
                 <div className="form-header">
                   <div>
                     <p className="eyebrow">New listing</p>
-                    <h2>Create a fruit listing</h2>
+                    <h2>Create a premium fruit listing</h2>
+                    <p>
+                      A stronger title, cleaner image, and more specific pickup windows make the listing feel polished.
+                    </p>
                   </div>
                 </div>
 
@@ -247,7 +356,7 @@ function App() {
                       <input
                         value={form.title}
                         onChange={(e) => updateForm('title', e.target.value)}
-                        placeholder="Sweet backyard avocados"
+                        placeholder="Golden backyard avocados"
                       />
                     </label>
 
@@ -302,9 +411,10 @@ function App() {
                       />
                     </label>
 
-                    <label className="full">
+                    <label className="full upload-zone">
                       Upload photo
                       <input type="file" accept="image/*" onChange={handleImageUpload} />
+                      <span className="upload-hint">Choose a fruit photo from your device for instant preview.</span>
                     </label>
 
                     {form.imagePreview && (
@@ -364,48 +474,96 @@ function App() {
         )}
 
         {tab === 'home' && (
-          <section className="grid">
-            {filtered.map((item) => (
-              <article className="card" key={item.id}>
-                <img src={item.image} alt={item.title} />
-                <div className="card-body">
-                  <div className="price-row">
-                    <h3>{item.title}</h3>
-                    <span>
-                      ${item.price}/{item.unit}
-                    </span>
+          <>
+            <section className="section-heading">
+              <div>
+                <p className="eyebrow">Featured near you</p>
+                <h2>Beautiful local harvests</h2>
+              </div>
+              <span className="section-meta">{filtered.length} listings</span>
+            </section>
+
+            <section className="grid">
+              {filtered.map((item) => (
+                <article className="card premium-card" key={item.id}>
+                  <div className="card-image-wrap">
+                    <img src={item.image} alt={item.title} />
+                    <span className="card-badge">{item.distance}</span>
                   </div>
-                  <p className="meta">
-                    {item.location} · {item.distance} · {item.inventory} left
-                  </p>
-                  <p className="desc">{item.description}</p>
-                  <div className="pill-row">
-                    {item.pickupWindows.map((slot) => (
-                      <span className="pill" key={slot}>
-                        {slot}
+                  <div className="card-body">
+                    <div className="price-row">
+                      <h3>{item.title}</h3>
+                      <span>
+                        ${item.price}/{item.unit}
                       </span>
-                    ))}
+                    </div>
+                    <p className="meta">
+                      {item.location} · {item.inventory} left · {item.sellerName}
+                    </p>
+                    <p className="desc">{item.description}</p>
+                    <div className="pill-row">
+                      {item.pickupWindows.map((slot) => (
+                        <span className="pill" key={slot}>
+                          {slot}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="action-row">
+                      <button className="primary">Message seller</button>
+                      <button className="ghost">Save</button>
+                    </div>
                   </div>
-                  <div className="action-row">
-                    <button className="primary">Message seller</button>
-                    <button className="ghost">Save</button>
+                </article>
+              ))}
+            </section>
+
+            <section className="section-heading section-gap-top">
+              <div>
+                <p className="eyebrow">Fresh activity</p>
+                <h2>Just added</h2>
+              </div>
+            </section>
+
+            <section className="mini-grid">
+              {(justAdded.length ? justAdded : listings.slice(0, 2)).map((item) => (
+                <div className="activity-card" key={item.id}>
+                  <img src={item.image} alt={item.title} />
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p>
+                      {item.location} · ${item.price}/{item.unit}
+                    </p>
                   </div>
                 </div>
-              </article>
-            ))}
-          </section>
+              ))}
+            </section>
+          </>
         )}
 
         {tab === 'map' && (
           <section className="map-panel">
-            <div className="map-fallback">
-              <h3>Google Maps-ready discovery</h3>
-              <p>Add a Maps API key later. For now, this clean fallback shows nearby inventory in a map-first style.</p>
+            <div className="map-fallback premium-map">
+              <div className="map-header-row">
+                <div>
+                  <p className="eyebrow">Discovery map</p>
+                  <h3>Google Maps-ready neighborhood view</h3>
+                </div>
+                <button className="ghost" onClick={openCreateListing}>
+                  Add your harvest
+                </button>
+              </div>
+              <p>
+                This is the premium fallback map state. Next we can wire real pins, neighborhoods, and distance-driven discovery.
+              </p>
               <div className="pin-list">
                 {filtered.map((item) => (
-                  <div className="pin-row" key={item.id}>
-                    <strong>{item.fruit}</strong>
-                    <span>{item.location}</span>
+                  <div className="pin-row premium-pin-row" key={item.id}>
+                    <div>
+                      <strong>{item.fruit}</strong>
+                      <p>
+                        {item.title} · {item.location}
+                      </p>
+                    </div>
                     <span>
                       ${item.price}/{item.unit}
                     </span>
@@ -418,17 +576,26 @@ function App() {
 
         {tab === 'favorites' && (
           <section className="stack">
-            <h2>Saved listings</h2>
+            <div className="section-heading compact-heading">
+              <div>
+                <p className="eyebrow">Saved for later</p>
+                <h2>Favorites</h2>
+              </div>
+              <span className="section-meta">{favorites.length} saved</span>
+            </div>
+
             {favorites.length ? (
               favorites.map((item) => (
-                <div className="mini-card" key={item.id}>
+                <div className="mini-card premium-mini-card" key={item.id}>
                   <img src={item.image} alt={item.title} />
-                  <div>
+                  <div className="mini-card-copy">
                     <strong>{item.title}</strong>
                     <p>
                       {item.location} · ${item.price}/{item.unit}
                     </p>
+                    <span>{item.pickupWindows[0]}</span>
                   </div>
+                  <button className="ghost">View</button>
                 </div>
               ))
             ) : (
@@ -439,9 +606,16 @@ function App() {
 
         {tab === 'messages' && (
           <section className="stack">
-            <h2>Inbox</h2>
+            <div className="section-heading compact-heading">
+              <div>
+                <p className="eyebrow">Conversations</p>
+                <h2>Inbox</h2>
+              </div>
+              <span className="section-meta">{messages.length} threads</span>
+            </div>
+
             {messages.map((msg) => (
-              <div className="thread" key={msg.id}>
+              <div className="thread premium-thread" key={msg.id}>
                 <div>
                   <strong>{msg.sellerName}</strong>
                   <p>{msg.preview}</p>
@@ -454,20 +628,44 @@ function App() {
 
         {tab === 'store' && (
           <section className="stack">
-            <h2>My Store</h2>
-            <div className="hero-card compact">
+            <div className="section-heading compact-heading">
               <div>
-                <p className="eyebrow">Seller tools</p>
-                <h3>Inventory, pickup windows, and listing creation</h3>
+                <p className="eyebrow">Seller dashboard</p>
+                <h2>My Store</h2>
               </div>
               <button className="primary" onClick={openCreateListing}>
                 New listing
               </button>
             </div>
-            {listings
-              .filter((item) => item.sellerName === seller.name)
-              .map((item) => (
-                <div className="thread" key={item.id}>
+
+            <div className="dashboard-stats">
+              <div className="dashboard-card">
+                <span>Active listings</span>
+                <strong>{myListings.length}</strong>
+              </div>
+              <div className="dashboard-card">
+                <span>Total inventory</span>
+                <strong>{totalInventory}</strong>
+              </div>
+              <div className="dashboard-card">
+                <span>Average price</span>
+                <strong>${averagePrice}</strong>
+              </div>
+            </div>
+
+            <div className="hero-card compact">
+              <div>
+                <p className="eyebrow">Seller tools</p>
+                <h3>Inventory, pickup windows, and listing creation</h3>
+              </div>
+              <button className="ghost" onClick={openCreateListing}>
+                Open form
+              </button>
+            </div>
+
+            {myListings.length ? (
+              myListings.map((item) => (
+                <div className="thread premium-thread" key={item.id}>
                   <div>
                     <strong>{item.title}</strong>
                     <p>
@@ -476,12 +674,15 @@ function App() {
                   </div>
                   <button className="ghost">Edit</button>
                 </div>
-              ))}
+              ))
+            ) : (
+              <p>You do not have any listings yet.</p>
+            )}
           </section>
         )}
 
         {tab === 'profile' && (
-          <section className="profile-card">
+          <section className="profile-card premium-profile">
             <img className="hero-fruit" src={seller.heroFruit} alt="Lead fruit" />
             <div className="profile-row">
               <img className="avatar" src={seller.avatar} alt={seller.name} />
@@ -492,7 +693,24 @@ function App() {
                 </p>
               </div>
             </div>
+
             <p>{seller.bio}</p>
+
+            <div className="dashboard-stats profile-stats">
+              <div className="dashboard-card">
+                <span>Listings</span>
+                <strong>{myListings.length}</strong>
+              </div>
+              <div className="dashboard-card">
+                <span>Favorites</span>
+                <strong>{favorites.length}</strong>
+              </div>
+              <div className="dashboard-card">
+                <span>Messages</span>
+                <strong>{messages.length}</strong>
+              </div>
+            </div>
+
             <div className="action-row">
               <button className="ghost">Upload profile photo</button>
               <button className="ghost">Upload lead fruit photo</button>
