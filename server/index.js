@@ -74,10 +74,6 @@ app.put('/api/listings/:id', (req, res) => {
   const listings = db.listings || []
   const existing = listings.find((item) => item.id === listingId)
 
-  if (!existing) {
-    return res.status(404).json({ error: 'Listing not found' })
-  }
-
   const updated = normalizeListing(
     {
       ...existing,
@@ -86,9 +82,13 @@ app.put('/api/listings/:id', (req, res) => {
     listingId,
   )
 
-  db.listings = listings.map((item) => (item.id === listingId ? updated : item))
-  writeDb(db)
+  if (existing) {
+    db.listings = listings.map((item) => (item.id === listingId ? updated : item))
+  } else {
+    db.listings = [updated, ...listings]
+  }
 
+  writeDb(db)
   res.json(updated)
 })
 
