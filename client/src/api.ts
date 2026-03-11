@@ -2,10 +2,26 @@ import type { Listing, Message, SellerProfile } from './types'
 
 const API_BASE = '/api'
 
+async function parseResponse<T>(res: Response, fallbackMessage: string): Promise<T> {
+  if (res.ok) {
+    return res.json()
+  }
+
+  let detail = fallbackMessage
+
+  try {
+    const body = await res.json()
+    if (body?.error) detail = body.error
+  } catch {
+    // ignore parse failure
+  }
+
+  throw new Error(detail)
+}
+
 export async function getListings(): Promise<Listing[]> {
   const res = await fetch(`${API_BASE}/listings`)
-  if (!res.ok) throw new Error('Failed to load listings')
-  return res.json()
+  return parseResponse<Listing[]>(res, 'Failed to load listings')
 }
 
 export async function createListing(
@@ -19,8 +35,7 @@ export async function createListing(
     body: JSON.stringify(payload),
   })
 
-  if (!res.ok) throw new Error('Failed to create listing')
-  return res.json()
+  return parseResponse<Listing>(res, 'Failed to create listing')
 }
 
 export async function updateListing(
@@ -35,18 +50,15 @@ export async function updateListing(
     body: JSON.stringify(payload),
   })
 
-  if (!res.ok) throw new Error('Failed to update listing')
-  return res.json()
+  return parseResponse<Listing>(res, 'Failed to update listing')
 }
 
 export async function getMessages(): Promise<Message[]> {
   const res = await fetch(`${API_BASE}/messages`)
-  if (!res.ok) throw new Error('Failed to load messages')
-  return res.json()
+  return parseResponse<Message[]>(res, 'Failed to load messages')
 }
 
 export async function getSeller(): Promise<SellerProfile> {
   const res = await fetch(`${API_BASE}/seller/me`)
-  if (!res.ok) throw new Error('Failed to load seller')
-  return res.json()
+  return parseResponse<SellerProfile>(res, 'Failed to load seller')
 }
