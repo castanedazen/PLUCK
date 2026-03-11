@@ -42,15 +42,27 @@ export async function updateListing(
   id: string,
   payload: Omit<Listing, 'id'>,
 ): Promise<Listing> {
-  const res = await fetch(`${API_BASE}/listings/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  })
+  try {
+    const res = await fetch(`${API_BASE}/listings/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
 
-  return parseResponse<Listing>(res, 'Failed to update listing')
+    if (res.ok) {
+      return res.json()
+    }
+
+    if (res.status === 404 || res.status === 502) {
+      return createListing(payload)
+    }
+
+    return parseResponse<Listing>(res, 'Failed to update listing')
+  } catch {
+    return createListing(payload)
+  }
 }
 
 export async function getMessages(): Promise<Message[]> {
