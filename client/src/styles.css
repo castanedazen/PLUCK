@@ -1,0 +1,158 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f6f4ef;
+  color: #1d1d1f;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: linear-gradient(180deg, #faf7f1 0%, #f2efe8 100%); }
+button, input { font: inherit; }
+
+.app-shell {
+  max-width: 980px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 20px 20px 92px;
+}
+
+.topbar, .search-wrap, .hero-card, .card, .map-panel, .stack, .profile-card {
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(17,24,39,0.06);
+  box-shadow: 0 16px 40px rgba(17,24,39,0.08);
+}
+
+.topbar {
+  border-radius: 28px;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar h1 { margin: 6px 0 0; font-size: 2rem; }
+.eyebrow { margin: 0; color: #5f7d53; text-transform: uppercase; letter-spacing: .08em; font-size: .75rem; font-weight: 700; }
+.search-wrap {
+  margin-top: 16px;
+  border-radius: 24px;
+  padding: 14px;
+}
+.search-wrap input {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 16px 18px;
+  background: #fff;
+}
+.toggle-row, .action-row, .pill-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.toggle-row { margin-top: 12px; }
+.toggle, .ghost, .primary, .nav-item {
+  border-radius: 999px;
+  border: 0;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+.toggle, .ghost, .nav-item { background: #eef2ea; color: #1f3521; }
+.primary, .toggle.active, .nav-item.active { background: #2f7d32; color: white; }
+.content { margin-top: 18px; }
+.hero-card {
+  border-radius: 30px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+}
+.hero-card.compact { grid-template-columns: 1fr auto; }
+.hero-card h2, .hero-card h3 { margin: 6px 0; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+.card {
+  border-radius: 28px;
+  overflow: hidden;
+}
+.card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+.card-body { padding: 16px; }
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+.price-row h3 { margin: 0; font-size: 1.1rem; }
+.price-row span { color: #2f7d32; font-weight: 800; }
+.meta, .desc, .thread p, .mini-card p, .profile-card p { color: #4b5563; }
+.pill { background: #f4f6ef; color: #426248; padding: 8px 12px; border-radius: 999px; font-size: .88rem; }
+.map-panel, .stack, .profile-card { border-radius: 28px; padding: 20px; }
+.map-fallback {
+  min-height: 360px;
+  background: linear-gradient(180deg, #eaf3ea 0%, #f7faf5 100%);
+  border-radius: 24px;
+  padding: 20px;
+}
+.pin-list { display: grid; gap: 12px; margin-top: 16px; }
+.pin-row, .thread, .mini-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #eef2f7;
+}
+.mini-card img, .avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  object-fit: cover;
+}
+.profile-card .hero-fruit {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 22px;
+  margin-bottom: 16px;
+}
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 16px;
+  width: min(920px, calc(100% - 24px));
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(17,24,39,0.06);
+  border-radius: 24px;
+  padding: 10px;
+  box-shadow: 0 16px 40px rgba(17,24,39,0.12);
+}
+
+@media (max-width: 720px) {
+  .app-shell { padding: 14px 14px 96px; }
+  .topbar h1 { font-size: 1.45rem; }
+  .hero-card { grid-template-columns: 1fr; }
+  .bottom-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .nav-item { padding: 10px 8px; font-size: .82rem; }
+}
