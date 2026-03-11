@@ -1,0 +1,77 @@
+{
+  "listings": [
+    {
+      "id": "1",
+      "title": "Sun-warm Valencia Oranges",
+      "fruit": "Oranges",
+      "price": 6,
+      "unit": "bag",
+      "image": "https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=1200&q=80",
+      "location": "Mission Hills",
+      "distance": "0.8 mi",
+      "inventory": 7,
+      "sellerId": "s1",
+      "sellerName": "Elena",
+      "description": "Picked this morning. Sweet, juicy, and perfect for juice or snacks.",
+      "pickupWindows": ["Today 5–7 PM", "Tomorrow 9–11 AM"],
+      "isFavorite": true
+    },
+    {
+      "id": "2",
+      "title": "Backyard Meyer Lemons",
+      "fruit": "Lemons",
+      "price": 4,
+      "unit": "bundle",
+      "image": "https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=1200&q=80",
+      "location": "Granada Hills",
+      "distance": "1.7 mi",
+      "inventory": 11,
+      "sellerId": "s2",
+      "sellerName": "Marco",
+      "description": "Bright and floral. Great for cooking, cocktails, and lemon bars.",
+      "pickupWindows": ["Today 6–8 PM", "Saturday 10 AM–1 PM"]
+    },
+    {
+      "id": "3",
+      "title": "Persimmon Porch Basket",
+      "fruit": "Persimmons",
+      "price": 8,
+      "unit": "basket",
+      "image": "https://images.unsplash.com/photo-1471943311424-646960669fbc?auto=format&fit=crop&w=1200&q=80",
+      "location": "Northridge",
+      "distance": "2.4 mi",
+      "inventory": 4,
+      "sellerId": "s3",
+      "sellerName": "Jules",
+      "description": "Soft, honey-sweet persimmons from a mature backyard tree.",
+      "pickupWindows": ["Tomorrow 8–10 AM", "Sunday 4–6 PM"]
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "listingId": "1",
+      "sellerName": "Elena",
+      "preview": "Yes, I can hold two bags until 6 PM.",
+      "updatedAt": "2h ago"
+    },
+    {
+      "id": "m2",
+      "listingId": "2",
+      "sellerName": "Marco",
+      "preview": "Pickup near the front gate works for me.",
+      "updatedAt": "Yesterday"
+    }
+  ],
+  "seller": {
+    "id": "me",
+    "name": "Christian",
+    "handle": "@pluckgrower",
+    "city": "Mission Hills, CA",
+    "bio": "Neighborhood grower sharing backyard harvests with nearby buyers.",
+    "avatar": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80",
+    "heroFruit": "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=1200&q=80"
+  }
+}
+
+
