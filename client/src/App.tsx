@@ -156,6 +156,11 @@ function App() {
     reader.readAsDataURL(file)
   }
 
+  function openCreateListing() {
+    setTab('home')
+    setShowCreateForm(true)
+  }
+
   function handleCreateListing(e: FormEvent) {
     e.preventDefault()
 
@@ -455,7 +460,7 @@ function App() {
                 <p className="eyebrow">Seller tools</p>
                 <h3>Inventory, pickup windows, and listing creation</h3>
               </div>
-              <button className="primary" onClick={() => setShowCreateForm(true)}>
+              <button className="primary" onClick={openCreateListing}>
                 New listing
               </button>
             </div>
