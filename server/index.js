@@ -12,7 +12,14 @@ const dbPath = path.join(__dirname, 'data', 'db.json')
 const app = express()
 const PORT = process.env.PORT || 8080
 
-app.use(cors())
+app.use(
+  cors({
+    origin: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  }),
+)
+
 app.use(express.json({ limit: '8mb' }))
 
 function readDb() {

@@ -1,9 +1,9 @@
 import type { Listing, Message, SellerProfile } from './types'
 
-const API_BASE = import.meta.env.VITE_API_BASE || window.location.origin.replace('-5173.app.github.dev', '-8080.app.github.dev')
+const API_BASE = '/api'
 
 export async function getListings(): Promise<Listing[]> {
-  const res = await fetch(`${API_BASE}/api/listings`)
+  const res = await fetch(`${API_BASE}/listings`)
   if (!res.ok) throw new Error('Failed to load listings')
   return res.json()
 }
@@ -11,7 +11,7 @@ export async function getListings(): Promise<Listing[]> {
 export async function createListing(
   payload: Omit<Listing, 'id'>,
 ): Promise<Listing> {
-  const res = await fetch(`${API_BASE}/api/listings`, {
+  const res = await fetch(`${API_BASE}/listings`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -24,13 +24,13 @@ export async function createListing(
 }
 
 export async function getMessages(): Promise<Message[]> {
-  const res = await fetch(`${API_BASE}/api/messages`)
+  const res = await fetch(`${API_BASE}/messages`)
   if (!res.ok) throw new Error('Failed to load messages')
   return res.json()
 }
 
 export async function getSeller(): Promise<SellerProfile> {
-  const res = await fetch(`${API_BASE}/api/seller/me`)
+  const res = await fetch(`${API_BASE}/seller/me`)
   if (!res.ok) throw new Error('Failed to load seller')
   return res.json()
 }
