@@ -1,4 +1,13 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
+import {
+  ChangeEvent,
+  FormEvent,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import {
   NavLink,
   Navigate,
@@ -188,6 +197,14 @@ function formatTime(value?: string) {
   })
 }
 
+function formatShortDate(value?: string) {
+  if (!value) return ''
+  return new Date(value).toLocaleDateString([], {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 function sellerLabel(listing: Listing) {
   const rating = listing.sellerRating ? listing.sellerRating.toFixed(1) : null
   return rating ? `${listing.sellerName} • ★ ${rating}` : listing.sellerName
@@ -199,11 +216,15 @@ function prettyLocation(listing: Listing) {
   return listing.location
 }
 
+function hasGeo(listing: Listing) {
+  return Boolean(listing.geo?.lat && listing.geo?.lng)
+}
+
 function ActionGrid({
   children,
   columns = 2,
 }: {
-  children: React.ReactNode
+  children: ReactNode
   columns?: 1 | 2 | 3 | 4
 }) {
   return <div className={`action-grid action-grid--${columns}`}>{children}</div>
@@ -504,6 +525,7 @@ function ListingForm({
         availabilityLabel: form.availabilityLabel,
         sellerVerified: seller.verified,
         sellerRating: seller.rating,
+        geo: initialValues?.geo || null,
       }
 
       await onSubmitListing(payload, existingId)
@@ -757,7 +779,9 @@ function GrowerTrust({
       <p className="desc">{seller.bio}</p>
 
       <div className="trust-metrics">
-        <div className="metric-chip">★ {(seller.rating || 0).toFixed(1)} {seller.ratingCount ? `(${seller.ratingCount})` : ''}</div>
+        <div className="metric-chip">
+          ★ {(seller.rating || 0).toFixed(1)} {seller.ratingCount ? `(${seller.ratingCount})` : ''}
+        </div>
         <div className="metric-chip">{seller.followers || 0} followers</div>
         {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
         {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
@@ -886,19 +910,23 @@ function ListingDetailRoute({
 
 function MessagesPage({
   conversations,
+  selectedConversationId,
   threadMessages,
   seller,
   onSelectConversation,
   onSendMessage,
 }: {
   conversations: Conversation[]
+  selectedConversationId: string | null
   threadMessages: Message[]
   seller: SellerProfile
   onSelectConversation: (id: string) => Promise<void>
   onSendMessage: (conversationId: string, content: string) => Promise<void>
 }) {
   const [draft, setDraft] = useState('')
-  const activeConversation = conversations[0]
+
+  const activeConversation =
+    conversations.find((item) => item.id === selectedConversationId) || conversations[0] || null
 
   return (
     <section className="messages-shell">
@@ -913,8 +941,8 @@ function MessagesPage({
 
         <div className="messages-list">
           {conversations.length ? (
-            conversations.map((conversation, index) => {
-              const active = index === 0
+            conversations.map((conversation) => {
+              const active = conversation.id === activeConversation?.id
               return (
                 <button
                   key={conversation.id}
@@ -923,10 +951,10 @@ function MessagesPage({
                 >
                   <div className="thread-card-top">
                     <strong>{conversation.sellerName}</strong>
-                    <span>{new Date(conversation.updatedAt).toLocaleDateString()}</span>
+                    <span>{formatShortDate(conversation.updatedAt)}</span>
                   </div>
                   <div className="thread-card-title">{conversation.listingTitle}</div>
-                  <p>{conversation.lastMessage}</p>
+                  <p>{conversation.lastMessage || 'No messages yet'}</p>
                 </button>
               )
             })
@@ -950,9 +978,9 @@ function MessagesPage({
               <div className="thread-context">
                 <div>
                   <strong>{activeConversation.sellerName}</strong>
-                  <p>{activeConversation.lastMessage}</p>
+                  <p>{activeConversation.lastMessage || 'Conversation started'}</p>
                 </div>
-                <span>{new Date(activeConversation.updatedAt).toLocaleDateString()}</span>
+                <span>{formatTime(activeConversation.updatedAt)}</span>
               </div>
 
               <div className="message-thread">
@@ -1016,10 +1044,23 @@ function GrowerPage({
 
   useEffect(() => {
     if (!id) return
+    let cancelled = false
     setLoading(true)
+
     getSellerById(id)
-      .then(setGrower)
-      .finally(() => setLoading(false))
+      .then((data) => {
+        if (!cancelled) setGrower(data)
+      })
+      .catch(() => {
+        if (!cancelled) setGrower(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [id])
 
   if (loading) {
@@ -1263,21 +1304,21 @@ function AlertsPage({
 
 type AppLayoutProps = {
   listings: Listing[]
-  setListings: React.Dispatch<React.SetStateAction<Listing[]>>
+  setListings: Dispatch<SetStateAction<Listing[]>>
   seller: SellerProfile
   favorites: Favorite[]
-  setFavorites: React.Dispatch<React.SetStateAction<Favorite[]>>
+  setFavorites: Dispatch<SetStateAction<Favorite[]>>
   conversations: Conversation[]
-  setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>
+  setConversations: Dispatch<SetStateAction<Conversation[]>>
   threadMessages: Message[]
-  setThreadMessages: React.Dispatch<React.SetStateAction<Message[]>>
+  setThreadMessages: Dispatch<SetStateAction<Message[]>>
   socialPosts: SocialPost[]
   notifications: NotificationItem[]
-  setNotifications: React.Dispatch<React.SetStateAction<NotificationItem[]>>
+  setNotifications: Dispatch<SetStateAction<NotificationItem[]>>
   alerts: AlertItem[]
-  setAlerts: React.Dispatch<React.SetStateAction<AlertItem[]>>
+  setAlerts: Dispatch<SetStateAction<AlertItem[]>>
   follows: Follow[]
-  setFollows: React.Dispatch<React.SetStateAction<Follow[]>>
+  setFollows: Dispatch<SetStateAction<Follow[]>>
   authUser: AuthUser | null
   onAuthSuccess: (user: AuthUser) => void
 }
@@ -1307,6 +1348,7 @@ function AppLayout({
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<QuickFilter>('all')
   const [reserveTarget, setReserveTarget] = useState<Listing | null>(null)
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
 
   const favoriteListingIds = new Set(favorites.map((fav) => fav.listingId))
   const favoriteListings = listings.filter((item) => favoriteListingIds.has(item.id))
@@ -1422,6 +1464,23 @@ function AppLayout({
 
     setListings((current) => current.map((item) => (item.id === listing.id ? result.listing : item)))
     setReserveTarget(null)
+
+    const conversation = await createOrGetConversation({
+      listingId: listing.id,
+      listingTitle: listing.title,
+      sellerId: listing.sellerId,
+      sellerName: listing.sellerName,
+      buyerId: seller.id,
+      buyerName: seller.name,
+    })
+
+    const refreshed = await getConversations()
+    setConversations(refreshed)
+    setSelectedConversationId(conversation.id)
+
+    const thread = await getMessagesByConversation(conversation.id)
+    setThreadMessages(thread)
+
     navigate('/messages')
   }
 
@@ -1437,6 +1496,7 @@ function AppLayout({
 
     const refreshed = await getConversations()
     setConversations(refreshed)
+    setSelectedConversationId(conversation.id)
 
     const thread = await getMessagesByConversation(conversation.id)
     setThreadMessages(thread)
@@ -1447,6 +1507,7 @@ function AppLayout({
   async function handleSelectConversation(conversationId: string) {
     const thread = await getMessagesByConversation(conversationId)
     setThreadMessages(thread)
+    setSelectedConversationId(conversationId)
 
     const selected = conversations.find((item) => item.id === conversationId)
     if (selected) {
@@ -1468,6 +1529,7 @@ function AppLayout({
 
     setConversations(refreshedConversations)
     setThreadMessages(thread)
+    setSelectedConversationId(conversationId)
   }
 
   async function handleCreateAlert(payload: Omit<AlertItem, 'id'>) {
@@ -1514,7 +1576,9 @@ function AppLayout({
               <button className="ghost" onClick={() => navigate('/alerts')}>
                 Alerts {unreadNotifications.length ? `(${unreadNotifications.length})` : ''}
               </button>
-              <button className="ghost">{[seller.city, seller.state].filter(Boolean).join(', ') || 'Location'}</button>
+              <button className="ghost" onClick={() => navigate('/profile')}>
+                {[seller.city, seller.state].filter(Boolean).join(', ') || 'Profile'}
+              </button>
               <button className="primary" onClick={() => navigate('/store/new')}>
                 + New listing
               </button>
@@ -1660,7 +1724,8 @@ function AppLayout({
                           <p className="meta">{prettyLocation(item)} • {item.inventory} left</p>
 
                           <button className="seller-inline-link" onClick={() => navigate('/grower/' + item.sellerId)}>
-                            {item.sellerVerified ? '✓ ' : ''}{sellerLabel(item)}
+                            {item.sellerVerified ? '✓ ' : ''}
+                            {sellerLabel(item)}
                           </button>
 
                           <p className="desc">{item.description}</p>
@@ -1783,9 +1848,11 @@ function AppLayout({
                       Add your harvest
                     </button>
                   </div>
+
                   <p>
-                    This map reflects nationwide-ready location fields and trust signals. Next layer is real pins and live area search.
+                    This map view is now geo-aware and nationwide-ready. Listings with coordinates are ready for live pin rendering in the next step.
                   </p>
+
                   <div className="pin-list">
                     {filtered.map((item) => (
                       <div className="pin-row premium-pin-row" key={item.id}>
@@ -1797,6 +1864,7 @@ function AppLayout({
                           <div className="listing-badge-row">
                             {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
                             {item.sellerVerified ? <span className="trust-pill verified">Verified</span> : null}
+                            {hasGeo(item) ? <span className="trust-pill available">Geo-ready</span> : null}
                           </div>
                         </div>
                         <span>
@@ -1894,6 +1962,7 @@ function AppLayout({
             element={
               <MessagesPage
                 conversations={conversations}
+                selectedConversationId={selectedConversationId}
                 threadMessages={threadMessages}
                 seller={seller}
                 onSelectConversation={handleSelectConversation}
@@ -2111,45 +2180,61 @@ function AppLayout({
                   </div>
                 </div>
 
-                <p>{seller.bio}</p>
+                {!authUser ? (
+                  <>
+                    <p>Create an account or log in to make this profile live across devices.</p>
+                    <div className="action-row">
+                      <button className="primary" onClick={() => navigate('/signup')}>
+                        Create account
+                      </button>
+                      <button className="ghost" onClick={() => navigate('/login')}>
+                        Log in
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p>{seller.bio}</p>
 
-                <div className="dashboard-stats profile-stats">
-                  <div className="dashboard-card">
-                    <span>Listings</span>
-                    <strong>{myListings.length}</strong>
-                  </div>
-                  <div className="dashboard-card">
-                    <span>Favorites</span>
-                    <strong>{favoriteListings.length}</strong>
-                  </div>
-                  <div className="dashboard-card">
-                    <span>Messages</span>
-                    <strong>{conversations.length}</strong>
-                  </div>
-                </div>
+                    <div className="dashboard-stats profile-stats">
+                      <div className="dashboard-card">
+                        <span>Listings</span>
+                        <strong>{myListings.length}</strong>
+                      </div>
+                      <div className="dashboard-card">
+                        <span>Favorites</span>
+                        <strong>{favoriteListings.length}</strong>
+                      </div>
+                      <div className="dashboard-card">
+                        <span>Messages</span>
+                        <strong>{conversations.length}</strong>
+                      </div>
+                    </div>
 
-                <div className="trust-metrics">
-                  {seller.verified ? <div className="metric-chip">Verified grower</div> : null}
-                  {seller.rating ? <div className="metric-chip">★ {seller.rating.toFixed(1)}</div> : null}
-                  {seller.followers ? <div className="metric-chip">{seller.followers} followers</div> : null}
-                  {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
-                  {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
-                </div>
+                    <div className="trust-metrics">
+                      {seller.verified ? <div className="metric-chip">Verified grower</div> : null}
+                      {seller.rating ? <div className="metric-chip">★ {seller.rating.toFixed(1)}</div> : null}
+                      {seller.followers ? <div className="metric-chip">{seller.followers} followers</div> : null}
+                      {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
+                      {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
+                    </div>
 
-                {seller.specialties?.length ? (
-                  <div className="pill-row">
-                    {seller.specialties.map((item) => (
-                      <span className="pill" key={item}>
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
+                    {seller.specialties?.length ? (
+                      <div className="pill-row">
+                        {seller.specialties.map((item) => (
+                          <span className="pill" key={item}>
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
 
-                <div className="action-row">
-                  <button className="ghost">Upload profile photo</button>
-                  <button className="ghost">Upload lead fruit photo</button>
-                </div>
+                    <div className="action-row">
+                      <button className="ghost">Upload profile photo</button>
+                      <button className="ghost">Upload lead fruit photo</button>
+                    </div>
+                  </>
+                )}
               </section>
             }
           />
