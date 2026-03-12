@@ -1,38 +1,19 @@
 :root {
   color-scheme: light;
-  --bg-1: #f8f5ee;
-  --bg-2: #f1ecdf;
-  --panel: rgba(255, 255, 255, 0.9);
-  --panel-strong: rgba(255, 255, 255, 0.97);
-  --text: #18212b;
-  --muted: #667085;
-  --green-1: #3f9745;
-  --green-2: #2f7d32;
-  --green-soft: #edf8ee;
-  --gold-1: #ffd55c;
-  --gold-2: #f4bf2a;
-  --gold-soft: #fff4cf;
-  --blue-soft: #eaf3ff;
-  --blue-text: #2c67bd;
-  --danger-soft: #fff1f1;
-  --danger-text: #b42318;
-  --danger-line: #f3c7c7;
-  --shadow-sm: 0 10px 24px rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 18px 50px rgba(16, 24, 40, 0.08);
-  --shadow-lg: 0 26px 70px rgba(16, 24, 40, 0.12);
-  --radius-xl: 30px;
-  --radius-lg: 24px;
-  --radius-md: 18px;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  background: #f4f1ea;
+  color: #18212b;
 }
 
 * {
   box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  min-height: 100%;
 }
 
 html {
@@ -41,262 +22,324 @@ html {
 
 body {
   margin: 0;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(182, 211, 179, 0.14), transparent 24%),
-    radial-gradient(circle at top right, rgba(255, 225, 185, 0.18), transparent 28%),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    radial-gradient(circle at top left, rgba(182, 211, 179, 0.12), transparent 26%),
+    radial-gradient(circle at top right, rgba(255, 225, 185, 0.12), transparent 28%),
+    linear-gradient(180deg, #f9f7f2 0%, #f2efe8 100%);
   letter-spacing: -0.01em;
 }
 
 button,
 input,
-select,
 textarea {
   font: inherit;
 }
 
-button {
-  cursor: pointer;
-}
-
 img {
   max-width: 100%;
-  display: block;
 }
 
-.pluck-app {
-  max-width: 1280px;
+a {
+  text-decoration: none;
+}
+
+.app-shell {
+  max-width: 1120px;
   margin: 0 auto;
   min-height: 100vh;
-  padding: 24px 20px 56px;
+  padding: 24px 20px 100px;
 }
 
-.hero,
+.topbar,
+.search-wrap,
+.hero-card,
 .card,
+.map-panel,
+.stack,
+.profile-card,
+.hero-band,
 .stat-card,
-.listing-card,
-.alert-card,
-.post-card,
-.orchard-card,
-.mini-card,
-.loading-panel,
-.error-banner,
-.empty-state,
-.detail-card,
-.feed-callout {
-  background: var(--panel);
+.dashboard-card,
+.activity-card,
+.tool-card {
+  background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(14px);
   border: 1px solid rgba(16, 24, 40, 0.06);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 18px 50px rgba(16, 24, 40, 0.08);
 }
 
-.hero {
-  display: grid;
-  grid-template-columns: 1.45fr 0.85fr;
-  gap: 0;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  margin-bottom: 18px;
-}
-
-.hero__content {
-  padding: 32px 28px;
-  background:
-    radial-gradient(circle at top left, rgba(255, 213, 92, 0.16), transparent 32%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.9));
-}
-
-.hero__stats {
-  padding: 18px;
-  background:
-    linear-gradient(180deg, rgba(255, 248, 230, 0.76), rgba(255, 255, 255, 0.82));
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  border-left: 1px solid rgba(16, 24, 40, 0.05);
-}
-
-.brand-lockup {
+.topbar {
+  border-radius: 30px;
+  padding: 22px 22px;
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
   align-items: flex-start;
+  gap: 18px;
 }
 
-.brand-mark {
-  width: 66px;
-  height: 66px;
-  border-radius: 20px;
-  background: linear-gradient(180deg, var(--green-1) 0%, var(--green-2) 100%);
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: 31px;
-  font-weight: 800;
-  box-shadow: 0 14px 30px rgba(47, 125, 50, 0.2);
-  flex: 0 0 auto;
+.topbar h1 {
+  margin: 8px 0 8px;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  line-height: 1.02;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.subtle-copy {
+  margin: 0;
+  max-width: 620px;
+  color: #667085;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .eyebrow {
-  margin: 0 0 8px;
+  margin: 0;
   color: #6e7b67;
   text-transform: uppercase;
-  letter-spacing: 0.11em;
+  letter-spacing: 0.08em;
   font-size: 0.72rem;
   font-weight: 800;
 }
 
-.hero h1 {
+.hero-band {
+  margin-top: 18px;
+  border-radius: 30px;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1.25fr 0.95fr;
+  gap: 22px;
+}
+
+.hero-copy h2 {
+  margin: 8px 0 12px;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-weight: 760;
+}
+
+.hero-copy p {
   margin: 0;
-  font-size: clamp(2.3rem, 4.8vw, 4.1rem);
-  line-height: 0.98;
-  font-weight: 790;
-  letter-spacing: -0.045em;
-  max-width: 8.8ch;
-}
-
-.hero__sub {
-  margin: 18px 0 0;
-  color: var(--muted);
-  font-size: 1rem;
+  color: #667085;
   line-height: 1.65;
-  max-width: 60ch;
+  max-width: 62ch;
 }
 
-.hero__actions {
+.hero-cta-row,
+.toggle-row,
+.action-row,
+.pill-row,
+.filter-chip-row {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 22px;
 }
 
-.stat-card {
+.hero-cta-row {
+  margin-top: 18px;
+}
+
+.stats-grid,
+.dashboard-stats,
+.mini-grid,
+.tool-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.stats-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.tool-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.stat-card,
+.dashboard-card,
+.activity-card,
+.tool-card {
   border-radius: 22px;
   padding: 18px;
-  background: rgba(255, 255, 255, 0.76);
 }
 
-.stat-card__label {
+.stat-card span,
+.dashboard-card span {
   display: block;
-  color: var(--muted);
+  color: #667085;
   font-size: 0.88rem;
   margin-bottom: 10px;
   font-weight: 500;
 }
 
-.stat-card strong {
-  font-size: 1.95rem;
+.stat-card strong,
+.dashboard-card strong {
+  font-size: 1.85rem;
   color: #243423;
   font-weight: 760;
   letter-spacing: -0.03em;
 }
 
-.tabs {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+.stat-link,
+.dashboard-link,
+.tool-card {
+  border: 0;
+  text-align: left;
+  cursor: pointer;
 }
 
-.tab,
-.btn,
-.map-layer-pill {
+.search-wrap {
+  margin-top: 18px;
+  border-radius: 26px;
+  padding: 16px;
+}
+
+.search-wrap input {
+  width: 100%;
+  border: 1px solid #dbe3d7;
+  border-radius: 16px;
+  padding: 16px 18px;
+  background: #fff;
+  color: #18212b;
+}
+
+.search-wrap input::placeholder,
+.listing-form input::placeholder,
+.listing-form textarea::placeholder {
+  color: #8a94a6;
+}
+
+.search-bottom-row {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.toggle,
+.ghost,
+.primary,
+.nav-item,
+.filter-chip {
   border-radius: 999px;
+  border: 0;
+  padding: 12px 16px;
+  cursor: pointer;
   transition:
     transform 0.18s ease,
     opacity 0.18s ease,
     background 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease;
+    box-shadow 0.18s ease;
+  font-weight: 600;
 }
 
-.tab:hover,
-.btn:hover,
-.map-layer-pill:hover {
+.toggle:hover,
+.ghost:hover,
+.primary:hover,
+.nav-item:hover,
+.filter-chip:hover,
+.tool-card:hover,
+.stat-link:hover,
+.dashboard-link:hover {
   transform: translateY(-1px);
 }
 
-.tab,
-.map-layer-pill {
-  border: 1px solid rgba(16, 24, 40, 0.08);
-  background: rgba(255, 255, 255, 0.78);
+.toggle,
+.ghost,
+.nav-item,
+.filter-chip {
+  background: #eef2ea;
   color: #243423;
-  padding: 12px 16px;
-  font-weight: 700;
-  box-shadow: 0 6px 16px rgba(16, 24, 40, 0.04);
 }
 
-.tab--active,
-.map-layer-pill--active {
-  background: linear-gradient(180deg, var(--gold-1) 0%, var(--gold-2) 100%);
-  border-color: transparent;
-  color: #1f2a16;
-  box-shadow: 0 12px 24px rgba(244, 191, 42, 0.25);
+.primary,
+.toggle.active,
+.nav-item.active,
+.filter-chip.active {
+  background: linear-gradient(180deg, #3f9745 0%, #2f7d32 100%);
+  color: white;
+  box-shadow: 0 12px 24px rgba(47, 125, 50, 0.2);
 }
 
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+.primary:disabled,
+.ghost:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.page-section {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+.content {
+  margin-top: 20px;
 }
 
-.page-section--grid {
-  display: grid;
-  grid-template-columns: minmax(360px, 410px) 1fr;
-  gap: 18px;
-  align-items: start;
-}
-
-.card {
+.hero-card {
   border-radius: 28px;
-  padding: 22px;
-  overflow: hidden;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
 }
 
-.card--form {
-  position: sticky;
-  top: 16px;
+.hero-card.compact {
+  grid-template-columns: 1fr auto;
 }
 
-.card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.card__header h2,
-.card h3,
-.card h4 {
-  margin: 0;
-  font-weight: 740;
+.hero-card h2,
+.hero-card h3 {
+  margin: 6px 0;
+  font-weight: 720;
   letter-spacing: -0.02em;
 }
 
-.card__header p {
-  margin: 8px 0 0;
-  color: var(--muted);
-  line-height: 1.55;
+.hero-card p {
+  color: #667085;
 }
 
-.stack {
-  display: flex;
-  flex-direction: column;
+.stack,
+.profile-card,
+.map-panel {
+  border-radius: 28px;
+  padding: 20px;
+}
+
+.form-stack {
+  margin-top: 18px;
+}
+
+.premium-form-shell {
+  box-shadow: 0 22px 60px rgba(16, 24, 40, 0.09);
+}
+
+.form-header {
+  margin-bottom: 14px;
+}
+
+.form-header h2 {
+  margin: 6px 0 6px;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.form-header p {
+  margin: 0;
+  color: #667085;
+}
+
+.listing-form {
+  display: grid;
   gap: 18px;
 }
 
@@ -306,11 +349,7 @@ img {
   gap: 16px;
 }
 
-.form-grid__full {
-  grid-column: 1 / -1;
-}
-
-label {
+.listing-form label {
   display: grid;
   gap: 8px;
   font-size: 0.93rem;
@@ -318,208 +357,165 @@ label {
   color: #475467;
 }
 
-input,
-select,
-textarea {
+.listing-form label.full,
+.image-preview-wrap.full {
+  grid-column: 1 / -1;
+}
+
+.listing-form input,
+.listing-form textarea {
   width: 100%;
   border: 1px solid #dde4d8;
   border-radius: 16px;
   padding: 14px 16px;
   background: #fff;
-  color: var(--text);
+  color: #18212b;
   outline: none;
 }
 
-input::placeholder,
-textarea::placeholder {
-  color: #8a94a6;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
+.listing-form input:focus,
+.listing-form textarea:focus,
+.search-wrap input:focus {
   border-color: #9ab799;
   box-shadow: 0 0 0 4px rgba(47, 125, 50, 0.08);
 }
 
-textarea {
+.listing-form textarea {
   resize: vertical;
   min-height: 120px;
 }
 
-.checkbox {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  padding-top: 8px;
+.upload-zone {
+  padding: 18px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #f6faf3 0%, #eef5ea 100%);
+  border: 1px dashed #b7c9af;
 }
 
-.checkbox input {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  padding: 0;
-  flex: 0 0 auto;
+.upload-hint {
+  color: #667085;
+  font-size: 0.86rem;
 }
 
-.checkbox--inline {
-  white-space: nowrap;
-  font-size: 0.92rem;
-}
-
-.form-actions,
-.card-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.form-actions {
-  margin-top: 4px;
-}
-
-.btn {
-  border: 0;
-  padding: 12px 16px;
-  font-weight: 700;
-}
-
-.btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn--primary {
-  background: linear-gradient(180deg, var(--green-1) 0%, var(--green-2) 100%);
-  color: white;
-  box-shadow: 0 12px 24px rgba(47, 125, 50, 0.2);
-}
-
-.btn--secondary {
-  background: #eef2ea;
-  color: #243423;
-  border: 1px solid transparent;
-}
-
-.btn--ghost {
-  background: rgba(255, 255, 255, 0.74);
-  color: #7a3c38;
-  border: 1px solid rgba(180, 35, 24, 0.12);
-}
-
-.toolbar {
+.image-preview-wrap {
   display: grid;
-  grid-template-columns: minmax(260px, 1.5fr) minmax(130px, 0.6fr) minmax(140px, 0.7fr) auto auto;
-  gap: 10px;
-  align-items: center;
+  gap: 12px;
 }
 
-.toolbar__search {
-  min-width: 0;
+.image-preview {
+  width: 100%;
+  max-width: 420px;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 20px;
+  border: 1px solid #dde4d8;
+  box-shadow: 0 10px 28px rgba(16, 24, 40, 0.08);
 }
 
-.location-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.status-banner {
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 0.94rem;
+  font-weight: 600;
 }
 
-.location-preview__pill {
-  display: inline-flex;
-  width: fit-content;
-  padding: 10px 12px;
-  border-radius: 999px;
-  background: #eef2ea;
-  color: #243423;
-  font-weight: 700;
-  font-size: 0.88rem;
+.status-banner.success {
+  background: #eef9ef;
+  color: #22642a;
+  border: 1px solid #cde7d0;
 }
 
-.location-preview__hint {
-  color: var(--muted);
-  font-size: 0.88rem;
+.status-banner.error {
+  background: #fff1f1;
+  color: #b42318;
+  border: 1px solid #f3c7c7;
 }
 
-.feed-callout {
-  border-radius: 24px;
-  padding: 16px 18px;
+.section-heading {
   display: flex;
   justify-content: space-between;
+  align-items: end;
   gap: 16px;
-  align-items: center;
-  color: #32463a;
+  margin: 18px 0 14px;
 }
 
-.list-grid {
+.section-heading h2 {
+  margin: 6px 0 0;
+  font-size: 1.55rem;
+  letter-spacing: -0.03em;
+  font-weight: 740;
+}
+
+.compact-heading {
+  margin-top: 0;
+}
+
+.section-meta {
+  color: #667085;
+  font-weight: 600;
+}
+
+.section-gap-top {
+  margin-top: 28px;
+}
+
+.grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 18px;
 }
 
-.listing-card,
-.alert-card,
-.post-card,
-.orchard-card,
-.mini-card {
+.card {
   border-radius: 26px;
   overflow: hidden;
-  background: var(--panel-strong);
 }
 
-.listing-card {
+.premium-card {
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease;
 }
 
-.listing-card:hover,
-.orchard-card:hover,
-.alert-card:hover,
-.post-card:hover,
-.mini-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+.premium-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.11);
 }
 
-.listing-card__imageWrap {
+.card-image-wrap {
   position: relative;
 }
 
-.listing-card__image,
-.orchard-card__image,
-.detail-card__image {
+.card img {
   width: 100%;
   height: 240px;
   object-fit: cover;
+  display: block;
 }
 
-.listing-card__chips {
+.card-badge {
   position: absolute;
   top: 14px;
   left: 14px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.94);
+  color: #223321;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.81rem;
+  font-weight: 700;
 }
 
-.listing-card__body,
-.orchard-card__body,
-.alert-card,
-.post-card,
-.mini-card {
+.card-body {
   padding: 18px;
 }
 
-.listing-card__topline {
+.price-row {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   align-items: flex-start;
 }
 
-.listing-card__topline h3 {
+.price-row h3 {
   margin: 0;
   font-size: 1.18rem;
   line-height: 1.18;
@@ -527,389 +523,1577 @@ textarea {
   font-weight: 720;
 }
 
-.listing-card__topline strong {
-  color: var(--green-2);
+.price-row span {
+  color: #2f7d32;
   font-weight: 800;
   white-space: nowrap;
 }
 
-.muted {
-  color: var(--muted);
-  font-size: 0.95rem;
+.meta,
+.desc,
+.thread p,
+.mini-card p,
+.profile-card p {
+  color: #667085;
 }
 
-.listing-card p,
-.post-card p,
-.orchard-card p,
-.detail-card p,
-.ai-summary p {
-  color: var(--muted);
-  line-height: 1.6;
+.desc {
+  line-height: 1.58;
 }
 
-.seller-row {
+.pill {
+  background: #f3f5ef;
+  color: #49644d;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 500;
+}
+
+.mini-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-top: 8px;
+}
+
+.activity-card {
   display: flex;
+  gap: 14px;
   align-items: center;
-  gap: 12px;
-  margin-top: 14px;
 }
 
-.seller-row__avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+.activity-card img {
+  width: 92px;
+  height: 92px;
+  border-radius: 16px;
   object-fit: cover;
 }
 
-.seller-row__avatar--fallback {
-  display: grid;
-  place-items: center;
-  background: #f3f5ef;
-  color: #49644d;
-  font-weight: 700;
+.activity-card strong {
+  font-size: 1.04rem;
+  letter-spacing: -0.02em;
 }
 
-.seller-row__name {
-  font-weight: 700;
+.activity-card p {
+  margin: 6px 0 0;
+  color: #667085;
 }
 
-.match-banner {
-  margin-top: 14px;
-  background: var(--green-soft);
-  color: #22642a;
-  border: 1px solid #cde7d0;
-  padding: 12px 14px;
-  border-radius: 14px;
-  font-size: 0.94rem;
-  font-weight: 600;
-}
-
-.chips-wrap {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.chip {
-  background: #f3f5ef;
-  color: #49644d;
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-size: 0.83rem;
-  font-weight: 600;
-}
-
-.chip--good {
-  background: var(--green-soft);
-  color: #22642a;
-}
-
-.chip--info {
-  background: var(--blue-soft);
-  color: var(--blue-text);
-}
-
-.chip--warn {
-  background: var(--gold-soft);
-  color: #7a5a00;
-}
-
-.chip--tip {
-  background: #eef9ef;
-  color: #22642a;
-}
-
-.chip--trade {
-  background: #eef4ff;
-  color: #285db4;
-}
-
-.chip--event {
-  background: #fff1e7;
-  color: #bc5c1d;
-}
-
-.chip--orchard {
-  background: #f3eeff;
-  color: #6440b3;
-}
-
-.chip--harvest {
-  background: #fff4cf;
-  color: #8b6500;
-}
-
-.map-card {
-  padding-bottom: 22px;
-}
-
-.map-layer-bar {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-
-.map-live-layout {
-  display: grid;
-  grid-template-columns: 1.4fr 380px;
-  gap: 18px;
-  align-items: start;
-}
-
-.leaflet-shell {
-  min-height: 620px;
-  height: 620px;
+.map-fallback {
+  min-height: 420px;
+  background: linear-gradient(180deg, #ebf5e9 0%, #f7fbf6 100%);
   border-radius: 24px;
-  overflow: hidden;
-  border: 1px solid rgba(16, 24, 40, 0.06);
-  box-shadow: var(--shadow-sm);
-  background: #eef3ea;
+  padding: 22px;
 }
 
-.leaflet-map {
-  width: 100%;
-  height: 100%;
-}
-
-.map-sidebar {
-  min-height: 620px;
-}
-
-.popup-card {
-  min-width: 140px;
-  line-height: 1.45;
-}
-
-.detail-card,
-.empty-state,
-.loading-panel,
-.error-banner {
-  border-radius: 24px;
-  padding: 18px;
-}
-
-.detail-meta {
+.map-header-row {
   display: flex;
-  gap: 10px;
-  align-items: baseline;
-  margin-top: 12px;
-}
-
-.map-legend {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-}
-
-.legend-pill {
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.legend-pill--listing {
-  background: var(--gold-soft);
-  color: #7a5a00;
-}
-
-.legend-pill--orchard {
-  background: var(--green-soft);
-  color: #22642a;
-}
-
-.legend-pill--user {
-  background: #eef0f4;
-  color: #18212b;
-}
-
-.alert-list,
-.post-list,
-.orchard-grid {
-  display: grid;
+  justify-content: space-between;
   gap: 14px;
+  align-items: start;
+  margin-bottom: 12px;
 }
 
-.alert-card__top,
-.post-card__meta {
+.pin-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.pin-row,
+.thread,
+.mini-card,
+.listing-row,
+.inventory-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #edf1f4;
 }
 
-.alert-card__count {
-  background: #f7f2df;
-  color: #67511a;
-  border-radius: 999px;
-  padding: 10px 12px;
-  font-weight: 700;
-  font-size: 0.92rem;
+.premium-pin-row p,
+.mini-card-copy span,
+.listing-row-copy span {
+  margin: 6px 0 0;
+  color: #667085;
 }
 
-.orchard-grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+.mini-card img,
+.avatar,
+.listing-row-image {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  object-fit: cover;
 }
 
-.ai-query-bar {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  margin-bottom: 18px;
+.mini-card-copy,
+.listing-row-copy {
+  flex: 1;
 }
 
-.ai-preview-bar {
+.listing-row-actions {
   display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: #f7fbf4;
-  border: 1px solid rgba(63, 151, 69, 0.1);
-  color: #38503e;
-  margin-bottom: 16px;
-  font-size: 0.92rem;
-  font-weight: 600;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.ai-layout {
-  display: grid;
-  gap: 18px;
-}
-
-.ai-summary {
-  background: rgba(255, 250, 236, 0.92);
-  border: 1px solid rgba(244, 191, 42, 0.18);
-  border-radius: 24px;
+.inventory-table,
+.analytics-note {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(16, 24, 40, 0.05);
+  border-radius: 20px;
   padding: 18px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.ai-columns {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+.analytics-note p {
+  margin-bottom: 0;
+  color: #667085;
 }
 
-.ai-column {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.simple-list {
-  margin: 10px 0 0;
-  padding-left: 18px;
-  color: var(--text);
-}
-
-.loading-panel,
-.error-banner {
+.profile-card .hero-fruit {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 22px;
   margin-bottom: 18px;
 }
 
-.loading-panel {
-  color: var(--muted);
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
 }
 
-.error-banner {
-  color: var(--danger-text);
-  background: var(--danger-soft);
-  border-color: var(--danger-line);
+.profile-row h2 {
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
 }
 
-@media (max-width: 1180px) {
-  .hero,
-  .page-section--grid,
-  .map-live-layout,
-  .ai-columns {
-    grid-template-columns: 1fr;
-  }
+.premium-profile {
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.09);
+}
 
-  .hero__stats {
-    border-left: 0;
-    border-top: 1px solid rgba(16, 24, 40, 0.05);
-  }
+.profile-stats {
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
 
-  .card--form {
-    position: static;
-  }
-
-  .map-sidebar {
-    min-height: auto;
-  }
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 16px;
+  width: min(980px, calc(100% - 24px));
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(16, 24, 40, 0.06);
+  border-radius: 24px;
+  padding: 10px;
+  box-shadow: 0 18px 42px rgba(16, 24, 40, 0.13);
 }
 
 @media (max-width: 900px) {
-  .toolbar {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .toolbar__search {
-    grid-column: 1 / -1;
-  }
-
-  .feed-callout,
-  .ai-preview-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 760px) {
-  .pluck-app {
-    padding: 14px 14px 28px;
-  }
-
-  .hero,
-  .card,
-  .listing-card,
-  .alert-card,
-  .post-card,
-  .orchard-card,
-  .mini-card,
-  .feed-callout {
-    border-radius: 22px;
-  }
-
-  .hero__content,
-  .hero__stats,
-  .card {
-    padding: 16px;
-  }
-
-  .hero h1 {
-    max-width: none;
-    font-size: 2.45rem;
-  }
-
-  .hero__stats {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .form-grid,
-  .ai-query-bar,
-  .toolbar {
+  .hero-band {
     grid-template-columns: 1fr;
   }
 
-  .leaflet-shell {
-    height: 440px;
-    min-height: 440px;
-  }
-
-  .tabs {
-    overflow-x: auto;
-    padding-bottom: 4px;
-    flex-wrap: nowrap;
-  }
-
-  .tab,
-  .map-layer-pill {
-    white-space: nowrap;
-    flex: 0 0 auto;
+  .dashboard-stats,
+  .stats-grid,
+  .tool-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 14px 14px 98px;
+  }
+
+  .topbar {
+    flex-direction: column;
+  }
+
+  .topbar-actions {
+    justify-content: flex-start;
+  }
+
+  .topbar h1 {
+    font-size: 1.95rem;
+  }
+
+  .hero-card,
+  .hero-card.compact,
+  .map-header-row {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .form-grid,
+  .dashboard-stats,
+  .stats-grid,
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-row,
+  .inventory-row,
+  .mini-card,
+  .thread {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .bottom-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .nav-item {
+    padding: 10px 8px;
+    font-size: 0.82rem;
+  }
+  .listing-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.listing-detail-image {
+  width: 100%;
+  height: 360px;
+  object-fit: cover;
+  border-radius: 22px;
+}
+
+.listing-detail-copy h2 {
+  margin: 6px 0 10px;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+
+.listing-detail-price {
+  margin: 0 0 12px;
+  color: #2f7d32;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.tool-card strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 1rem;
+}
+
+.tool-card span {
+  color: #667085;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 720px) {
+  .listing-detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-detail-image {
+    height: 260px;
+  }
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
+import {
+  NavLink,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+} from 'react-router-dom'
+import {
+  createListing,
+  createOrGetConversation,
+  deleteListing,
+  getConversations,
+  getFavorites,
+  getListings,
+  getMessagesByConversation,
+  getSeller,
+  reservePickup,
+  sendMessage,
+  toggleFavorite,
+  updateListing,
+} from './api'
+import type {
+  Listing,
+  Message,
+  SellerProfile,
+  Favorite,
+  Conversation,
+} from './types'
+
+type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
+
+const fallbackListings: Listing[] = [
+  {
+    id: '1',
+    title: 'Sun-warm Valencia Oranges',
+    fruit: 'Oranges',
+    price: 6,
+    unit: 'bag',
+    image:
+      'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=1200&q=80',
+    location: 'Mission Hills',
+    distance: '0.8 mi',
+    inventory: 7,
+    sellerId: 's1',
+    sellerName: 'Elena',
+    description: 'Picked this morning. Sweet, juicy, and ideal for snacking or fresh juice.',
+    pickupWindows: ['Today 5–7 PM', 'Tomorrow 9–11 AM'],
+    isFavorite: true,
+    status: 'active',
+  },
+  {
+    id: '2',
+    title: 'Backyard Meyer Lemons',
+    fruit: 'Lemons',
+    price: 4,
+    unit: 'bundle',
+    image:
+      'https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=1200&q=80',
+    location: 'Granada Hills',
+    distance: '1.7 mi',
+    inventory: 11,
+    sellerId: 's2',
+    sellerName: 'Marco',
+    description: 'Bright, floral lemons with strong color and a clean finish for cooking or cocktails.',
+    pickupWindows: ['Today 6–8 PM', 'Saturday 10 AM–1 PM'],
+    status: 'active',
+  },
+]
+
+const fallbackSeller: SellerProfile = {
+  id: 'me',
+  name: 'Christian',
+  handle: '@pluckgrower',
+  city: 'Mission Hills, CA',
+  bio: 'Neighborhood grower sharing backyard harvests with nearby buyers.',
+  avatar:
+    'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80',
+  heroFruit:
+    'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=1400&q=80',
+}
+
+type ListingFormState = {
+  title: string
+  fruit: string
+  price: string
+  unit: string
+  imagePreview: string
+  location: string
+  inventory: string
+  description: string
+  pickup1: string
+  pickup2: string
+}
+
+const emptyForm: ListingFormState = {
+  title: '',
+  fruit: '',
+  price: '',
+  unit: 'basket',
+  imagePreview: '',
+  location: 'Mission Hills',
+  inventory: '',
+  description: '',
+  pickup1: '',
+  pickup2: '',
+}
+
+const quickFilters: { key: QuickFilter; label: string }[] = [
+  { key: 'all', label: 'All harvests' },
+  { key: 'just-added', label: 'Just added' },
+  { key: 'under-5', label: 'Under $5' },
+  { key: 'citrus', label: 'Citrus' },
+  { key: 'high-stock', label: 'High stock' },
+]
+
+type ListingFormProps = {
+  seller: SellerProfile
+  initialValues?: Listing
+  submitLabel: string
+  onSubmitListing: (payload: Omit<Listing, 'id'>, existingId?: string) => Promise<void>
+  existingId?: string
+}
+
+function ListingForm({
+  seller,
+  initialValues,
+  submitLabel,
+  onSubmitListing,
+  existingId,
+}: ListingFormProps) {
+  const navigate = useNavigate()
+  const [form, setForm] = useState<ListingFormState>(() => {
+    if (!initialValues) return emptyForm
+    return {
+      title: initialValues.title,
+      fruit: initialValues.fruit,
+      price: String(initialValues.price),
+      unit: initialValues.unit,
+      imagePreview: initialValues.image,
+      location: initialValues.location,
+      inventory: String(initialValues.inventory),
+      description: initialValues.description,
+      pickup1: initialValues.pickupWindows?.[0] || '',
+      pickup2: initialValues.pickupWindows?.[1] || '',
+    }
+  })
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [saveSuccess, setSaveSuccess] = useState('')
+
+  function updateForm<K extends keyof ListingFormState>(key: K, value: ListingFormState[K]) {
+    setForm((current) => ({ ...current, [key]: value }))
+  }
+
+  function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : ''
+      updateForm('imagePreview', result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setIsSaving(true)
+    setSaveError('')
+    setSaveSuccess('')
+
+    try {
+      const pickupWindows = [form.pickup1, form.pickup2].map((x) => x.trim()).filter(Boolean)
+
+      const payload: Omit<Listing, 'id'> = {
+        title: form.title.trim() || `${form.fruit.trim()} Listing`,
+        fruit: form.fruit.trim() || 'Fruit',
+        price: Number(form.price) || 0,
+        unit: form.unit.trim() || 'basket',
+        image:
+          form.imagePreview ||
+          'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80',
+        location: form.location.trim() || 'Mission Hills',
+        distance: initialValues?.distance || 'Just added',
+        inventory: Number(form.inventory) || 1,
+        sellerId: seller.id,
+        sellerName: seller.name,
+        description: form.description.trim() || 'Fresh local fruit available for pickup.',
+        pickupWindows: pickupWindows.length ? pickupWindows : ['Pickup by message'],
+        isFavorite: initialValues?.isFavorite || false,
+        status: initialValues?.status || 'active',
+      }
+
+      await onSubmitListing(payload, existingId)
+      setSaveSuccess(existingId ? 'Listing updated successfully.' : 'Listing created successfully.')
+
+      setTimeout(() => {
+        navigate('/store/listings')
+      }, 500)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to save listing right now.'
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <section className="stack form-stack premium-form-shell">
+      <div className="form-header">
+        <div>
+          <p className="eyebrow">{existingId ? 'Edit listing' : 'New listing'}</p>
+          <h2>{existingId ? 'Update listing details' : 'Create a premium fruit listing'}</h2>
+          <p>Better titles, stronger images, and clearer pickup windows improve trust and conversion.</p>
+        </div>
+      </div>
+
+      <form className="listing-form" onSubmit={handleSubmit}>
+        <div className="form-grid">
+          <label>
+            Title
+            <input
+              value={form.title}
+              onChange={(e) => updateForm('title', e.target.value)}
+              placeholder="Golden backyard avocados"
+            />
+          </label>
+
+          <label>
+            Fruit
+            <input
+              value={form.fruit}
+              onChange={(e) => updateForm('fruit', e.target.value)}
+              placeholder="Avocados"
+            />
+          </label>
+
+          <label>
+            Price
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.price}
+              onChange={(e) => updateForm('price', e.target.value)}
+              placeholder="8"
+            />
+          </label>
+
+          <label>
+            Unit
+            <input
+              value={form.unit}
+              onChange={(e) => updateForm('unit', e.target.value)}
+              placeholder="bag"
+            />
+          </label>
+
+          <label>
+            Location
+            <input
+              value={form.location}
+              onChange={(e) => updateForm('location', e.target.value)}
+              placeholder="Mission Hills"
+            />
+          </label>
+
+          <label>
+            Inventory
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={form.inventory}
+              onChange={(e) => updateForm('inventory', e.target.value)}
+              placeholder="6"
+            />
+          </label>
+
+          <label className="full upload-zone">
+            Upload photo
+            <input type="file" accept="image/*" onChange={handleImageUpload} />
+            <span className="upload-hint">Choose a fruit photo from your device for instant preview.</span>
+          </label>
+
+          {form.imagePreview && (
+            <div className="image-preview-wrap full">
+              <img className="image-preview" src={form.imagePreview} alt="Preview" />
+              <button type="button" className="ghost" onClick={() => updateForm('imagePreview', '')}>
+                Remove image
+              </button>
+            </div>
+          )}
+
+          <label className="full">
+            Description
+            <textarea
+              value={form.description}
+              onChange={(e) => updateForm('description', e.target.value)}
+              placeholder="Tell buyers what makes this fruit special."
+              rows={4}
+            />
+          </label>
+
+          <label>
+            Pickup window 1
+            <input
+              value={form.pickup1}
+              onChange={(e) => updateForm('pickup1', e.target.value)}
+              placeholder="Today 5–7 PM"
+            />
+          </label>
+
+          <label>
+            Pickup window 2
+            <input
+              value={form.pickup2}
+              onChange={(e) => updateForm('pickup2', e.target.value)}
+              placeholder="Tomorrow 10 AM–12 PM"
+            />
+          </label>
+        </div>
+
+        {(saveError || saveSuccess) && (
+          <div className={saveError ? 'status-banner error' : 'status-banner success'}>
+            {saveError || saveSuccess}
+          </div>
+        )}
+
+        <div className="action-row">
+          <button type="submit" className="primary" disabled={isSaving}>
+            {isSaving ? 'Saving...' : submitLabel}
+          </button>
+          <button type="button" className="ghost" disabled={isSaving} onClick={() => navigate('/store/listings')}>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </section>
+  )
+}
+
+function ListingDetailRoute({
+  listings,
+  seller,
+  favorites,
+  onEdit,
+  onToggleFavorite,
+  onReserve,
+  onStartConversation,
+}: {
+  listings: Listing[]
+  seller: SellerProfile
+  favorites: Favorite[]
+  onEdit: (id: string) => void
+  onToggleFavorite: (listingId: string) => Promise<void>
+  onReserve: (listing: Listing) => Promise<void>
+  onStartConversation: (listing: Listing) => Promise<void>
+}) {
+  const { id } = useParams()
+  const listing = listings.find((item) => item.id === id)
+
+  if (!listing) {
+    return (
+      <section className="stack">
+        <h2>Listing not found</h2>
+      </section>
+    )
+  }
+
+  const isFavorite = favorites.some((fav) => fav.listingId === listing.id)
+
+  return (
+    <section className="stack">
+      <div className="listing-detail-hero">
+        <img className="listing-detail-image" src={listing.image} alt={listing.title} />
+        <div className="listing-detail-copy">
+          <p className="eyebrow">{listing.fruit}</p>
+          <h2>{listing.title}</h2>
+          <p className="listing-detail-price">
+            ${listing.price}/{listing.unit}
+          </p>
+          <p className="desc">{listing.description}</p>
+          <p className="meta">
+            {listing.location} · {listing.inventory} left · {listing.sellerName}
+          </p>
+
+          <div className="trust-row">
+            <span className="trust-pill">Trusted grower</span>
+            <span className="trust-pill">Local pickup</span>
+            <span className="trust-pill">Repeat seller</span>
+          </div>
+
+          <div className="pill-row">
+            {listing.pickupWindows.map((slot, index) => (
+              <span className="pill" key={`${listing.id}-${slot}-${index}`}>
+                {slot}
+              </span>
+            ))}
+          </div>
+
+          <div className="action-row">
+            <button className="primary" onClick={() => onReserve(listing)} disabled={listing.inventory <= 0}>
+              {listing.inventory <= 0 ? 'Sold out' : 'Reserve pickup'}
+            </button>
+            <button className="ghost" onClick={() => onStartConversation(listing)}>
+              Message seller
+            </button>
+            <button className="ghost" onClick={() => onToggleFavorite(listing.id)}>
+              {isFavorite ? 'Unfavorite' : 'Favorite'}
+            </button>
+            <button className="ghost" onClick={() => onEdit(listing.id)}>
+              Edit listing
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function MessagesPage({
+  conversations,
+  threadMessages,
+  seller,
+  onSelectConversation,
+  onSendMessage,
+}: {
+  conversations: Conversation[]
+  threadMessages: Message[]
+  seller: SellerProfile
+  onSelectConversation: (id: string) => Promise<void>
+  onSendMessage: (conversationId: string, content: string) => Promise<void>
+}) {
+  const [draft, setDraft] = useState('')
+  const activeConversation = conversations[0]
+
+  return (
+    <section className="messages-layout">
+      <div className="stack">
+        <div className="section-heading compact-heading">
+          <div>
+            <p className="eyebrow">Conversations</p>
+            <h2>Inbox</h2>
+          </div>
+          <span className="section-meta">{conversations.length} threads</span>
+        </div>
+
+        {conversations.length ? (
+          conversations.map((conversation) => (
+            <button
+              key={conversation.id}
+              className="thread thread-button"
+              onClick={() => onSelectConversation(conversation.id)}
+            >
+              <div>
+                <strong>{conversation.sellerName}</strong>
+                <p>{conversation.lastMessage}</p>
+              </div>
+              <span>{new Date(conversation.updatedAt).toLocaleDateString()}</span>
+            </button>
+          ))
+        ) : (
+          <p>No conversations yet.</p>
+        )}
+      </div>
+
+      <div className="stack">
+        <div className="section-heading compact-heading">
+          <div>
+            <p className="eyebrow">Thread</p>
+            <h2>{activeConversation ? activeConversation.listingTitle : 'Select a conversation'}</h2>
+          </div>
+        </div>
+
+        <div className="message-thread">
+          {threadMessages.length ? (
+            threadMessages.map((msg) => (
+              <div
+                key={msg.id}
+                className={msg.senderId === seller.id ? 'message-bubble mine' : 'message-bubble'}
+              >
+                <strong>{msg.senderName}</strong>
+                <p>{msg.content}</p>
+              </div>
+            ))
+          ) : (
+            <p>No messages yet.</p>
+          )}
+        </div>
+
+        {activeConversation && (
+          <div className="message-compose">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Write a message..."
+              rows={3}
+            />
+            <button
+              className="primary"
+              onClick={async () => {
+                if (!draft.trim()) return
+                await onSendMessage(activeConversation.id, draft)
+                setDraft('')
+              }}
+            >
+              Send
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+type AppLayoutProps = {
+  listings: Listing[]
+  setListings: React.Dispatch<React.SetStateAction<Listing[]>>
+  seller: SellerProfile
+  favorites: Favorite[]
+  setFavorites: React.Dispatch<React.SetStateAction<Favorite[]>>
+  conversations: Conversation[]
+  setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>
+  threadMessages: Message[]
+  setThreadMessages: React.Dispatch<React.SetStateAction<Message[]>>
+}
+
+function AppLayout({
+  listings,
+  setListings,
+  seller,
+  favorites,
+  setFavorites,
+  conversations,
+  setConversations,
+  threadMessages,
+  setThreadMessages,
+}: AppLayoutProps) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [query, setQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState<QuickFilter>('all')
+
+  const favoriteListingIds = new Set(favorites.map((fav) => fav.listingId))
+  const favoriteListings = listings.filter((item) => favoriteListingIds.has(item.id))
+  const myListings = listings.filter((item) => item.sellerName === seller.name)
+  const justAdded = listings.filter((item) => item.distance === 'Just added')
+  const totalInventory = myListings.reduce((sum, item) => sum + item.inventory, 0)
+  const averagePrice =
+    myListings.length > 0
+      ? (myListings.reduce((sum, item) => sum + item.price, 0) / myListings.length).toFixed(2)
+      : '0.00'
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+
+    let result = listings.filter((item) =>
+      [item.title, item.fruit, item.location, item.sellerName, item.description]
+        .join(' ')
+        .toLowerCase()
+        .includes(q),
+    )
+
+    if (activeFilter === 'just-added') {
+      result = result.filter((item) => item.distance === 'Just added')
+    }
+
+    if (activeFilter === 'under-5') {
+      result = result.filter((item) => item.price <= 5)
+    }
+
+    if (activeFilter === 'citrus') {
+      result = result.filter((item) =>
+        ['orange', 'oranges', 'lemon', 'lemons', 'lime', 'limes', 'grapefruit'].includes(
+          item.fruit.toLowerCase(),
+        ),
+      )
+    }
+
+    if (activeFilter === 'high-stock') {
+      result = result.filter((item) => item.inventory >= 6)
+    }
+
+    return result
+  }, [listings, query, activeFilter])
+
+  async function handleCreate(payload: Omit<Listing, 'id'>) {
+    const saved = await createListing(payload)
+    setListings((current) => [saved, ...current])
+  }
+
+  async function handleUpdate(payload: Omit<Listing, 'id'>, listingId?: string) {
+    if (!listingId) {
+      const saved = await createListing(payload)
+      setListings((current) => [saved, ...current])
+      return
+    }
+
+    const updated = await updateListing(listingId, payload)
+
+    setListings((current) => {
+      const exists = current.some((item) => item.id === listingId)
+      if (exists) {
+        return current.map((item) => (item.id === listingId ? updated : item))
+      }
+      return [updated, ...current]
+    })
+  }
+
+  async function handleArchive(listingId: string) {
+    const confirmed = window.confirm('Archive this listing?')
+    if (!confirmed) return
+
+    await deleteListing(listingId)
+    setListings((current) => current.filter((item) => item.id !== listingId))
+  }
+
+  async function handleToggleFavorite(listingId: string) {
+    const result = await toggleFavorite({ userId: seller.id, listingId })
+
+    if (result.active) {
+      setFavorites((current) => [
+        { id: crypto.randomUUID(), userId: seller.id, listingId },
+        ...current,
+      ])
+    } else {
+      setFavorites((current) => current.filter((fav) => fav.listingId !== listingId))
+    }
+  }
+
+  async function handleReserve(listing: Listing) {
+    const pickupWindow = listing.pickupWindows?.[0] || 'Pickup by message'
+    const result = await reservePickup({
+      listingId: listing.id,
+      buyerId: seller.id,
+      buyerName: seller.name,
+      sellerId: listing.sellerId,
+      pickupWindow,
+    })
+
+    setListings((current) =>
+      current.map((item) => (item.id === listing.id ? result.listing : item)),
+    )
+
+    window.alert(`Pickup reserved for ${pickupWindow}`)
+  }
+
+  async function handleStartConversation(listing: Listing) {
+    const conversation = await createOrGetConversation({
+      listingId: listing.id,
+      listingTitle: listing.title,
+      sellerId: listing.sellerId,
+      sellerName: listing.sellerName,
+      buyerId: seller.id,
+      buyerName: seller.name,
+    })
+
+    const refreshed = await getConversations()
+    setConversations(refreshed)
+
+    const thread = await getMessagesByConversation(conversation.id)
+    setThreadMessages(thread)
+
+    navigate('/messages')
+  }
+
+  async function handleSelectConversation(conversationId: string) {
+    const thread = await getMessagesByConversation(conversationId)
+    setThreadMessages(thread)
+
+    const selected = conversations.find((item) => item.id === conversationId)
+    if (selected) {
+      const ordered = [
+        selected,
+        ...conversations.filter((item) => item.id !== conversationId),
+      ]
+      setConversations(ordered)
+    }
+  }
+
+  async function handleSendMessage(conversationId: string, content: string) {
+    await sendMessage({
+      conversationId,
+      senderId: seller.id,
+      senderName: seller.name,
+      content,
+    })
+
+    const refreshedConversations = await getConversations()
+    const thread = await getMessagesByConversation(conversationId)
+
+    setConversations(refreshedConversations)
+    setThreadMessages(thread)
+  }
+
+  function isActivePath(path: string) {
+    return location.pathname === path
+  }
+
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <div>
+          <p className="eyebrow">Pluck</p>
+          <h1>Fresh fruit from neighbors</h1>
+          <p className="subtle-copy">
+            A beautifully local marketplace for backyard harvests, same-day pickup, and neighborhood discovery.
+          </p>
+        </div>
+        <div className="topbar-actions">
+          <button className="ghost">Mission Hills</button>
+          <button className="primary" onClick={() => navigate('/store/new')}>
+            + New listing
+          </button>
+        </div>
+      </header>
+
+      <section className="hero-band">
+        <div className="hero-copy">
+          <p className="eyebrow">Refined neighborhood commerce</p>
+          <h2>Turn extra fruit into a polished local marketplace experience.</h2>
+          <p>
+            Pluck is evolving into a premium neighborhood product: stronger seller presence, tighter cards,
+            better listing quality, and a cleaner path from harvest to pickup.
+          </p>
+          <div className="hero-cta-row">
+            <button className="primary" onClick={() => navigate('/store/new')}>
+              Create premium listing
+            </button>
+            <button className="ghost" onClick={() => navigate('/map')}>
+              Explore nearby map
+            </button>
+          </div>
+        </div>
+
+        <div className="stats-grid">
+          <button className="stat-card stat-link" onClick={() => navigate('/')}>
+            <span>Nearby listings</span>
+            <strong>{listings.length}</strong>
+          </button>
+          <button className="stat-card stat-link" onClick={() => navigate('/favorites')}>
+            <span>Saved items</span>
+            <strong>{favoriteListings.length}</strong>
+          </button>
+          <button className="stat-card stat-link" onClick={() => navigate('/store/inventory')}>
+            <span>Your inventory</span>
+            <strong>{totalInventory}</strong>
+          </button>
+          <button className="stat-card stat-link" onClick={() => navigate('/messages')}>
+            <span>Inbox threads</span>
+            <strong>{conversations.length}</strong>
+          </button>
+        </div>
+      </section>
+
+      <div className="search-wrap">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search oranges, avocados, lemons, neighborhoods..."
+        />
+
+        <div className="search-bottom-row">
+          <div className="toggle-row">
+            <button className={isActivePath('/') ? 'toggle active' : 'toggle'} onClick={() => navigate('/')}>
+              List
+            </button>
+            <button className={isActivePath('/map') ? 'toggle active' : 'toggle'} onClick={() => navigate('/map')}>
+              Map
+            </button>
+          </div>
+
+          <div className="filter-chip-row">
+            {quickFilters.map((filter) => (
+              <button
+                key={filter.key}
+                className={activeFilter === filter.key ? 'filter-chip active' : 'filter-chip'}
+                onClick={() => setActiveFilter(filter.key)}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <main className="content">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <section className="hero-card">
+                  <div>
+                    <p className="eyebrow">Today nearby</p>
+                    <h2>Backyard harvests, same-day pickup</h2>
+                    <p>Browse fruit from local growers, reserve by message, and coordinate a clear pickup window.</p>
+                  </div>
+                  <button className="primary" onClick={() => navigate('/store/new')}>
+                    Create listing
+                  </button>
+                </section>
+
+                <section className="section-heading">
+                  <div>
+                    <p className="eyebrow">Featured near you</p>
+                    <h2>Beautiful local harvests</h2>
+                  </div>
+                  <span className="section-meta">{filtered.length} listings</span>
+                </section>
+
+                <section className="grid">
+                  {filtered.map((item) => {
+                    const isFavorite = favoriteListingIds.has(item.id)
+
+                    return (
+                      <article className="card premium-card" key={item.id}>
+                        <div className="card-image-wrap">
+                          <img src={item.image} alt={item.title} />
+                          <span className="card-badge">{item.distance}</span>
+                        </div>
+                        <div className="card-body">
+                          <div className="price-row">
+                            <h3>{item.title}</h3>
+                            <span>
+                              ${item.price}/{item.unit}
+                            </span>
+                          </div>
+                          <p className="meta">
+                            {item.location} · {item.inventory} left · {item.sellerName}
+                          </p>
+                          <p className="desc">{item.description}</p>
+                          <div className="pill-row">
+                            {item.pickupWindows.map((slot, index) => (
+                              <span className="pill" key={`${item.id}-${slot}-${index}`}>
+                                {slot}
+                              </span>
+                            ))}
+                          </div>
+                          <div className="action-row">
+                            <button className="primary" onClick={() => handleStartConversation(item)}>
+                              Message
+                            </button>
+                            <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
+                              View
+                            </button>
+                            <button className="ghost" onClick={() => handleToggleFavorite(item.id)}>
+                              {isFavorite ? 'Saved' : 'Save'}
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </section>
+
+                <section className="section-heading section-gap-top">
+                  <div>
+                    <p className="eyebrow">Fresh activity</p>
+                    <h2>Just added</h2>
+                  </div>
+                </section>
+
+                <section className="mini-grid">
+                  {(justAdded.length ? justAdded : listings.slice(0, 2)).map((item) => (
+                    <div className="activity-card" key={item.id}>
+                      <img src={item.image} alt={item.title} />
+                      <div>
+                        <strong>{item.title}</strong>
+                        <p>
+                          {item.location} · ${item.price}/{item.unit}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </section>
+              </>
+            }
+          />
+
+          <Route
+            path="/map"
+            element={
+              <section className="map-panel">
+                <div className="map-fallback premium-map">
+                  <div className="map-header-row">
+                    <div>
+                      <p className="eyebrow">Discovery map</p>
+                      <h3>Location-first neighborhood browsing</h3>
+                    </div>
+                    <button className="ghost" onClick={() => navigate('/store/new')}>
+                      Add your harvest
+                    </button>
+                  </div>
+                  <p>
+                    This is the refined map state. The next layer will be real pins, neighborhoods, and distance-based discovery.
+                  </p>
+                  <div className="pin-list">
+                    {filtered.map((item) => (
+                      <div className="pin-row premium-pin-row" key={item.id}>
+                        <div>
+                          <strong>{item.fruit}</strong>
+                          <p>
+                            {item.title} · {item.location}
+                          </p>
+                        </div>
+                        <span>
+                          ${item.price}/{item.unit}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            }
+          />
+
+          <Route
+            path="/listing/:id"
+            element={
+              <ListingDetailRoute
+                listings={listings}
+                seller={seller}
+                favorites={favorites}
+                onEdit={(id) => navigate('/store/edit/' + id)}
+                onToggleFavorite={handleToggleFavorite}
+                onReserve={handleReserve}
+                onStartConversation={handleStartConversation}
+              />
+            }
+          />
+
+          <Route
+            path="/favorites"
+            element={
+              <section className="stack">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <p className="eyebrow">Saved for later</p>
+                    <h2>Favorites</h2>
+                  </div>
+                  <span className="section-meta">{favoriteListings.length} saved</span>
+                </div>
+
+                {favoriteListings.length ? (
+                  favoriteListings.map((item) => (
+                    <div className="mini-card premium-mini-card" key={item.id}>
+                      <img src={item.image} alt={item.title} />
+                      <div className="mini-card-copy">
+                        <strong>{item.title}</strong>
+                        <p>
+                          {item.location} · ${item.price}/{item.unit}
+                        </p>
+                        <span>{item.pickupWindows[0]}</span>
+                      </div>
+                      <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
+                        View
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p>No saved listings yet.</p>
+                )}
+              </section>
+            }
+          />
+
+          <Route
+            path="/messages"
+            element={
+              <MessagesPage
+                conversations={conversations}
+                threadMessages={threadMessages}
+                seller={seller}
+                onSelectConversation={handleSelectConversation}
+                onSendMessage={handleSendMessage}
+              />
+            }
+          />
+
+          <Route
+            path="/store"
+            element={
+              <section className="stack">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <p className="eyebrow">Seller dashboard</p>
+                    <h2>My Store</h2>
+                  </div>
+                  <button className="primary" onClick={() => navigate('/store/new')}>
+                    New listing
+                  </button>
+                </div>
+
+                <div className="dashboard-stats">
+                  <button className="dashboard-card dashboard-link" onClick={() => navigate('/store/listings')}>
+                    <span>Active listings</span>
+                    <strong>{myListings.length}</strong>
+                  </button>
+                  <button className="dashboard-card dashboard-link" onClick={() => navigate('/store/inventory')}>
+                    <span>Total inventory</span>
+                    <strong>{totalInventory}</strong>
+                  </button>
+                  <button className="dashboard-card dashboard-link" onClick={() => navigate('/store/analytics')}>
+                    <span>Average price</span>
+                    <strong>${averagePrice}</strong>
+                  </button>
+                </div>
+
+                <div className="tool-grid">
+                  <button className="tool-card" onClick={() => navigate('/store/new')}>
+                    <strong>+ New listing</strong>
+                    <span>Create a new product card</span>
+                  </button>
+                  <button className="tool-card" onClick={() => navigate('/store/listings')}>
+                    <strong>Manage listings</strong>
+                    <span>View and edit your active items</span>
+                  </button>
+                  <button className="tool-card" onClick={() => navigate('/store/inventory')}>
+                    <strong>Inventory</strong>
+                    <span>Adjust stock across listings</span>
+                  </button>
+                  <button className="tool-card" onClick={() => navigate('/store/analytics')}>
+                    <strong>Analytics</strong>
+                    <span>See pricing and seller metrics</span>
+                  </button>
+                </div>
+              </section>
+            }
+          />
+
+          <Route
+            path="/store/listings"
+            element={
+              <section className="stack">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <p className="eyebrow">Seller listings</p>
+                    <h2>Manage Listings</h2>
+                  </div>
+                  <button className="primary" onClick={() => navigate('/store/new')}>
+                    New listing
+                  </button>
+                </div>
+
+                {myListings.length ? (
+                  myListings.map((item) => (
+                    <div className="listing-row" key={item.id}>
+                      <img className="listing-row-image" src={item.image} alt={item.title} />
+                      <div className="listing-row-copy">
+                        <strong>{item.title}</strong>
+                        <p>
+                          {item.location} · {item.inventory} left · ${item.price}/{item.unit}
+                        </p>
+                        <span>{item.pickupWindows[0]}</span>
+                      </div>
+                      <div className="listing-row-actions">
+                        <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
+                          View
+                        </button>
+                        <button className="ghost" onClick={() => navigate('/store/edit/' + item.id)}>
+                          Edit
+                        </button>
+                        <button className="ghost" onClick={() => handleArchive(item.id)}>
+                          Archive
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p>You do not have any listings yet.</p>
+                )}
+              </section>
+            }
+          />
+
+          <Route
+            path="/store/inventory"
+            element={
+              <section className="stack">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <p className="eyebrow">Inventory</p>
+                    <h2>Inventory Overview</h2>
+                  </div>
+                  <button className="ghost" onClick={() => navigate('/store/listings')}>
+                    Back to listings
+                  </button>
+                </div>
+
+                <div className="inventory-table">
+                  {myListings.length ? (
+                    myListings.map((item) => (
+                      <div className="inventory-row" key={item.id}>
+                        <span>{item.title}</span>
+                        <strong>{item.inventory} in stock</strong>
+                      </div>
+                    ))
+                  ) : (
+                    <p>You do not have inventory yet.</p>
+                  )}
+                </div>
+              </section>
+            }
+          />
+
+          <Route
+            path="/store/analytics"
+            element={
+              <section className="stack">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <p className="eyebrow">Seller analytics</p>
+                    <h2>Performance Snapshot</h2>
+                  </div>
+                </div>
+
+                <div className="dashboard-stats">
+                  <div className="dashboard-card">
+                    <span>Active listings</span>
+                    <strong>{myListings.length}</strong>
+                  </div>
+                  <div className="dashboard-card">
+                    <span>Total inventory</span>
+                    <strong>{totalInventory}</strong>
+                  </div>
+                  <div className="dashboard-card">
+                    <span>Average price</span>
+                    <strong>${averagePrice}</strong>
+                  </div>
+                </div>
+
+                <div className="analytics-note">
+                  <strong>Next upgrade:</strong>
+                  <p>Next we add alerts, grower followers, and location intelligence.</p>
+                </div>
+              </section>
+            }
+          />
+
+          <Route
+            path="/store/new"
+            element={
+              <ListingForm
+                seller={seller}
+                submitLabel="Save listing"
+                onSubmitListing={async (payload) => handleCreate(payload)}
+              />
+            }
+          />
+
+          <Route
+            path="/store/edit/:id"
+            element={
+              <EditListingRoute
+                listings={listings}
+                seller={seller}
+                onSubmitListing={async (payload, existingId) => handleUpdate(payload, existingId)}
+              />
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <section className="profile-card premium-profile">
+                <img className="hero-fruit" src={seller.heroFruit} alt="Lead fruit" />
+                <div className="profile-row">
+                  <img className="avatar" src={seller.avatar} alt={seller.name} />
+                  <div>
+                    <h2>{seller.name}</h2>
+                    <p>
+                      {seller.handle} · {seller.city}
+                    </p>
+                  </div>
+                </div>
+
+                <p>{seller.bio}</p>
+
+                <div className="dashboard-stats profile-stats">
+                  <div className="dashboard-card">
+                    <span>Listings</span>
+                    <strong>{myListings.length}</strong>
+                  </div>
+                  <div className="dashboard-card">
+                    <span>Favorites</span>
+                    <strong>{favoriteListings.length}</strong>
+                  </div>
+                  <div className="dashboard-card">
+                    <span>Messages</span>
+                    <strong>{conversations.length}</strong>
+                  </div>
+                </div>
+
+                <div className="action-row">
+                  <button className="ghost">Upload profile photo</button>
+                  <button className="ghost">Upload lead fruit photo</button>
+                </div>
+              </section>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+
+      <nav className="bottom-nav">
+        <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Home
+        </NavLink>
+        <NavLink to="/favorites" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Favorites
+        </NavLink>
+        <NavLink to="/messages" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Messages
+        </NavLink>
+        <NavLink to="/store" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          My Store
+        </NavLink>
+        <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Profile
+        </NavLink>
+      </nav>
+    </div>
+  )
+}
+
+function EditListingRoute({
+  listings,
+  seller,
+  onSubmitListing,
+}: {
+  listings: Listing[]
+  seller: SellerProfile
+  onSubmitListing: (payload: Omit<Listing, 'id'>, existingId?: string) => Promise<void>
+}) {
+  const { id } = useParams()
+  const listing = listings.find((item) => item.id === id)
+
+  if (!listing) {
+    return (
+      <section className="stack">
+        <h2>Listing not found</h2>
+        <p>This listing may have been created before persistence was enabled. Create a fresh listing instead.</p>
+      </section>
+    )
+  }
+
+  return (
+    <ListingForm
+      seller={seller}
+      initialValues={listing}
+      existingId={listing.id}
+      submitLabel="Update listing"
+      onSubmitListing={onSubmitListing}
+    />
+  )
+}
+
+function App() {
+  const [listings, setListings] = useState<Listing[]>(fallbackListings)
+  const [seller, setSeller] = useState<SellerProfile>(fallbackSeller)
+  const [favorites, setFavorites] = useState<Favorite[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [threadMessages, setThreadMessages] = useState<Message[]>([])
+
+  useEffect(() => {
+    getListings().then(setListings).catch(() => setListings(fallbackListings))
+    getSeller().then(setSeller).catch(() => setSeller(fallbackSeller))
+    getFavorites().then(setFavorites).catch(() => setFavorites([]))
+    getConversations().then(setConversations).catch(() => setConversations([]))
+  }, [])
+
+  return (
+    <AppLayout
+      listings={listings}
+      setListings={setListings}
+      seller={seller}
+      favorites={favorites}
+      setFavorites={setFavorites}
+      conversations={conversations}
+      setConversations={setConversations}
+      threadMessages={threadMessages}
+      setThreadMessages={setThreadMessages}
+    />
+  )
+}
+
+export default App
