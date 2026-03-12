@@ -1,10 +1,16 @@
 import type {
+  AlertItem,
+  AuthUser,
+  BuyerProfile,
+  Conversation,
+  Favorite,
+  Follow,
   Listing,
   Message,
-  SellerProfile,
-  Favorite,
-  Conversation,
+  NotificationItem,
   PickupReservation,
+  SellerProfile,
+  SocialPost,
 } from './types'
 
 const API_BASE = '/api'
@@ -152,4 +158,125 @@ export async function reservePickup(payload: {
 export async function getSeller(): Promise<SellerProfile> {
   const res = await fetch(`${API_BASE}/seller/me`)
   return parseResponse<SellerProfile>(res, 'Failed to load seller')
+}
+
+export async function getSellerById(id: string): Promise<SellerProfile> {
+  const res = await fetch(`${API_BASE}/seller/${id}`)
+  return parseResponse<SellerProfile>(res, 'Failed to load grower')
+}
+
+export async function getSellers(): Promise<SellerProfile[]> {
+  const res = await fetch(`${API_BASE}/sellers`)
+  return parseResponse<SellerProfile[]>(res, 'Failed to load growers')
+}
+
+export async function updateSellerProfile(
+  payload: Partial<SellerProfile>,
+): Promise<SellerProfile> {
+  const res = await fetch(`${API_BASE}/seller/me`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<SellerProfile>(res, 'Failed to update seller profile')
+}
+
+export async function getBuyerProfile(): Promise<BuyerProfile> {
+  const res = await fetch(`${API_BASE}/buyer/me`)
+  return parseResponse<BuyerProfile>(res, 'Failed to load buyer profile')
+}
+
+export async function updateBuyerProfile(
+  payload: Partial<BuyerProfile>,
+): Promise<BuyerProfile> {
+  const res = await fetch(`${API_BASE}/buyer/me`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<BuyerProfile>(res, 'Failed to update buyer profile')
+}
+
+export async function getSocialPosts(): Promise<SocialPost[]> {
+  const res = await fetch(`${API_BASE}/social`)
+  return parseResponse<SocialPost[]>(res, 'Failed to load social feed')
+}
+
+export async function getNotifications(): Promise<NotificationItem[]> {
+  const res = await fetch(`${API_BASE}/notifications`)
+  return parseResponse<NotificationItem[]>(res, 'Failed to load notifications')
+}
+
+export async function markNotificationRead(id: string): Promise<NotificationItem> {
+  const res = await fetch(`${API_BASE}/notifications/${id}/read`, {
+    method: 'POST',
+  })
+  return parseResponse<NotificationItem>(res, 'Failed to update notification')
+}
+
+export async function getAlerts(): Promise<AlertItem[]> {
+  const res = await fetch(`${API_BASE}/alerts`)
+  return parseResponse<AlertItem[]>(res, 'Failed to load alerts')
+}
+
+export async function createAlert(payload: Omit<AlertItem, 'id'>): Promise<AlertItem> {
+  const res = await fetch(`${API_BASE}/alerts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+  return parseResponse<AlertItem>(res, 'Failed to create alert')
+}
+
+export async function toggleAlert(id: string): Promise<AlertItem> {
+  const res = await fetch(`${API_BASE}/alerts/${id}/toggle`, {
+    method: 'POST',
+  })
+  return parseResponse<AlertItem>(res, 'Failed to update alert')
+}
+
+export async function getFollows(userId: string): Promise<Follow[]> {
+  const res = await fetch(`${API_BASE}/follows?userId=${encodeURIComponent(userId)}`)
+  return parseResponse<Follow[]>(res, 'Failed to load follows')
+}
+
+export async function toggleFollow(payload: {
+  userId: string
+  sellerId: string
+}): Promise<{ active: boolean }> {
+  const res = await fetch(`${API_BASE}/follows/toggle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<{ active: boolean }>(res, 'Failed to update follow')
+}
+
+export async function signup(payload: {
+  name: string
+  email: string
+  role: 'buyer' | 'grower'
+}): Promise<AuthUser> {
+  const res = await fetch(`${API_BASE}/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<AuthUser>(res, 'Failed to create account')
+}
+
+export async function login(payload: {
+  email: string
+}): Promise<AuthUser> {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<AuthUser>(res, 'Failed to log in')
 }
