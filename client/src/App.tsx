@@ -23,9 +23,11 @@ import {
   getSeller,
   getSellerById,
   getSocialPosts,
+  login,
   markNotificationRead,
   reservePickup,
   sendMessage,
+  signup,
   toggleAlert,
   toggleFavorite,
   toggleFollow,
@@ -33,6 +35,7 @@ import {
 } from './api'
 import type {
   AlertItem,
+  AuthUser,
   Conversation,
   Favorite,
   Follow,
@@ -54,7 +57,7 @@ const fallbackListings: Listing[] = [
     unit: 'bag',
     image:
       'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=1200&q=80',
-    location: 'Mission Hills',
+    location: 'Mission Hills, CA',
     city: 'Mission Hills',
     state: 'CA',
     distance: '0.8 mi',
@@ -81,7 +84,7 @@ const fallbackListings: Listing[] = [
     unit: 'bundle',
     image:
       'https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=1200&q=80',
-    location: 'Granada Hills',
+    location: 'Granada Hills, CA',
     city: 'Granada Hills',
     state: 'CA',
     distance: '1.7 mi',
@@ -201,7 +204,7 @@ function ActionGrid({
   columns = 2,
 }: {
   children: React.ReactNode
-  columns?: 2 | 3 | 4
+  columns?: 1 | 2 | 3 | 4
 }) {
   return <div className={`action-grid action-grid--${columns}`}>{children}</div>
 }
@@ -274,6 +277,128 @@ function ReserveModal({
         </div>
       </div>
     </div>
+  )
+}
+
+function AuthShell({
+  mode,
+  onAuthSuccess,
+}: {
+  mode: 'login' | 'signup'
+  onAuthSuccess: (user: AuthUser) => void
+}) {
+  const navigate = useNavigate()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState<'buyer' | 'grower'>('buyer')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    setError('')
+
+    try {
+      const user =
+        mode === 'signup'
+          ? await signup({
+              name: name.trim() || 'User',
+              email: email.trim(),
+              role,
+            })
+          : await login({
+              email: email.trim(),
+            })
+
+      onAuthSuccess(user)
+      navigate('/')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to continue.'
+      setError(message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="auth-page">
+      <div className="auth-hero">
+        <p className="eyebrow">PLUCK account</p>
+        <h1>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
+        <p>
+          Join as a buyer or grower. This is the foundation for real profiles, saved searches, and nationwide discovery.
+        </p>
+      </div>
+
+      <form className="auth-card" onSubmit={handleSubmit}>
+        <div className="form-header">
+          <div>
+            <p className="eyebrow">{mode === 'signup' ? 'New account' : 'Login'}</p>
+            <h2>{mode === 'signup' ? 'Start using PLUCK' : 'Sign into your account'}</h2>
+          </div>
+        </div>
+
+        <div className="listing-form">
+          <div className="form-grid">
+            {mode === 'signup' ? (
+              <label className="full">
+                Full name
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Miller" />
+              </label>
+            ) : null}
+
+            <label className="full">
+              Email
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
+            </label>
+
+            {mode === 'signup' ? (
+              <label className="full">
+                Role
+                <div className="auth-role-row">
+                  <button
+                    type="button"
+                    className={role === 'buyer' ? 'ghost auth-role active-soft' : 'ghost auth-role'}
+                    onClick={() => setRole('buyer')}
+                  >
+                    Buyer
+                  </button>
+                  <button
+                    type="button"
+                    className={role === 'grower' ? 'ghost auth-role active-soft' : 'ghost auth-role'}
+                    onClick={() => setRole('grower')}
+                  >
+                    Grower
+                  </button>
+                </div>
+              </label>
+            ) : null}
+          </div>
+
+          {error ? <div className="status-banner error">{error}</div> : null}
+
+          <div className="action-row">
+            <button className="primary" type="submit" disabled={busy}>
+              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Log in'}
+            </button>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => navigate(mode === 'signup' ? '/login' : '/signup')}
+            >
+              {mode === 'signup' ? 'Have an account?' : 'Create account'}
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
   )
 }
 
@@ -1153,6 +1278,8 @@ type AppLayoutProps = {
   setAlerts: React.Dispatch<React.SetStateAction<AlertItem[]>>
   follows: Follow[]
   setFollows: React.Dispatch<React.SetStateAction<Follow[]>>
+  authUser: AuthUser | null
+  onAuthSuccess: (user: AuthUser) => void
 }
 
 function AppLayout({
@@ -1172,6 +1299,8 @@ function AppLayout({
   setAlerts,
   follows,
   setFollows,
+  authUser,
+  onAuthSuccess,
 }: AppLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -1364,20 +1493,33 @@ function AppLayout({
     <div className="app-shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Pluck V7B shell</p>
+          <p className="eyebrow">Pluck V7C shell</p>
           <h1>Fresh fruit from neighbors</h1>
           <p className="subtle-copy">
             A sharper local marketplace for backyard harvests, same-day pickup, grower trust, and nationwide-ready discovery.
           </p>
         </div>
         <div className="topbar-actions">
-          <button className="ghost" onClick={() => navigate('/alerts')}>
-            Alerts {unreadNotifications.length ? `(${unreadNotifications.length})` : ''}
-          </button>
-          <button className="ghost">{[seller.city, seller.state].filter(Boolean).join(', ') || 'Location'}</button>
-          <button className="primary" onClick={() => navigate('/store/new')}>
-            + New listing
-          </button>
+          {!authUser ? (
+            <>
+              <button className="ghost" onClick={() => navigate('/login')}>
+                Log in
+              </button>
+              <button className="primary" onClick={() => navigate('/signup')}>
+                Create account
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="ghost" onClick={() => navigate('/alerts')}>
+                Alerts {unreadNotifications.length ? `(${unreadNotifications.length})` : ''}
+              </button>
+              <button className="ghost">{[seller.city, seller.state].filter(Boolean).join(', ') || 'Location'}</button>
+              <button className="primary" onClick={() => navigate('/store/new')}>
+                + New listing
+              </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -1454,6 +1596,9 @@ function AppLayout({
 
       <main className="content">
         <Routes>
+          <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
+          <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
+
           <Route
             path="/"
             element={
@@ -1923,7 +2068,7 @@ function AppLayout({
 
                 <div className="analytics-note">
                   <strong>Next build target:</strong>
-                  <p>Live map pins, account creation, and richer pickup coordination flow.</p>
+                  <p>Live map pins, editable profiles, and richer pickup coordination flow.</p>
                 </div>
               </section>
             }
@@ -2084,6 +2229,7 @@ function App() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [follows, setFollows] = useState<Follow[]>([])
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
     getListings().then(setListings).catch(() => setListings(fallbackListings))
@@ -2114,6 +2260,8 @@ function App() {
       setAlerts={setAlerts}
       follows={follows}
       setFollows={setFollows}
+      authUser={authUser}
+      onAuthSuccess={setAuthUser}
     />
   )
 }
