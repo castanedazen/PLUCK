@@ -5,6 +5,10 @@ import type {
   Favorite,
   Conversation,
   PickupReservation,
+  SocialPost,
+  NotificationItem,
+  SavedAlert,
+  SellerFollow,
 } from './types'
 
 const API_BASE = '/api'
@@ -152,4 +156,60 @@ export async function reservePickup(payload: {
 export async function getSeller(): Promise<SellerProfile> {
   const res = await fetch(`${API_BASE}/seller/me`)
   return parseResponse<SellerProfile>(res, 'Failed to load seller')
+}
+
+export async function getSellers(): Promise<SellerProfile[]> {
+  const res = await fetch(`${API_BASE}/sellers`)
+  return parseResponse<SellerProfile[]>(res, 'Failed to load sellers')
+}
+
+export async function getSellerById(id: string): Promise<SellerProfile> {
+  const res = await fetch(`${API_BASE}/sellers/${id}`)
+  return parseResponse<SellerProfile>(res, 'Failed to load seller profile')
+}
+
+export async function getSocialPosts(): Promise<SocialPost[]> {
+  const res = await fetch(`${API_BASE}/social`)
+  return parseResponse<SocialPost[]>(res, 'Failed to load social posts')
+}
+
+export async function getNotifications(): Promise<NotificationItem[]> {
+  const res = await fetch(`${API_BASE}/notifications`)
+  return parseResponse<NotificationItem[]>(res, 'Failed to load notifications')
+}
+
+export async function getSavedAlerts(): Promise<SavedAlert[]> {
+  const res = await fetch(`${API_BASE}/alerts`)
+  return parseResponse<SavedAlert[]>(res, 'Failed to load alerts')
+}
+
+export async function createSavedAlert(payload: Omit<SavedAlert, 'id'>): Promise<SavedAlert> {
+  const res = await fetch(`${API_BASE}/alerts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<SavedAlert>(res, 'Failed to create alert')
+}
+
+export async function toggleFollowSeller(payload: {
+  userId: string
+  sellerId: string
+}): Promise<{ active: boolean; follows: SellerFollow[] }> {
+  const res = await fetch(`${API_BASE}/follows/toggle`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<{ active: boolean; follows: SellerFollow[] }>(
+    res,
+    'Failed to update follow state',
+  )
+}
+
+export async function getFollows(userId: string): Promise<SellerFollow[]> {
+  const res = await fetch(`${API_BASE}/follows?userId=${encodeURIComponent(userId)}`)
+  return parseResponse<SellerFollow[]>(res, 'Failed to load follows')
 }
