@@ -9,63 +9,41 @@ import {
   useParams,
 } from 'react-router-dom'
 import {
+  createAlert,
   createListing,
   createOrGetConversation,
-  createSavedAlert,
   deleteListing,
+  getAlerts,
   getConversations,
   getFavorites,
   getFollows,
   getListings,
   getMessagesByConversation,
   getNotifications,
-  getSavedAlerts,
   getSeller,
   getSellerById,
-  getSellers,
   getSocialPosts,
+  markNotificationRead,
   reservePickup,
   sendMessage,
+  toggleAlert,
   toggleFavorite,
-  toggleFollowSeller,
+  toggleFollow,
   updateListing,
 } from './api'
 import type {
+  AlertItem,
   Conversation,
   Favorite,
+  Follow,
   Listing,
   Message,
   NotificationItem,
-  SavedAlert,
-  SellerFollow,
   SellerProfile,
   SocialPost,
 } from './types'
 
-type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock' | 'near-me'
-type RadiusFilter = 3 | 5 | 10 | 25
-
-type ListingFormState = {
-  title: string
-  fruit: string
-  price: string
-  unit: string
-  imagePreview: string
-  location: string
-  inventory: string
-  description: string
-  pickup1: string
-  pickup2: string
-  harvestNote: string
-  tags: string
-}
-
-type DetectionPreview = {
-  produce: string
-  title: string
-  tags: string[]
-  freshnessNote: string
-}
+type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
 
 const fallbackListings: Listing[] = [
   {
@@ -77,13 +55,14 @@ const fallbackListings: Listing[] = [
     image:
       'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=1200&q=80',
     location: 'Mission Hills',
+    city: 'Mission Hills',
+    state: 'CA',
     distance: '0.8 mi',
     inventory: 7,
     sellerId: 's1',
     sellerName: 'Elena',
     description: 'Picked this morning. Sweet, juicy, and ideal for snacking or fresh juice.',
     pickupWindows: ['Today 5–7 PM', 'Tomorrow 9–11 AM'],
-    isFavorite: true,
     status: 'active',
     tags: ['sweet', 'citrus', 'juice'],
     harvestLabel: 'Just dropped',
@@ -103,6 +82,8 @@ const fallbackListings: Listing[] = [
     image:
       'https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=1200&q=80',
     location: 'Granada Hills',
+    city: 'Granada Hills',
+    state: 'CA',
     distance: '1.7 mi',
     inventory: 11,
     sellerId: 's2',
@@ -110,7 +91,7 @@ const fallbackListings: Listing[] = [
     description: 'Bright, floral lemons with strong color and a clean finish for cooking or cocktails.',
     pickupWindows: ['Today 6–8 PM', 'Saturday 10 AM–1 PM'],
     status: 'active',
-    tags: ['citrus', 'kitchen'],
+    tags: ['citrus', 'cocktails', 'kitchen'],
     harvestLabel: 'New nearby',
     freshnessLabel: 'Fresh harvest',
     availabilityLabel: 'Available now',
@@ -125,7 +106,10 @@ const fallbackSeller: SellerProfile = {
   id: 'me',
   name: 'Christian',
   handle: '@pluckgrower',
-  city: 'Mission Hills, CA',
+  city: 'Mission Hills',
+  state: 'CA',
+  zip: '91345',
+  locationLabel: 'Mission Hills, CA',
   bio: 'Neighborhood grower sharing backyard harvests with nearby buyers.',
   avatar:
     'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80',
@@ -141,19 +125,46 @@ const fallbackSeller: SellerProfile = {
   specialties: ['Citrus', 'Seasonal bundles', 'Same-day pickup'],
 }
 
+type ListingFormState = {
+  title: string
+  fruit: string
+  price: string
+  unit: string
+  imagePreview: string
+  location: string
+  city: string
+  state: string
+  zip: string
+  inventory: string
+  description: string
+  pickup1: string
+  pickup2: string
+  tags: string
+  harvestNote: string
+  harvestLabel: string
+  freshnessLabel: string
+  availabilityLabel: string
+}
+
 const emptyForm: ListingFormState = {
   title: '',
   fruit: '',
   price: '',
   unit: 'basket',
   imagePreview: '',
-  location: 'Mission Hills',
+  location: '',
+  city: '',
+  state: '',
+  zip: '',
   inventory: '',
   description: '',
   pickup1: '',
   pickup2: '',
-  harvestNote: '',
   tags: '',
+  harvestNote: '',
+  harvestLabel: 'Just dropped',
+  freshnessLabel: 'Fresh harvest',
+  availabilityLabel: 'Available now',
 }
 
 const quickFilters: { key: QuickFilter; label: string }[] = [
@@ -162,73 +173,106 @@ const quickFilters: { key: QuickFilter; label: string }[] = [
   { key: 'under-5', label: 'Under $5' },
   { key: 'citrus', label: 'Citrus' },
   { key: 'high-stock', label: 'High stock' },
-  { key: 'near-me', label: 'Near me' },
 ]
 
-const radiusOptions: RadiusFilter[] = [3, 5, 10, 25]
-
-function inferDetection(fileName: string, currentFruit: string): DetectionPreview {
-  const name = `${fileName} ${currentFruit}`.toLowerCase()
-
-  if (name.includes('peach')) {
-    return {
-      produce: 'Peaches',
-      title: 'Soft-ripe neighborhood peaches',
-      tags: ['stone fruit', 'sweet', 'same-day'],
-      freshnessNote: 'Looks like a ripe peach batch ready for a short pickup window.',
-    }
-  }
-
-  if (name.includes('lemon')) {
-    return {
-      produce: 'Lemons',
-      title: 'Backyard Meyer lemons',
-      tags: ['citrus', 'bright', 'kitchen'],
-      freshnessNote: 'Likely citrus. Good candidate for a just-harvested listing.',
-    }
-  }
-
-  if (name.includes('orange') || name.includes('citrus')) {
-    return {
-      produce: 'Oranges',
-      title: 'Sun-warm local oranges',
-      tags: ['citrus', 'sweet', 'juice'],
-      freshnessNote: 'Detected a citrus-style produce photo. Sweetness note and harvest timing would help conversion.',
-    }
-  }
-
-  return {
-    produce: currentFruit || 'Produce detected',
-    title: currentFruit ? `${currentFruit} harvest listing` : 'Fresh local produce listing',
-    tags: ['local', 'fresh harvest', 'nearby'],
-    freshnessNote: 'AI shell ready. Next layer will run real produce detection from photos.',
-  }
+function formatTime(value?: string) {
+  if (!value) return ''
+  return new Date(value).toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
 }
 
-function formatRelativeTime(value: string) {
-  const now = new Date().getTime()
-  const then = new Date(value).getTime()
-  const diffMinutes = Math.max(1, Math.round((now - then) / 60000))
-
-  if (diffMinutes < 60) return `${diffMinutes}m ago`
-
-  const diffHours = Math.round(diffMinutes / 60)
-  if (diffHours < 24) return `${diffHours}h ago`
-
-  const diffDays = Math.round(diffHours / 24)
-  return `${diffDays}d ago`
+function sellerLabel(listing: Listing) {
+  const rating = listing.sellerRating ? listing.sellerRating.toFixed(1) : null
+  return rating ? `${listing.sellerName} • ★ ${rating}` : listing.sellerName
 }
 
-function ListingSignalRow({ listing }: { listing: Listing }) {
-  const labels = [listing.harvestLabel, listing.freshnessLabel, listing.availabilityLabel].filter(Boolean)
+function prettyLocation(listing: Listing) {
+  const parts = [listing.city || '', listing.state || ''].filter(Boolean)
+  if (parts.length) return parts.join(', ')
+  return listing.location
+}
+
+function ActionGrid({
+  children,
+  columns = 2,
+}: {
+  children: React.ReactNode
+  columns?: 2 | 3 | 4
+}) {
+  return <div className={`action-grid action-grid--${columns}`}>{children}</div>
+}
+
+function ReserveModal({
+  listing,
+  onClose,
+  onConfirm,
+}: {
+  listing: Listing
+  onClose: () => void
+  onConfirm: (pickupWindow: string) => Promise<void>
+}) {
+  const [selectedWindow, setSelectedWindow] = useState(listing.pickupWindows?.[0] || 'Pickup by message')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
   return (
-    <div className="signal-row">
-      {labels.map((label) => (
-        <span key={`${listing.id}-${label}`} className="signal-pill">
-          {label}
-        </span>
-      ))}
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-shell" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div>
+            <p className="eyebrow">Reserve pickup</p>
+            <h3>{listing.title}</h3>
+            <p className="modal-subcopy">
+              Choose the pickup window that works best. You can message the grower immediately after.
+            </p>
+          </div>
+          <button className="ghost compact-btn" onClick={onClose}>
+            Close
+          </button>
+        </div>
+
+        <div className="modal-window-list">
+          {listing.pickupWindows.map((slot) => (
+            <button
+              key={slot}
+              className={selectedWindow === slot ? 'window-pill active' : 'window-pill'}
+              onClick={() => setSelectedWindow(slot)}
+            >
+              {slot}
+            </button>
+          ))}
+        </div>
+
+        {error ? <div className="status-banner error">{error}</div> : null}
+
+        <div className="action-row">
+          <button
+            className="primary"
+            disabled={busy}
+            onClick={async () => {
+              try {
+                setBusy(true)
+                setError('')
+                await onConfirm(selectedWindow)
+              } catch (err) {
+                const message = err instanceof Error ? err.message : 'Unable to reserve pickup.'
+                setError(message)
+              } finally {
+                setBusy(false)
+              }
+            }}
+          >
+            {busy ? 'Reserving...' : 'Confirm pickup'}
+          </button>
+          <button className="ghost" disabled={busy} onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -258,45 +302,36 @@ function ListingForm({
       unit: initialValues.unit,
       imagePreview: initialValues.image,
       location: initialValues.location,
+      city: initialValues.city || '',
+      state: initialValues.state || '',
+      zip: initialValues.zip || '',
       inventory: String(initialValues.inventory),
       description: initialValues.description,
       pickup1: initialValues.pickupWindows?.[0] || '',
       pickup2: initialValues.pickupWindows?.[1] || '',
-      harvestNote: initialValues.harvestNote || '',
       tags: (initialValues.tags || []).join(', '),
+      harvestNote: initialValues.harvestNote || '',
+      harvestLabel: initialValues.harvestLabel || 'Just dropped',
+      freshnessLabel: initialValues.freshnessLabel || 'Fresh harvest',
+      availabilityLabel: initialValues.availabilityLabel || 'Available now',
     }
   })
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState('')
-  const [detection, setDetection] = useState<DetectionPreview | null>(null)
 
   function updateForm<K extends keyof ListingFormState>(key: K, value: ListingFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }))
-  }
-
-  function applyDetection(suggestion: DetectionPreview) {
-    setForm((current) => ({
-      ...current,
-      fruit: current.fruit || suggestion.produce,
-      title: current.title || suggestion.title,
-      tags: current.tags || suggestion.tags.join(', '),
-      harvestNote: current.harvestNote || suggestion.freshnessNote,
-    }))
   }
 
   function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const suggestion = inferDetection(file.name, form.fruit)
-    setDetection(suggestion)
-
     const reader = new FileReader()
     reader.onload = () => {
       const result = typeof reader.result === 'string' ? reader.result : ''
       updateForm('imagePreview', result)
-      applyDetection(suggestion)
     }
     reader.readAsDataURL(file)
   }
@@ -309,10 +344,10 @@ function ListingForm({
 
     try {
       const pickupWindows = [form.pickup1, form.pickup2].map((x) => x.trim()).filter(Boolean)
-      const tagList = form.tags
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean)
+      const locationLabel =
+        form.location.trim() ||
+        [form.city.trim(), form.state.trim()].filter(Boolean).join(', ') ||
+        'Anywhere, USA'
 
       const payload: Omit<Listing, 'id'> = {
         title: form.title.trim() || `${form.fruit.trim()} Listing`,
@@ -322,7 +357,10 @@ function ListingForm({
         image:
           form.imagePreview ||
           'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80',
-        location: form.location.trim() || 'Mission Hills',
+        location: locationLabel,
+        city: form.city.trim(),
+        state: form.state.trim(),
+        zip: form.zip.trim(),
         distance: initialValues?.distance || 'Just added',
         inventory: Number(form.inventory) || 1,
         sellerId: seller.id,
@@ -331,14 +369,16 @@ function ListingForm({
         pickupWindows: pickupWindows.length ? pickupWindows : ['Pickup by message'],
         isFavorite: initialValues?.isFavorite || false,
         status: initialValues?.status || 'active',
-        tags: tagList,
-        harvestLabel: initialValues?.harvestLabel || 'Just dropped',
-        freshnessLabel: initialValues?.freshnessLabel || 'Fresh harvest',
-        availabilityLabel: initialValues?.availabilityLabel || 'Available now',
-        harvestNote: form.harvestNote.trim() || detection?.freshnessNote || 'Local harvest ready for pickup.',
+        tags: form.tags
+          .split(',')
+          .map((x) => x.trim())
+          .filter(Boolean),
+        harvestNote: form.harvestNote.trim(),
+        harvestLabel: form.harvestLabel,
+        freshnessLabel: form.freshnessLabel,
+        availabilityLabel: form.availabilityLabel,
         sellerVerified: seller.verified,
         sellerRating: seller.rating,
-        geo: initialValues?.geo || { lat: 34.2706, lng: -118.4728 },
       }
 
       await onSubmitListing(payload, existingId)
@@ -346,7 +386,7 @@ function ListingForm({
 
       setTimeout(() => {
         navigate('/store/listings')
-      }, 500)
+      }, 450)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to save listing right now.'
       setSaveError(message)
@@ -359,49 +399,16 @@ function ListingForm({
     <section className="stack form-stack premium-form-shell">
       <div className="form-header">
         <div>
-          <p className="eyebrow">{existingId ? 'Edit listing' : 'Photo-first listing builder'}</p>
-          <h2>{existingId ? 'Update listing details' : 'Create a trusted neighborhood listing'}</h2>
-          <p>Use one strong produce photo, clear harvest language, and a tight pickup window to convert faster.</p>
+          <p className="eyebrow">{existingId ? 'Edit listing' : 'New listing'}</p>
+          <h2>{existingId ? 'Update listing details' : 'Create a premium fruit listing'}</h2>
+          <p>
+            Stronger titles, clearer pickup windows, trust badges, and nationwide-ready location fields.
+          </p>
         </div>
       </div>
 
       <form className="listing-form" onSubmit={handleSubmit}>
         <div className="form-grid">
-          <label className="full upload-zone upload-zone-large">
-            Upload fruit photo
-            <input type="file" accept="image/*" onChange={handleImageUpload} />
-            <span className="upload-hint">PLUCK will turn this into an AI-ready produce detection flow later.</span>
-          </label>
-
-          {form.imagePreview && (
-            <div className="image-preview-wrap full detection-layout">
-              <img className="image-preview" src={form.imagePreview} alt="Preview" />
-              <div className="detection-card">
-                <p className="eyebrow">AI produce shell</p>
-                <h3>Detect produce from image</h3>
-                <p className="detection-note">This is the V6A product shell. Real classifier logic lands in V6B.</p>
-                {detection ? (
-                  <>
-                    <strong>{detection.produce}</strong>
-                    <p>{detection.freshnessNote}</p>
-                    <div className="signal-row compact-signal-row">
-                      {detection.tags.map((tag) => (
-                        <span className="signal-pill" key={tag}>
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <button type="button" className="ghost" onClick={() => applyDetection(detection)}>
-                      Use suggestions
-                    </button>
-                  </>
-                ) : (
-                  <p>Upload a produce photo to generate suggested fruit type, tags, and a freshness note.</p>
-                )}
-              </div>
-            </div>
-          )}
-
           <label>
             Title
             <input
@@ -434,15 +441,46 @@ function ListingForm({
 
           <label>
             Unit
-            <input value={form.unit} onChange={(e) => updateForm('unit', e.target.value)} placeholder="bag" />
+            <input
+              value={form.unit}
+              onChange={(e) => updateForm('unit', e.target.value)}
+              placeholder="bag"
+            />
           </label>
 
           <label>
-            Neighborhood
+            City
+            <input
+              value={form.city}
+              onChange={(e) => updateForm('city', e.target.value)}
+              placeholder="Austin"
+            />
+          </label>
+
+          <label>
+            State
+            <input
+              value={form.state}
+              onChange={(e) => updateForm('state', e.target.value)}
+              placeholder="TX"
+            />
+          </label>
+
+          <label>
+            ZIP code
+            <input
+              value={form.zip}
+              onChange={(e) => updateForm('zip', e.target.value)}
+              placeholder="78704"
+            />
+          </label>
+
+          <label>
+            Location label
             <input
               value={form.location}
               onChange={(e) => updateForm('location', e.target.value)}
-              placeholder="Mission Hills"
+              placeholder="South Austin, TX"
             />
           </label>
 
@@ -458,14 +496,20 @@ function ListingForm({
             />
           </label>
 
-          <label className="full">
-            Listing tags
-            <input
-              value={form.tags}
-              onChange={(e) => updateForm('tags', e.target.value)}
-              placeholder="sweet, citrus, same-day"
-            />
+          <label className="full upload-zone">
+            Upload photo
+            <input type="file" accept="image/*" onChange={handleImageUpload} />
+            <span className="upload-hint">Choose a fruit photo from your device for instant preview.</span>
           </label>
+
+          {form.imagePreview && (
+            <div className="image-preview-wrap full">
+              <img className="image-preview" src={form.imagePreview} alt="Preview" />
+              <button type="button" className="ghost compact-btn" onClick={() => updateForm('imagePreview', '')}>
+                Remove image
+              </button>
+            </div>
+          )}
 
           <label className="full">
             Description
@@ -478,12 +522,48 @@ function ListingForm({
           </label>
 
           <label className="full">
+            Tags
+            <input
+              value={form.tags}
+              onChange={(e) => updateForm('tags', e.target.value)}
+              placeholder="sweet, citrus, juice"
+            />
+          </label>
+
+          <label className="full">
             Harvest note
             <textarea
               value={form.harvestNote}
               onChange={(e) => updateForm('harvestNote', e.target.value)}
-              placeholder="Picked this morning. Best for same-day pickup."
+              placeholder="Picked at dawn. Best same-day."
               rows={3}
+            />
+          </label>
+
+          <label>
+            Harvest badge
+            <input
+              value={form.harvestLabel}
+              onChange={(e) => updateForm('harvestLabel', e.target.value)}
+              placeholder="Just dropped"
+            />
+          </label>
+
+          <label>
+            Freshness badge
+            <input
+              value={form.freshnessLabel}
+              onChange={(e) => updateForm('freshnessLabel', e.target.value)}
+              placeholder="Fresh harvest"
+            />
+          </label>
+
+          <label className="full">
+            Availability badge
+            <input
+              value={form.availabilityLabel}
+              onChange={(e) => updateForm('availabilityLabel', e.target.value)}
+              placeholder="Available now"
             />
           </label>
 
@@ -507,7 +587,9 @@ function ListingForm({
         </div>
 
         {(saveError || saveSuccess) && (
-          <div className={saveError ? 'status-banner error' : 'status-banner success'}>{saveError || saveSuccess}</div>
+          <div className={saveError ? 'status-banner error' : 'status-banner success'}>
+            {saveError || saveSuccess}
+          </div>
         )}
 
         <div className="action-row">
@@ -523,26 +605,76 @@ function ListingForm({
   )
 }
 
+function GrowerTrust({
+  seller,
+  isFollowing,
+  onToggleFollow,
+}: {
+  seller: SellerProfile
+  isFollowing: boolean
+  onToggleFollow: () => Promise<void>
+}) {
+  return (
+    <div className="grower-trust-card">
+      <div className="grower-head">
+        <img className="avatar" src={seller.avatar} alt={seller.name} />
+        <div>
+          <div className="grower-name-row">
+            <h3>{seller.name}</h3>
+            {seller.verified ? <span className="trust-pill verified">Verified grower</span> : null}
+          </div>
+          <p className="meta">
+            {seller.handle} • {[seller.city, seller.state].filter(Boolean).join(', ')}
+          </p>
+        </div>
+      </div>
+
+      <p className="desc">{seller.bio}</p>
+
+      <div className="trust-metrics">
+        <div className="metric-chip">★ {(seller.rating || 0).toFixed(1)} {seller.ratingCount ? `(${seller.ratingCount})` : ''}</div>
+        <div className="metric-chip">{seller.followers || 0} followers</div>
+        {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
+        {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
+      </div>
+
+      {seller.specialties?.length ? (
+        <div className="pill-row">
+          {seller.specialties.map((item) => (
+            <span className="pill" key={item}>
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="action-row">
+        <button className="primary" onClick={onToggleFollow}>
+          {isFollowing ? 'Following' : 'Follow grower'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function ListingDetailRoute({
   listings,
   favorites,
-  sellers,
   follows,
   onEdit,
   onToggleFavorite,
-  onReserve,
+  onToggleFollow,
+  onOpenReserve,
   onStartConversation,
-  onFollow,
 }: {
   listings: Listing[]
   favorites: Favorite[]
-  sellers: SellerProfile[]
-  follows: SellerFollow[]
+  follows: Follow[]
   onEdit: (id: string) => void
   onToggleFavorite: (listingId: string) => Promise<void>
-  onReserve: (listing: Listing) => Promise<void>
+  onToggleFollow: (sellerId: string) => Promise<void>
+  onOpenReserve: (listing: Listing) => void
   onStartConversation: (listing: Listing) => Promise<void>
-  onFollow: (sellerId: string) => Promise<void>
 }) {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -557,8 +689,7 @@ function ListingDetailRoute({
   }
 
   const isFavorite = favorites.some((fav) => fav.listingId === listing.id)
-  const seller = sellers.find((item) => item.id === listing.sellerId)
-  const isFollowing = follows.some((follow) => follow.sellerId === listing.sellerId)
+  const isFollowing = follows.some((item) => item.sellerId === listing.sellerId)
 
   return (
     <section className="stack">
@@ -570,26 +701,29 @@ function ListingDetailRoute({
           <p className="listing-detail-price">
             ${listing.price}/{listing.unit}
           </p>
-          <ListingSignalRow listing={listing} />
+
+          <div className="listing-top-badges">
+            {listing.harvestLabel ? <span className="trust-pill harvest">{listing.harvestLabel}</span> : null}
+            {listing.freshnessLabel ? <span className="trust-pill freshness">{listing.freshnessLabel}</span> : null}
+            {listing.availabilityLabel ? <span className="trust-pill available">{listing.availabilityLabel}</span> : null}
+          </div>
+
           <p className="desc">{listing.description}</p>
           <p className="meta">
-            {listing.location} · {listing.inventory} left · {listing.sellerName}
+            {prettyLocation(listing)} • {listing.inventory} left • {sellerLabel(listing)}
           </p>
-          {listing.harvestNote && <p className="desc">{listing.harvestNote}</p>}
 
-          <div className="trust-row">
-            <span className="trust-pill">{listing.sellerVerified ? 'Verified farmer' : 'Verification pending'}</span>
-            <span className="trust-pill">{listing.sellerRating?.toFixed(1) || '4.7'} ★ seller rating</span>
-            <span className="trust-pill">Local pickup</span>
-          </div>
+          {listing.harvestNote ? <div className="harvest-note">“{listing.harvestNote}”</div> : null}
 
-          <div className="pill-row">
-            {(listing.tags || []).map((tag) => (
-              <span className="pill" key={`${listing.id}-${tag}`}>
-                {tag}
-              </span>
-            ))}
-          </div>
+          {(listing.tags || []).length ? (
+            <div className="pill-row">
+              {listing.tags?.map((tag) => (
+                <span className="pill" key={tag}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
 
           <div className="pill-row">
             {listing.pickupWindows.map((slot, index) => (
@@ -599,38 +733,26 @@ function ListingDetailRoute({
             ))}
           </div>
 
-          {seller && (
-            <div className="seller-inline-card">
-              <img src={seller.avatar} alt={seller.name} />
-              <div>
-                <strong>{seller.name}</strong>
-                <p>
-                  {seller.handle} · {seller.city}
-                </p>
-              </div>
-              <button className="ghost" onClick={() => navigate(`/seller/${seller.id}`)}>
-                Seller page
-              </button>
-            </div>
-          )}
-
-          <div className="action-row">
-            <button className="primary" onClick={() => onReserve(listing)} disabled={listing.inventory <= 0}>
+          <ActionGrid columns={2}>
+            <button className="primary fill-btn" onClick={() => onOpenReserve(listing)} disabled={listing.inventory <= 0}>
               {listing.inventory <= 0 ? 'Sold out' : 'Reserve pickup'}
             </button>
-            <button className="ghost" onClick={() => onStartConversation(listing)}>
+            <button className="ghost fill-btn" onClick={() => onStartConversation(listing)}>
               Message seller
             </button>
-            <button className="ghost" onClick={() => onToggleFavorite(listing.id)}>
+            <button className="ghost fill-btn" onClick={() => onToggleFavorite(listing.id)}>
               {isFavorite ? 'Saved' : 'Save'}
             </button>
-            <button className="ghost" onClick={() => onFollow(listing.sellerId)}>
-              {isFollowing ? 'Following' : 'Follow seller'}
+            <button className="ghost fill-btn" onClick={() => onToggleFollow(listing.sellerId)}>
+              {isFollowing ? 'Following' : 'Follow grower'}
             </button>
-            <button className="ghost" onClick={() => onEdit(listing.id)}>
+            <button className="ghost fill-btn" onClick={() => navigate('/grower/' + listing.sellerId)}>
+              Grower profile
+            </button>
+            <button className="ghost fill-btn" onClick={() => onEdit(listing.id)}>
               Edit listing
             </button>
-          </div>
+          </ActionGrid>
         </div>
       </div>
     </section>
@@ -654,9 +776,9 @@ function MessagesPage({
   const activeConversation = conversations[0]
 
   return (
-    <section className="messages-layout">
-      <div className="stack">
-        <div className="section-heading compact-heading">
+    <section className="messages-shell">
+      <aside className="messages-sidebar">
+        <div className="section-heading compact-heading no-top-gap">
           <div>
             <p className="eyebrow">Conversations</p>
             <h2>Inbox</h2>
@@ -664,168 +786,204 @@ function MessagesPage({
           <span className="section-meta">{conversations.length} threads</span>
         </div>
 
-        {conversations.length ? (
-          conversations.map((conversation) => (
-            <button key={conversation.id} className="thread thread-button" onClick={() => onSelectConversation(conversation.id)}>
-              <div>
-                <strong>{conversation.sellerName}</strong>
-                <p>{conversation.lastMessage}</p>
-              </div>
-              <span>{new Date(conversation.updatedAt).toLocaleDateString()}</span>
-            </button>
-          ))
-        ) : (
-          <p>No conversations yet.</p>
-        )}
-      </div>
+        <div className="messages-list">
+          {conversations.length ? (
+            conversations.map((conversation, index) => {
+              const active = index === 0
+              return (
+                <button
+                  key={conversation.id}
+                  className={active ? 'thread-card active' : 'thread-card'}
+                  onClick={() => onSelectConversation(conversation.id)}
+                >
+                  <div className="thread-card-top">
+                    <strong>{conversation.sellerName}</strong>
+                    <span>{new Date(conversation.updatedAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="thread-card-title">{conversation.listingTitle}</div>
+                  <p>{conversation.lastMessage}</p>
+                </button>
+              )
+            })
+          ) : (
+            <div className="empty-panel">No conversations yet.</div>
+          )}
+        </div>
+      </aside>
 
-      <div className="stack">
-        <div className="section-heading compact-heading">
+      <section className="messages-main">
+        <div className="section-heading compact-heading no-top-gap">
           <div>
             <p className="eyebrow">Thread</p>
             <h2>{activeConversation ? activeConversation.listingTitle : 'Select a conversation'}</h2>
           </div>
         </div>
 
-        <div className="message-thread">
-          {threadMessages.length ? (
-            threadMessages.map((msg) => (
-              <div key={msg.id} className={msg.senderId === seller.id ? 'message-bubble mine' : 'message-bubble'}>
-                <strong>{msg.senderName}</strong>
-                <p>{msg.content}</p>
+        <div className="thread-panel">
+          {activeConversation ? (
+            <>
+              <div className="thread-context">
+                <div>
+                  <strong>{activeConversation.sellerName}</strong>
+                  <p>{activeConversation.lastMessage}</p>
+                </div>
+                <span>{new Date(activeConversation.updatedAt).toLocaleDateString()}</span>
               </div>
-            ))
+
+              <div className="message-thread">
+                {threadMessages.length ? (
+                  threadMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={msg.senderId === seller.id ? 'message-bubble mine' : 'message-bubble'}
+                    >
+                      <strong>{msg.senderName}</strong>
+                      <p>{msg.content}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-panel">No messages yet.</div>
+                )}
+              </div>
+
+              <div className="message-compose">
+                <textarea
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="Write a message..."
+                  rows={3}
+                />
+                <button
+                  className="primary fill-btn"
+                  onClick={async () => {
+                    if (!draft.trim()) return
+                    await onSendMessage(activeConversation.id, draft)
+                    setDraft('')
+                  }}
+                >
+                  Send
+                </button>
+              </div>
+            </>
           ) : (
-            <p>No messages yet.</p>
+            <div className="empty-panel">Choose a conversation to view the thread.</div>
           )}
         </div>
-
-        {activeConversation && (
-          <div className="message-compose">
-            <textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a message..." rows={3} />
-            <button
-              className="primary"
-              onClick={async () => {
-                if (!draft.trim()) return
-                await onSendMessage(activeConversation.id, draft)
-                setDraft('')
-              }}
-            >
-              Send
-            </button>
-          </div>
-        )}
-      </div>
+      </section>
     </section>
   )
 }
 
-function SellerRoute({
+function GrowerPage({
   listings,
-  sellers,
+  currentSeller,
   follows,
-  onToggleFavorite,
-  favorites,
-  onFollow,
+  onToggleFollow,
 }: {
   listings: Listing[]
-  sellers: SellerProfile[]
-  follows: SellerFollow[]
-  onToggleFavorite: (listingId: string) => Promise<void>
-  favorites: Favorite[]
-  onFollow: (sellerId: string) => Promise<void>
+  currentSeller: SellerProfile
+  follows: Follow[]
+  onToggleFollow: (sellerId: string) => Promise<void>
 }) {
-  const navigate = useNavigate()
-  const { sellerId } = useParams()
-  const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null)
+  const { id } = useParams()
+  const [grower, setGrower] = useState<SellerProfile | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!sellerId) return
-    getSellerById(sellerId).then(setSellerProfile).catch(() => {
-      const match = sellers.find((item) => item.id === sellerId) || null
-      setSellerProfile(match)
-    })
-  }, [sellerId, sellers])
+    if (!id) return
+    setLoading(true)
+    getSellerById(id)
+      .then(setGrower)
+      .finally(() => setLoading(false))
+  }, [id])
 
-  if (!sellerId) return <Navigate to="/" replace />
-
-  const seller = sellerProfile || sellers.find((item) => item.id === sellerId)
-
-  if (!seller) {
+  if (loading) {
     return (
       <section className="stack">
-        <h2>Seller not found</h2>
+        <p>Loading grower...</p>
       </section>
     )
   }
 
-  const sellerListings = listings.filter((listing) => listing.sellerId === seller.id)
-  const isFollowing = follows.some((follow) => follow.sellerId === seller.id)
+  if (!grower) {
+    return (
+      <section className="stack">
+        <h2>Grower not found</h2>
+      </section>
+    )
+  }
+
+  const growerListings = listings.filter((item) => item.sellerId === grower.id)
+  const isFollowing = follows.some((item) => item.sellerId === grower.id)
 
   return (
     <section className="stack">
-      <section className="seller-hero-card">
-        <img className="seller-hero-image" src={seller.heroFruit} alt={seller.name} />
-        <div className="seller-hero-content">
-          <div className="seller-hero-row">
-            <img className="avatar" src={seller.avatar} alt={seller.name} />
-            <div>
-              <h2>{seller.name}</h2>
-              <p>
-                {seller.handle} · {seller.city}
-              </p>
-            </div>
-            <button className="primary" onClick={() => onFollow(seller.id)}>
-              {isFollowing ? 'Following' : 'Follow seller'}
-            </button>
+      <section className="profile-card premium-profile">
+        <img className="hero-fruit" src={grower.heroFruit} alt="Grower orchard" />
+        <div className="profile-row">
+          <img className="avatar" src={grower.avatar} alt={grower.name} />
+          <div>
+            <h2>{grower.name}</h2>
+            <p>
+              {grower.handle} • {[grower.city, grower.state].filter(Boolean).join(', ')}
+            </p>
           </div>
+        </div>
 
-          <div className="signal-row">
-            <span className="signal-pill">{seller.verified ? 'Verified farmer' : 'Verification pending'}</span>
-            <span className="signal-pill">{seller.rating?.toFixed(1) || '4.7'} ★</span>
-            <span className="signal-pill">{seller.responseScore || 'Reply score pending'}</span>
-            <span className="signal-pill">{seller.repeatBuyerScore || 'Repeat buyers pending'}</span>
+        <p>{grower.bio}</p>
+
+        <div className="dashboard-stats profile-stats">
+          <div className="dashboard-card">
+            <span>Listings</span>
+            <strong>{growerListings.length}</strong>
           </div>
-
-          <p>{seller.bio}</p>
-
-          <div className="dashboard-stats profile-stats">
-            <div className="dashboard-card">
-              <span>Listings</span>
-              <strong>{seller.listingCount ?? sellerListings.length}</strong>
-            </div>
-            <div className="dashboard-card">
-              <span>Followers</span>
-              <strong>{seller.followers || 0}</strong>
-            </div>
-            <div className="dashboard-card">
-              <span>Rating</span>
-              <strong>{seller.rating?.toFixed(1) || '4.7'}</strong>
-            </div>
+          <div className="dashboard-card">
+            <span>Followers</span>
+            <strong>{grower.followers || 0}</strong>
           </div>
+          <div className="dashboard-card">
+            <span>Rating</span>
+            <strong>{(grower.rating || 0).toFixed(1)}</strong>
+          </div>
+        </div>
 
+        <div className="trust-metrics">
+          {grower.verified ? <div className="metric-chip">Verified grower</div> : null}
+          {grower.responseScore ? <div className="metric-chip">{grower.responseScore}</div> : null}
+          {grower.repeatBuyerScore ? <div className="metric-chip">{grower.repeatBuyerScore}</div> : null}
+          {grower.orchardName ? <div className="metric-chip">{grower.orchardName}</div> : null}
+        </div>
+
+        {grower.specialties?.length ? (
           <div className="pill-row">
-            {(seller.specialties || []).map((specialty) => (
-              <span className="pill" key={specialty}>
-                {specialty}
+            {grower.specialties.map((item) => (
+              <span className="pill" key={item}>
+                {item}
               </span>
             ))}
           </div>
-        </div>
+        ) : null}
+
+        {grower.id !== currentSeller.id ? (
+          <div className="action-row">
+            <button className="primary" onClick={() => onToggleFollow(grower.id)}>
+              {isFollowing ? 'Following' : 'Follow grower'}
+            </button>
+          </div>
+        ) : null}
       </section>
 
-      <section className="section-heading compact-heading">
-        <div>
-          <p className="eyebrow">Live listings</p>
-          <h2>{seller.name}'s harvest board</h2>
+      <section>
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Grower listings</p>
+            <h2>Current harvests</h2>
+          </div>
+          <span className="section-meta">{growerListings.length} live</span>
         </div>
-        <span className="section-meta">{sellerListings.length} live</span>
-      </section>
 
-      <section className="grid">
-        {sellerListings.map((item) => {
-          const isFavorite = favorites.some((fav) => fav.listingId === item.id)
-          return (
+        <section className="grid">
+          {growerListings.map((item) => (
             <article className="card premium-card" key={item.id}>
               <div className="card-image-wrap">
                 <img src={item.image} alt={item.title} />
@@ -833,207 +991,146 @@ function SellerRoute({
               </div>
               <div className="card-body">
                 <div className="price-row">
-                  <div>
-                    <h3>{item.title}</h3>
-                    <span>
-                      ${item.price}/{item.unit}
-                    </span>
-                  </div>
+                  <h3>{item.title}</h3>
+                  <span>
+                    ${item.price}/{item.unit}
+                  </span>
                 </div>
-                <ListingSignalRow listing={item} />
-                <p className="meta">{item.location}</p>
-                <p className="desc">{item.description}</p>
-                <div className="action-row">
-                  <button className="primary" onClick={() => navigate(`/listing/${item.id}`)}>
-                    View
-                  </button>
-                  <button className="ghost" onClick={() => onToggleFavorite(item.id)}>
-                    {isFavorite ? 'Saved' : 'Save'}
-                  </button>
+                <p className="meta">{prettyLocation(item)} • {item.inventory} left</p>
+                <div className="listing-badge-row">
+                  {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
+                  {item.freshnessLabel ? <span className="trust-pill freshness">{item.freshnessLabel}</span> : null}
                 </div>
               </div>
             </article>
-          )
-        })}
+          ))}
+        </section>
       </section>
     </section>
   )
 }
 
-function NotificationsRoute({
-  notifications,
-  alerts,
+function AlertsPage({
   seller,
-  sellers,
-  follows,
+  alerts,
+  notifications,
   onCreateAlert,
+  onToggleAlert,
+  onReadNotification,
 }: {
-  notifications: NotificationItem[]
-  alerts: SavedAlert[]
   seller: SellerProfile
-  sellers: SellerProfile[]
-  follows: SellerFollow[]
-  onCreateAlert: (payload: Omit<SavedAlert, 'id'>) => Promise<void>
+  alerts: AlertItem[]
+  notifications: NotificationItem[]
+  onCreateAlert: (payload: Omit<AlertItem, 'id'>) => Promise<void>
+  onToggleAlert: (id: string) => Promise<void>
+  onReadNotification: (id: string) => Promise<void>
 }) {
-  const [fruit, setFruit] = useState('Peaches')
-  const [location, setLocation] = useState(seller.city.replace(', CA', ''))
-  const [radius, setRadius] = useState('5')
-  const [sellerId, setSellerId] = useState('')
+  const [fruit, setFruit] = useState('')
+  const [location, setLocation] = useState('Anywhere, USA')
+  const [radiusMiles, setRadiusMiles] = useState('25')
 
   return (
-    <section className="stack">
-      <div className="section-heading compact-heading">
-        <div>
-          <p className="eyebrow">Alerts + notifications</p>
-          <h2>Notification center</h2>
+    <section className="alerts-layout">
+      <div className="stack">
+        <div className="section-heading compact-heading no-top-gap">
+          <div>
+            <p className="eyebrow">Saved alerts</p>
+            <h2>Watchlist</h2>
+          </div>
+          <span className="section-meta">{alerts.length} alerts</span>
         </div>
-        <span className="section-meta">{notifications.filter((item) => !item.read).length} unread</span>
-      </div>
 
-      <div className="alerts-grid">
-        <section className="alert-builder-card">
-          <p className="eyebrow">Saved alert match</p>
-          <h3>Create nearby fruit alerts</h3>
-          <div className="form-grid compact-form-grid">
+        <form
+          className="listing-form"
+          onSubmit={async (e) => {
+            e.preventDefault()
+            await onCreateAlert({
+              userId: seller.id,
+              fruit: fruit || 'Fruit',
+              location: location || 'Anywhere, USA',
+              radiusMiles: Number(radiusMiles) || 25,
+              sellerId: '',
+              active: true,
+            })
+            setFruit('')
+            setLocation('Anywhere, USA')
+            setRadiusMiles('25')
+          }}
+        >
+          <div className="form-grid">
             <label>
               Fruit
               <input value={fruit} onChange={(e) => setFruit(e.target.value)} placeholder="Peaches" />
             </label>
             <label>
-              Neighborhood
-              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Mission Hills" />
+              Location
+              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Denver, CO" />
             </label>
-            <label>
+            <label className="full">
               Radius miles
-              <input value={radius} onChange={(e) => setRadius(e.target.value)} type="number" min="1" />
-            </label>
-            <label>
-              Seller focus
-              <select value={sellerId} onChange={(e) => setSellerId(e.target.value)}>
-                <option value="">Any seller</option>
-                {sellers.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
+              <input
+                type="number"
+                min="1"
+                max="500"
+                value={radiusMiles}
+                onChange={(e) => setRadiusMiles(e.target.value)}
+              />
             </label>
           </div>
-          <button
-            className="primary"
-            onClick={() =>
-              onCreateAlert({
-                userId: seller.id,
-                fruit,
-                location,
-                radiusMiles: Number(radius) || 5,
-                sellerId,
-                active: true,
-              })
-            }
-          >
-            Save alert
-          </button>
-        </section>
 
-        <section className="stack card-like">
-          <p className="eyebrow">Live alerts</p>
-          <h3>Saved alert list</h3>
-          {(alerts || []).map((alert) => (
-            <div className="mini-card premium-mini-card" key={alert.id}>
-              <div className="mini-card-copy">
+          <div className="action-row">
+            <button className="primary" type="submit">
+              Create alert
+            </button>
+          </div>
+        </form>
+
+        <div className="stack-list">
+          {alerts.map((alert) => (
+            <div className="alert-card-row" key={alert.id}>
+              <div>
                 <strong>{alert.fruit}</strong>
                 <p>
-                  {alert.location} · {alert.radiusMiles} mi radius
+                  {alert.location} • {alert.radiusMiles} miles
                 </p>
-                <span>{alert.sellerId ? `Seller-specific alert` : 'Any local seller'}</span>
               </div>
+              <button className={alert.active ? 'ghost active-soft' : 'ghost'} onClick={() => onToggleAlert(alert.id)}>
+                {alert.active ? 'Active' : 'Paused'}
+              </button>
             </div>
           ))}
-        </section>
-      </div>
-
-      <section className="stack card-like">
-        <p className="eyebrow">In-app push scaffold</p>
-        <h3>Notification feed</h3>
-        {notifications.map((item) => (
-          <div className="notification-row" key={item.id}>
-            <div>
-              <strong>{item.title}</strong>
-              <p>{item.body}</p>
-            </div>
-            <span>{formatRelativeTime(item.createdAt)}</span>
-          </div>
-        ))}
-      </section>
-
-      <section className="stack card-like">
-        <p className="eyebrow">Followed sellers</p>
-        <h3>Signal foundation</h3>
-        {follows.length ? (
-          follows.map((follow) => {
-            const sellerMatch = sellers.find((item) => item.id === follow.sellerId)
-            return (
-              <div className="notification-row" key={follow.id}>
-                <div>
-                  <strong>{sellerMatch?.name || 'Seller'}</strong>
-                  <p>{sellerMatch?.city || 'Local seller'} · alert-ready for future push and email notifications.</p>
-                </div>
-              </div>
-            )
-          })
-        ) : (
-          <p>No followed sellers yet.</p>
-        )}
-      </section>
-    </section>
-  )
-}
-
-function SocialRoute({ posts }: { posts: SocialPost[] }) {
-  return (
-    <section className="stack">
-      <div className="section-heading compact-heading">
-        <div>
-          <p className="eyebrow">Community layer</p>
-          <h2>Social feed</h2>
         </div>
-        <span className="section-meta">Seller posts · harvest updates · neighborhood signals</span>
       </div>
 
-      <div className="social-feed-list">
-        {posts.map((post) => (
-          <article className="social-card" key={post.id}>
-            <div className="social-card-header">
-              <div className="social-author">
-                <img src={post.sellerAvatar} alt={post.sellerName} />
-                <div>
-                  <strong>{post.sellerName}</strong>
-                  <p>
-                    {post.sellerHandle} · {post.location} · {formatRelativeTime(post.createdAt)}
-                  </p>
+      <div className="stack">
+        <div className="section-heading compact-heading no-top-gap">
+          <div>
+            <p className="eyebrow">Notifications</p>
+            <h2>Recent signals</h2>
+          </div>
+          <span className="section-meta">{notifications.filter((n) => !n.read).length} unread</span>
+        </div>
+
+        <div className="stack-list">
+          {notifications.length ? (
+            notifications.map((item) => (
+              <div className={item.read ? 'notification-card' : 'notification-card unread'} key={item.id}>
+                <div className="notification-copy">
+                  <strong>{item.title}</strong>
+                  <p>{item.body}</p>
+                  <span>{formatTime(item.createdAt)}</span>
                 </div>
+                {!item.read ? (
+                  <button className="ghost compact-btn" onClick={() => onReadNotification(item.id)}>
+                    Mark read
+                  </button>
+                ) : null}
               </div>
-              <span className="signal-pill">{post.type}</span>
-            </div>
-            <div className="social-card-body">
-              <h3>{post.title}</h3>
-              <p>{post.body}</p>
-              {post.image && <img className="social-card-image" src={post.image} alt={post.title} />}
-              <div className="social-card-actions">
-                <button className="ghost" type="button">
-                  Reactions soon
-                </button>
-                <button className="ghost" type="button">
-                  Comments soon
-                </button>
-                <button className="ghost" type="button">
-                  Spotlight soon
-                </button>
-              </div>
-            </div>
-          </article>
-        ))}
+            ))
+          ) : (
+            <div className="empty-panel">No notifications yet.</div>
+          )}
+        </div>
       </div>
     </section>
   )
@@ -1049,14 +1146,13 @@ type AppLayoutProps = {
   setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>
   threadMessages: Message[]
   setThreadMessages: React.Dispatch<React.SetStateAction<Message[]>>
-  sellers: SellerProfile[]
-  setSellers: React.Dispatch<React.SetStateAction<SellerProfile[]>>
-  posts: SocialPost[]
+  socialPosts: SocialPost[]
   notifications: NotificationItem[]
-  alerts: SavedAlert[]
-  setAlerts: React.Dispatch<React.SetStateAction<SavedAlert[]>>
-  follows: SellerFollow[]
-  setFollows: React.Dispatch<React.SetStateAction<SellerFollow[]>>
+  setNotifications: React.Dispatch<React.SetStateAction<NotificationItem[]>>
+  alerts: AlertItem[]
+  setAlerts: React.Dispatch<React.SetStateAction<AlertItem[]>>
+  follows: Follow[]
+  setFollows: React.Dispatch<React.SetStateAction<Follow[]>>
 }
 
 function AppLayout({
@@ -1069,10 +1165,9 @@ function AppLayout({
   setConversations,
   threadMessages,
   setThreadMessages,
-  sellers,
-  setSellers,
-  posts,
+  socialPosts,
   notifications,
+  setNotifications,
   alerts,
   setAlerts,
   follows,
@@ -1082,32 +1177,43 @@ function AppLayout({
   const location = useLocation()
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<QuickFilter>('all')
-  const [radiusFilter, setRadiusFilter] = useState<RadiusFilter>(5)
-  const [selectedMapListingId, setSelectedMapListingId] = useState<string | null>(null)
+  const [reserveTarget, setReserveTarget] = useState<Listing | null>(null)
 
   const favoriteListingIds = new Set(favorites.map((fav) => fav.listingId))
   const favoriteListings = listings.filter((item) => favoriteListingIds.has(item.id))
-  const myListings = listings.filter((item) => item.sellerId === seller.id)
-  const justAdded = listings.filter((item) => item.distance === 'Just added' || item.harvestLabel === 'Just dropped')
+  const myListings = listings.filter((item) => item.sellerName === seller.name)
+  const justAdded = listings.filter((item) => item.distance === 'Just added')
   const totalInventory = myListings.reduce((sum, item) => sum + item.inventory, 0)
   const averagePrice =
     myListings.length > 0
       ? (myListings.reduce((sum, item) => sum + item.price, 0) / myListings.length).toFixed(2)
       : '0.00'
-  const unreadCount = notifications.filter((item) => !item.read).length
+
+  const unreadNotifications = notifications.filter((item) => !item.read)
+  const followingSellerIds = new Set(follows.map((item) => item.sellerId))
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
 
     let result = listings.filter((item) =>
-      [item.title, item.fruit, item.location, item.sellerName, item.description, ...(item.tags || [])]
+      [
+        item.title,
+        item.fruit,
+        item.location,
+        item.city || '',
+        item.state || '',
+        item.zip || '',
+        item.sellerName,
+        item.description,
+        ...(item.tags || []),
+      ]
         .join(' ')
         .toLowerCase()
         .includes(q),
     )
 
     if (activeFilter === 'just-added') {
-      result = result.filter((item) => item.distance === 'Just added' || item.harvestLabel === 'Just dropped')
+      result = result.filter((item) => item.distance === 'Just added')
     }
 
     if (activeFilter === 'under-5') {
@@ -1116,7 +1222,9 @@ function AppLayout({
 
     if (activeFilter === 'citrus') {
       result = result.filter((item) =>
-        ['orange', 'oranges', 'lemon', 'lemons', 'lime', 'limes', 'grapefruit', 'citrus'].includes(item.fruit.toLowerCase()),
+        ['orange', 'oranges', 'lemon', 'lemons', 'lime', 'limes', 'grapefruit'].includes(
+          item.fruit.toLowerCase(),
+        ),
       )
     }
 
@@ -1124,22 +1232,8 @@ function AppLayout({
       result = result.filter((item) => item.inventory >= 6)
     }
 
-    if (activeFilter === 'near-me') {
-      result = result.filter((item) => {
-        const value = Number.parseFloat(item.distance)
-        return Number.isFinite(value) ? value <= radiusFilter : true
-      })
-    }
-
-    return result.sort((a, b) => {
-      const aValue = Number.parseFloat(a.distance)
-      const bValue = Number.parseFloat(b.distance)
-      if (Number.isFinite(aValue) && Number.isFinite(bValue)) return aValue - bValue
-      return 0
-    })
-  }, [listings, query, activeFilter, radiusFilter])
-
-  const selectedMapListing = filtered.find((item) => item.id === selectedMapListingId) || filtered[0] || null
+    return result
+  }, [listings, query, activeFilter])
 
   async function handleCreate(payload: Omit<Listing, 'id'>) {
     const saved = await createListing(payload)
@@ -1154,20 +1248,12 @@ function AppLayout({
     }
 
     const updated = await updateListing(listingId, payload)
-
-    setListings((current) => {
-      const exists = current.some((item) => item.id === listingId)
-      if (exists) {
-        return current.map((item) => (item.id === listingId ? updated : item))
-      }
-      return [updated, ...current]
-    })
+    setListings((current) => current.map((item) => (item.id === listingId ? updated : item)))
   }
 
   async function handleArchive(listingId: string) {
     const confirmed = window.confirm('Archive this listing?')
     if (!confirmed) return
-
     await deleteListing(listingId)
     setListings((current) => current.filter((item) => item.id !== listingId))
   }
@@ -1182,8 +1268,21 @@ function AppLayout({
     }
   }
 
-  async function handleReserve(listing: Listing) {
-    const pickupWindow = listing.pickupWindows?.[0] || 'Pickup by message'
+  async function handleToggleFollow(sellerId: string) {
+    if (sellerId === seller.id) return
+    const result = await toggleFollow({ userId: seller.id, sellerId })
+
+    if (result.active) {
+      setFollows((current) => [{ id: crypto.randomUUID(), userId: seller.id, sellerId }, ...current])
+    } else {
+      setFollows((current) => current.filter((item) => item.sellerId !== sellerId))
+    }
+
+    const refreshedListings = await getListings()
+    setListings(refreshedListings)
+  }
+
+  async function handleConfirmReserve(listing: Listing, pickupWindow: string) {
     const result = await reservePickup({
       listingId: listing.id,
       buyerId: seller.id,
@@ -1193,7 +1292,8 @@ function AppLayout({
     })
 
     setListings((current) => current.map((item) => (item.id === listing.id ? result.listing : item)))
-    window.alert(`Pickup reserved for ${pickupWindow}`)
+    setReserveTarget(null)
+    navigate('/messages')
   }
 
   async function handleStartConversation(listing: Listing) {
@@ -1241,16 +1341,19 @@ function AppLayout({
     setThreadMessages(thread)
   }
 
-  async function handleFollow(sellerId: string) {
-    const result = await toggleFollowSeller({ userId: seller.id, sellerId })
-    setFollows(result.follows)
-    const refreshedSellers = await getSellers().catch(() => sellers)
-    setSellers(refreshedSellers)
+  async function handleCreateAlert(payload: Omit<AlertItem, 'id'>) {
+    const created = await createAlert(payload)
+    setAlerts((current) => [created, ...current])
   }
 
-  async function handleCreateAlert(payload: Omit<SavedAlert, 'id'>) {
-    const saved = await createSavedAlert(payload)
-    setAlerts((current) => [saved, ...current])
+  async function handleToggleAlert(id: string) {
+    const updated = await toggleAlert(id)
+    setAlerts((current) => current.map((item) => (item.id === id ? updated : item)))
+  }
+
+  async function handleReadNotification(id: string) {
+    const updated = await markNotificationRead(id)
+    setNotifications((current) => current.map((item) => (item.id === id ? updated : item)))
   }
 
   function isActivePath(path: string) {
@@ -1261,16 +1364,17 @@ function AppLayout({
     <div className="app-shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Pluck</p>
+          <p className="eyebrow">Pluck V7B shell</p>
           <h1>Fresh fruit from neighbors</h1>
           <p className="subtle-copy">
-            A trusted local marketplace for backyard harvests, same-day pickup, grower discovery, and social neighborhood signals.
+            A sharper local marketplace for backyard harvests, same-day pickup, grower trust, and nationwide-ready discovery.
           </p>
         </div>
         <div className="topbar-actions">
-          <button className="ghost" onClick={() => navigate('/notifications')}>
-            Alerts {unreadCount ? `(${unreadCount})` : ''}
+          <button className="ghost" onClick={() => navigate('/alerts')}>
+            Alerts {unreadNotifications.length ? `(${unreadNotifications.length})` : ''}
           </button>
+          <button className="ghost">{[seller.city, seller.state].filter(Boolean).join(', ') || 'Location'}</button>
           <button className="primary" onClick={() => navigate('/store/new')}>
             + New listing
           </button>
@@ -1279,17 +1383,20 @@ function AppLayout({
 
       <section className="hero-band">
         <div className="hero-copy">
-          <p className="eyebrow">V6A productization layer</p>
-          <h2>Trust, alerts, geo discovery, social proof, and AI-ready listing creation.</h2>
+          <p className="eyebrow">Refined neighborhood commerce</p>
+          <h2>Turn extra fruit into a polished local marketplace experience.</h2>
           <p>
-            PLUCK now feels like a real startup product: stronger seller identity, harvest urgency, saved alerts, seller pages, and a scalable photo-first create flow.
+            Pluck now surfaces grower trust, harvest freshness, alerts, stronger messaging, and a cleaner mobile-style product rhythm.
           </p>
           <div className="hero-cta-row">
             <button className="primary" onClick={() => navigate('/store/new')}>
               Create premium listing
             </button>
-            <button className="ghost" onClick={() => navigate('/social')}>
-              Open social feed
+            <button className="ghost" onClick={() => navigate('/map')}>
+              Explore nearby map
+            </button>
+            <button className="ghost" onClick={() => navigate('/alerts')}>
+              Open alerts
             </button>
           </div>
         </div>
@@ -1303,19 +1410,23 @@ function AppLayout({
             <span>Saved items</span>
             <strong>{favoriteListings.length}</strong>
           </button>
-          <button className="stat-card stat-link" onClick={() => navigate('/notifications')}>
-            <span>Saved alerts</span>
-            <strong>{alerts.length}</strong>
+          <button className="stat-card stat-link" onClick={() => navigate('/store/inventory')}>
+            <span>Your inventory</span>
+            <strong>{totalInventory}</strong>
           </button>
-          <button className="stat-card stat-link" onClick={() => navigate('/social')}>
-            <span>Social posts</span>
-            <strong>{posts.length}</strong>
+          <button className="stat-card stat-link" onClick={() => navigate('/messages')}>
+            <span>Inbox threads</span>
+            <strong>{conversations.length}</strong>
           </button>
         </div>
       </section>
 
       <div className="search-wrap">
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search oranges, peaches, growers, neighborhoods..." />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search fruit, growers, city, state, or ZIP..."
+        />
 
         <div className="search-bottom-row">
           <div className="toggle-row">
@@ -1325,27 +1436,19 @@ function AppLayout({
             <button className={isActivePath('/map') ? 'toggle active' : 'toggle'} onClick={() => navigate('/map')}>
               Map
             </button>
-            <button className={isActivePath('/social') ? 'toggle active' : 'toggle'} onClick={() => navigate('/social')}>
-              Feed
-            </button>
           </div>
 
           <div className="filter-chip-row">
             {quickFilters.map((filter) => (
-              <button key={filter.key} className={activeFilter === filter.key ? 'filter-chip active' : 'filter-chip'} onClick={() => setActiveFilter(filter.key)}>
+              <button
+                key={filter.key}
+                className={activeFilter === filter.key ? 'filter-chip active' : 'filter-chip'}
+                onClick={() => setActiveFilter(filter.key)}
+              >
                 {filter.label}
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="radius-chip-row">
-          <span className="radius-label">Radius</span>
-          {radiusOptions.map((radius) => (
-            <button key={radius} className={radiusFilter === radius ? 'filter-chip active' : 'filter-chip'} onClick={() => setRadiusFilter(radius)}>
-              {radius} mi
-            </button>
-          ))}
         </div>
       </div>
 
@@ -1358,13 +1461,23 @@ function AppLayout({
                 <section className="hero-card">
                   <div>
                     <p className="eyebrow">Today nearby</p>
-                    <h2>Backyard harvests, same-day pickup, trusted growers</h2>
-                    <p>Browse live listings, save alerts, follow growers, and move from discovery to pickup in a few taps.</p>
+                    <h2>Backyard harvests, same-day pickup</h2>
+                    <p>Browse fruit from local growers, reserve by message, and coordinate a clear pickup window.</p>
                   </div>
-                  <button className="primary" onClick={() => navigate('/notifications')}>
-                    Set nearby alert
+                  <button className="primary" onClick={() => navigate('/store/new')}>
+                    Create listing
                   </button>
                 </section>
+
+                {unreadNotifications.length ? (
+                  <section className="signal-strip">
+                    {unreadNotifications.slice(0, 2).map((item) => (
+                      <button className="signal-pill" key={item.id} onClick={() => navigate('/alerts')}>
+                        {item.title}
+                      </button>
+                    ))}
+                  </section>
+                ) : null}
 
                 <section className="section-heading">
                   <div>
@@ -1377,76 +1490,132 @@ function AppLayout({
                 <section className="grid">
                   {filtered.map((item) => {
                     const isFavorite = favoriteListingIds.has(item.id)
-                    const sellerMatch = sellers.find((sellerItem) => sellerItem.id === item.sellerId)
+                    const isFollowing = followingSellerIds.has(item.sellerId)
 
                     return (
-                      <article className="card premium-card" key={item.id}>
+                      <article className="card premium-card listing-card-v2" key={item.id}>
                         <div className="card-image-wrap">
                           <img src={item.image} alt={item.title} />
                           <span className="card-badge">{item.distance}</span>
                         </div>
                         <div className="card-body">
                           <div className="price-row">
-                            <div>
-                              <h3>{item.title}</h3>
-                              <span>
-                                ${item.price}/{item.unit}
-                              </span>
-                            </div>
-                            <button className={isFavorite ? 'icon-favorite active' : 'icon-favorite'} onClick={() => handleToggleFavorite(item.id)}>
-                              ♥
-                            </button>
+                            <h3>{item.title}</h3>
+                            <span>
+                              ${item.price}/{item.unit}
+                            </span>
                           </div>
-                          <ListingSignalRow listing={item} />
-                          <p className="meta">
-                            {item.location} · {item.inventory} left · {item.sellerRating?.toFixed(1) || '4.7'} ★
-                          </p>
-                          <p className="desc">{item.description}</p>
-                          <button className="seller-link-inline" onClick={() => navigate(`/seller/${item.sellerId}`)}>
-                            {item.sellerVerified ? 'Verified' : 'Local'} seller: {item.sellerName}
-                            {sellerMatch?.orchardName ? ` · ${sellerMatch.orchardName}` : ''}
+
+                          <div className="listing-badge-row">
+                            {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
+                            {item.freshnessLabel ? <span className="trust-pill freshness">{item.freshnessLabel}</span> : null}
+                            {item.availabilityLabel ? <span className="trust-pill available">{item.availabilityLabel}</span> : null}
+                          </div>
+
+                          <p className="meta">{prettyLocation(item)} • {item.inventory} left</p>
+
+                          <button className="seller-inline-link" onClick={() => navigate('/grower/' + item.sellerId)}>
+                            {item.sellerVerified ? '✓ ' : ''}{sellerLabel(item)}
                           </button>
+
+                          <p className="desc">{item.description}</p>
+
+                          {item.harvestNote ? <div className="harvest-note small">{item.harvestNote}</div> : null}
+
+                          {(item.tags || []).length ? (
+                            <div className="pill-row">
+                              {item.tags?.map((tag) => (
+                                <span className="pill" key={tag}>
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+
                           <div className="pill-row">
-                            {(item.tags || []).map((tag) => (
-                              <span className="pill" key={`${item.id}-${tag}`}>
-                                {tag}
+                            {item.pickupWindows.map((slot, index) => (
+                              <span className="pill" key={`${item.id}-${slot}-${index}`}>
+                                {slot}
                               </span>
                             ))}
                           </div>
-                          <div className="action-row">
-                            <button className="primary" onClick={() => handleStartConversation(item)}>
+
+                          <ActionGrid columns={2}>
+                            <button className="primary fill-btn" onClick={() => handleStartConversation(item)}>
                               Message
                             </button>
-                            <button className="ghost" onClick={() => navigate(`/listing/${item.id}`)}>
+                            <button className="ghost fill-btn" onClick={() => navigate('/listing/' + item.id)}>
                               View
                             </button>
-                            <button className="ghost" onClick={() => handleFollow(item.sellerId)}>
-                              {follows.some((follow) => follow.sellerId === item.sellerId) ? 'Following' : 'Follow'}
+                            <button className="ghost fill-btn" onClick={() => handleToggleFavorite(item.id)}>
+                              {isFavorite ? 'Saved' : 'Save'}
                             </button>
-                          </div>
+                            <button className="ghost fill-btn" onClick={() => handleToggleFollow(item.sellerId)}>
+                              {isFollowing ? 'Following' : 'Follow'}
+                            </button>
+                          </ActionGrid>
                         </div>
                       </article>
                     )
                   })}
                 </section>
 
+                {socialPosts.length ? (
+                  <>
+                    <section className="section-heading section-gap-top">
+                      <div>
+                        <p className="eyebrow">Harvest feed</p>
+                        <h2>Grower signals</h2>
+                      </div>
+                    </section>
+
+                    <section className="social-grid">
+                      {socialPosts.slice(0, 3).map((post) => (
+                        <article className="social-card" key={post.id}>
+                          <div className="social-head">
+                            <img className="avatar small" src={post.sellerAvatar} alt={post.sellerName} />
+                            <div>
+                              <strong>{post.sellerName}</strong>
+                              <p>
+                                {post.sellerHandle} • {post.location}
+                              </p>
+                            </div>
+                          </div>
+
+                          {post.image ? <img className="social-image" src={post.image} alt={post.title} /> : null}
+
+                          <div className="social-body">
+                            <span className="trust-pill social-type">{post.type}</span>
+                            <h3>{post.title}</h3>
+                            <p>{post.body}</p>
+                            <ActionGrid columns={1}>
+                              <button className="ghost fill-btn" onClick={() => navigate('/grower/' + post.sellerId)}>
+                                View grower
+                              </button>
+                            </ActionGrid>
+                          </div>
+                        </article>
+                      ))}
+                    </section>
+                  </>
+                ) : null}
+
                 <section className="section-heading section-gap-top">
                   <div>
                     <p className="eyebrow">Fresh activity</p>
-                    <h2>Just added + harvest urgency</h2>
+                    <h2>Just added</h2>
                   </div>
                 </section>
 
                 <section className="mini-grid">
-                  {(justAdded.length ? justAdded : listings.slice(0, 3)).map((item) => (
-                    <div className="activity-card harvest-activity-card" key={item.id}>
+                  {(justAdded.length ? justAdded : listings.slice(0, 2)).map((item) => (
+                    <div className="activity-card" key={item.id}>
                       <img src={item.image} alt={item.title} />
                       <div>
                         <strong>{item.title}</strong>
                         <p>
-                          {item.location} · ${item.price}/{item.unit}
+                          {prettyLocation(item)} • ${item.price}/{item.unit}
                         </p>
-                        <span>{item.harvestLabel || 'Just dropped'}</span>
                       </div>
                     </div>
                   ))}
@@ -1459,7 +1628,7 @@ function AppLayout({
             path="/map"
             element={
               <section className="map-panel">
-                <div className="map-fallback premium-map enhanced-map-panel">
+                <div className="map-fallback premium-map">
                   <div className="map-header-row">
                     <div>
                       <p className="eyebrow">Discovery map</p>
@@ -1469,48 +1638,27 @@ function AppLayout({
                       Add your harvest
                     </button>
                   </div>
-                  <p>Geo discovery now supports near-me sorting, radius filtering, selected marker focus, and seller-aware map browsing.</p>
-                  <div className="map-two-col">
-                    <div className="pin-list">
-                      {filtered.map((item) => (
-                        <button
-                          className={selectedMapListing?.id === item.id ? 'pin-row premium-pin-row active' : 'pin-row premium-pin-row'}
-                          key={item.id}
-                          onClick={() => setSelectedMapListingId(item.id)}
-                        >
-                          <div>
-                            <strong>{item.fruit}</strong>
-                            <p>
-                              {item.title} · {item.location}
-                            </p>
+                  <p>
+                    This map reflects nationwide-ready location fields and trust signals. Next layer is real pins and live area search.
+                  </p>
+                  <div className="pin-list">
+                    {filtered.map((item) => (
+                      <div className="pin-row premium-pin-row" key={item.id}>
+                        <div>
+                          <strong>{item.fruit}</strong>
+                          <p>
+                            {item.title} • {prettyLocation(item)}
+                          </p>
+                          <div className="listing-badge-row">
+                            {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
+                            {item.sellerVerified ? <span className="trust-pill verified">Verified</span> : null}
                           </div>
-                          <span>
-                            ${item.price}/{item.unit}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="map-focus-card">
-                      {selectedMapListing ? (
-                        <>
-                          <img src={selectedMapListing.image} alt={selectedMapListing.title} />
-                          <h3>{selectedMapListing.title}</h3>
-                          <p>{selectedMapListing.description}</p>
-                          <ListingSignalRow listing={selectedMapListing} />
-                          <div className="action-row">
-                            <button className="primary" onClick={() => navigate(`/listing/${selectedMapListing.id}`)}>
-                              Open listing
-                            </button>
-                            <button className="ghost" onClick={() => navigate(`/seller/${selectedMapListing.sellerId}`)}>
-                              Seller page
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <p>No listings in this radius yet.</p>
-                      )}
-                    </div>
+                        </div>
+                        <span>
+                          ${item.price}/{item.unit}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </section>
@@ -1519,14 +1667,37 @@ function AppLayout({
 
           <Route
             path="/listing/:id"
-            element={<ListingDetailRoute listings={listings} favorites={favorites} sellers={sellers} follows={follows} onEdit={(id) => navigate(`/store/edit/${id}`)} onToggleFavorite={handleToggleFavorite} onReserve={handleReserve} onStartConversation={handleStartConversation} onFollow={handleFollow} />}
+            element={
+              <ListingDetailRoute
+                listings={listings}
+                favorites={favorites}
+                follows={follows}
+                onEdit={(id) => navigate('/store/edit/' + id)}
+                onToggleFavorite={handleToggleFavorite}
+                onToggleFollow={handleToggleFollow}
+                onOpenReserve={setReserveTarget}
+                onStartConversation={handleStartConversation}
+              />
+            }
+          />
+
+          <Route
+            path="/grower/:id"
+            element={
+              <GrowerPage
+                listings={listings}
+                currentSeller={seller}
+                follows={follows}
+                onToggleFollow={handleToggleFollow}
+              />
+            }
           />
 
           <Route
             path="/favorites"
             element={
               <section className="stack">
-                <div className="section-heading compact-heading">
+                <div className="section-heading compact-heading no-top-gap">
                   <div>
                     <p className="eyebrow">Saved for later</p>
                     <h2>Favorites</h2>
@@ -1535,47 +1706,62 @@ function AppLayout({
                 </div>
 
                 {favoriteListings.length ? (
-                  favoriteListings.map((item) => (
-                    <div className="mini-card premium-mini-card" key={item.id}>
-                      <img src={item.image} alt={item.title} />
-                      <div className="mini-card-copy">
-                        <strong>{item.title}</strong>
-                        <p>
-                          {item.location} · ${item.price}/{item.unit}
-                        </p>
-                        <span>{item.pickupWindows[0]}</span>
+                  <div className="stack-list">
+                    {favoriteListings.map((item) => (
+                      <div className="mini-card premium-mini-card" key={item.id}>
+                        <img src={item.image} alt={item.title} />
+                        <div className="mini-card-copy">
+                          <strong>{item.title}</strong>
+                          <p>
+                            {prettyLocation(item)} • ${item.price}/{item.unit}
+                          </p>
+                          <span>{item.pickupWindows[0]}</span>
+                        </div>
+                        <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
+                          View
+                        </button>
                       </div>
-                      <button className="ghost" onClick={() => navigate(`/listing/${item.id}`)}>
-                        View
-                      </button>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 ) : (
-                  <p>No saved listings yet.</p>
+                  <div className="empty-panel">No saved listings yet.</div>
                 )}
               </section>
             }
           />
 
-          <Route path="/messages" element={<MessagesPage conversations={conversations} threadMessages={threadMessages} seller={seller} onSelectConversation={handleSelectConversation} onSendMessage={handleSendMessage} />} />
-
           <Route
-            path="/notifications"
-            element={<NotificationsRoute notifications={notifications} alerts={alerts} seller={seller} sellers={sellers} follows={follows} onCreateAlert={handleCreateAlert} />}
+            path="/alerts"
+            element={
+              <AlertsPage
+                seller={seller}
+                alerts={alerts}
+                notifications={notifications}
+                onCreateAlert={handleCreateAlert}
+                onToggleAlert={handleToggleAlert}
+                onReadNotification={handleReadNotification}
+              />
+            }
           />
 
-          <Route path="/social" element={<SocialRoute posts={posts} />} />
-
           <Route
-            path="/seller/:sellerId"
-            element={<SellerRoute listings={listings} sellers={sellers} follows={follows} favorites={favorites} onToggleFavorite={handleToggleFavorite} onFollow={handleFollow} />}
+            path="/messages"
+            element={
+              <MessagesPage
+                conversations={conversations}
+                threadMessages={threadMessages}
+                seller={seller}
+                onSelectConversation={handleSelectConversation}
+                onSendMessage={handleSendMessage}
+              />
+            }
           />
 
           <Route
             path="/store"
             element={
               <section className="stack">
-                <div className="section-heading compact-heading">
+                <div className="section-heading compact-heading no-top-gap">
                   <div>
                     <p className="eyebrow">Seller dashboard</p>
                     <h2>My Store</h2>
@@ -1603,21 +1789,27 @@ function AppLayout({
                 <div className="tool-grid">
                   <button className="tool-card" onClick={() => navigate('/store/new')}>
                     <strong>+ New listing</strong>
-                    <span>Create a photo-first product card</span>
+                    <span>Create a new product card</span>
                   </button>
                   <button className="tool-card" onClick={() => navigate('/store/listings')}>
                     <strong>Manage listings</strong>
                     <span>View and edit your active items</span>
                   </button>
-                  <button className="tool-card" onClick={() => navigate('/notifications')}>
-                    <strong>Alerts</strong>
-                    <span>Control saved fruit notifications</span>
+                  <button className="tool-card" onClick={() => navigate('/store/inventory')}>
+                    <strong>Inventory</strong>
+                    <span>Adjust stock across listings</span>
                   </button>
-                  <button className="tool-card" onClick={() => navigate('/social')}>
-                    <strong>Community feed</strong>
-                    <span>Track harvest posts and neighborhood signals</span>
+                  <button className="tool-card" onClick={() => navigate('/store/analytics')}>
+                    <strong>Analytics</strong>
+                    <span>See pricing and seller metrics</span>
                   </button>
                 </div>
+
+                <GrowerTrust
+                  seller={seller}
+                  isFollowing={false}
+                  onToggleFollow={async () => Promise.resolve()}
+                />
               </section>
             }
           />
@@ -1626,7 +1818,7 @@ function AppLayout({
             path="/store/listings"
             element={
               <section className="stack">
-                <div className="section-heading compact-heading">
+                <div className="section-heading compact-heading no-top-gap">
                   <div>
                     <p className="eyebrow">Seller listings</p>
                     <h2>Manage Listings</h2>
@@ -1637,31 +1829,37 @@ function AppLayout({
                 </div>
 
                 {myListings.length ? (
-                  myListings.map((item) => (
-                    <div className="listing-row" key={item.id}>
-                      <img className="listing-row-image" src={item.image} alt={item.title} />
-                      <div className="listing-row-copy">
-                        <strong>{item.title}</strong>
-                        <p>
-                          {item.location} · {item.inventory} left · ${item.price}/{item.unit}
-                        </p>
-                        <span>{item.pickupWindows[0]}</span>
+                  <div className="stack-list">
+                    {myListings.map((item) => (
+                      <div className="listing-row" key={item.id}>
+                        <img className="listing-row-image" src={item.image} alt={item.title} />
+                        <div className="listing-row-copy">
+                          <strong>{item.title}</strong>
+                          <p>
+                            {prettyLocation(item)} • {item.inventory} left • ${item.price}/{item.unit}
+                          </p>
+                          <span>{item.pickupWindows[0]}</span>
+                          <div className="listing-badge-row">
+                            {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
+                            {item.availabilityLabel ? <span className="trust-pill available">{item.availabilityLabel}</span> : null}
+                          </div>
+                        </div>
+                        <div className="listing-row-actions">
+                          <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
+                            View
+                          </button>
+                          <button className="ghost" onClick={() => navigate('/store/edit/' + item.id)}>
+                            Edit
+                          </button>
+                          <button className="ghost" onClick={() => handleArchive(item.id)}>
+                            Archive
+                          </button>
+                        </div>
                       </div>
-                      <div className="listing-row-actions">
-                        <button className="ghost" onClick={() => navigate(`/listing/${item.id}`)}>
-                          View
-                        </button>
-                        <button className="ghost" onClick={() => navigate(`/store/edit/${item.id}`)}>
-                          Edit
-                        </button>
-                        <button className="ghost" onClick={() => handleArchive(item.id)}>
-                          Archive
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 ) : (
-                  <p>You do not have any listings yet.</p>
+                  <div className="empty-panel">You do not have any listings yet.</div>
                 )}
               </section>
             }
@@ -1671,7 +1869,7 @@ function AppLayout({
             path="/store/inventory"
             element={
               <section className="stack">
-                <div className="section-heading compact-heading">
+                <div className="section-heading compact-heading no-top-gap">
                   <div>
                     <p className="eyebrow">Inventory</p>
                     <h2>Inventory Overview</h2>
@@ -1690,7 +1888,7 @@ function AppLayout({
                       </div>
                     ))
                   ) : (
-                    <p>You do not have inventory yet.</p>
+                    <div className="empty-panel">You do not have inventory yet.</div>
                   )}
                 </div>
               </section>
@@ -1701,7 +1899,7 @@ function AppLayout({
             path="/store/analytics"
             element={
               <section className="stack">
-                <div className="section-heading compact-heading">
+                <div className="section-heading compact-heading no-top-gap">
                   <div>
                     <p className="eyebrow">Seller analytics</p>
                     <h2>Performance Snapshot</h2>
@@ -1724,16 +1922,34 @@ function AppLayout({
                 </div>
 
                 <div className="analytics-note">
-                  <strong>Next scale layer:</strong>
-                  <p>V6B adds push notifications, real trust ranking, AI produce detection backend, and feed ranking.</p>
+                  <strong>Next build target:</strong>
+                  <p>Live map pins, account creation, and richer pickup coordination flow.</p>
                 </div>
               </section>
             }
           />
 
-          <Route path="/store/new" element={<ListingForm seller={seller} submitLabel="Save listing" onSubmitListing={async (payload) => handleCreate(payload)} />} />
+          <Route
+            path="/store/new"
+            element={
+              <ListingForm
+                seller={seller}
+                submitLabel="Save listing"
+                onSubmitListing={async (payload) => handleCreate(payload)}
+              />
+            }
+          />
 
-          <Route path="/store/edit/:id" element={<EditListingRoute listings={listings} seller={seller} onSubmitListing={async (payload, existingId) => handleUpdate(payload, existingId)} />} />
+          <Route
+            path="/store/edit/:id"
+            element={
+              <EditListingRoute
+                listings={listings}
+                seller={seller}
+                onSubmitListing={async (payload, existingId) => handleUpdate(payload, existingId)}
+              />
+            }
+          />
 
           <Route
             path="/profile"
@@ -1745,18 +1961,12 @@ function AppLayout({
                   <div>
                     <h2>{seller.name}</h2>
                     <p>
-                      {seller.handle} · {seller.city}
+                      {seller.handle} • {[seller.city, seller.state].filter(Boolean).join(', ')}
                     </p>
                   </div>
                 </div>
 
                 <p>{seller.bio}</p>
-
-                <div className="signal-row">
-                  <span className="signal-pill">{seller.verified ? 'Verified farmer' : 'Verification pending'}</span>
-                  <span className="signal-pill">{seller.responseScore || 'Response score pending'}</span>
-                  <span className="signal-pill">{seller.repeatBuyerScore || 'Repeat-buyer score pending'}</span>
-                </div>
 
                 <div className="dashboard-stats profile-stats">
                   <div className="dashboard-card">
@@ -1768,10 +1978,28 @@ function AppLayout({
                     <strong>{favoriteListings.length}</strong>
                   </div>
                   <div className="dashboard-card">
-                    <span>Followers</span>
-                    <strong>{seller.followers || 0}</strong>
+                    <span>Messages</span>
+                    <strong>{conversations.length}</strong>
                   </div>
                 </div>
+
+                <div className="trust-metrics">
+                  {seller.verified ? <div className="metric-chip">Verified grower</div> : null}
+                  {seller.rating ? <div className="metric-chip">★ {seller.rating.toFixed(1)}</div> : null}
+                  {seller.followers ? <div className="metric-chip">{seller.followers} followers</div> : null}
+                  {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
+                  {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
+                </div>
+
+                {seller.specialties?.length ? (
+                  <div className="pill-row">
+                    {seller.specialties.map((item) => (
+                      <span className="pill" key={item}>
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
 
                 <div className="action-row">
                   <button className="ghost">Upload profile photo</button>
@@ -1789,19 +2017,27 @@ function AppLayout({
         <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Home
         </NavLink>
-        <NavLink to="/social" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          Feed
+        <NavLink to="/favorites" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Favorites
         </NavLink>
         <NavLink to="/messages" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Messages
         </NavLink>
-        <NavLink to="/notifications" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          Alerts
-        </NavLink>
         <NavLink to="/store" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           My Store
         </NavLink>
+        <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Profile
+        </NavLink>
       </nav>
+
+      {reserveTarget ? (
+        <ReserveModal
+          listing={reserveTarget}
+          onClose={() => setReserveTarget(null)}
+          onConfirm={async (pickupWindow) => handleConfirmReserve(reserveTarget, pickupWindow)}
+        />
+      ) : null}
     </div>
   )
 }
@@ -1827,7 +2063,15 @@ function EditListingRoute({
     )
   }
 
-  return <ListingForm seller={seller} initialValues={listing} existingId={listing.id} submitLabel="Update listing" onSubmitListing={onSubmitListing} />
+  return (
+    <ListingForm
+      seller={seller}
+      initialValues={listing}
+      existingId={listing.id}
+      submitLabel="Update listing"
+      onSubmitListing={onSubmitListing}
+    />
+  )
 }
 
 function App() {
@@ -1836,21 +2080,19 @@ function App() {
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [threadMessages, setThreadMessages] = useState<Message[]>([])
-  const [sellers, setSellers] = useState<SellerProfile[]>([fallbackSeller])
-  const [posts, setPosts] = useState<SocialPost[]>([])
+  const [socialPosts, setSocialPosts] = useState<SocialPost[]>([])
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
-  const [alerts, setAlerts] = useState<SavedAlert[]>([])
-  const [follows, setFollows] = useState<SellerFollow[]>([])
+  const [alerts, setAlerts] = useState<AlertItem[]>([])
+  const [follows, setFollows] = useState<Follow[]>([])
 
   useEffect(() => {
     getListings().then(setListings).catch(() => setListings(fallbackListings))
     getSeller().then(setSeller).catch(() => setSeller(fallbackSeller))
     getFavorites().then(setFavorites).catch(() => setFavorites([]))
     getConversations().then(setConversations).catch(() => setConversations([]))
-    getSellers().then(setSellers).catch(() => setSellers([fallbackSeller]))
-    getSocialPosts().then(setPosts).catch(() => setPosts([]))
+    getSocialPosts().then(setSocialPosts).catch(() => setSocialPosts([]))
     getNotifications().then(setNotifications).catch(() => setNotifications([]))
-    getSavedAlerts().then(setAlerts).catch(() => setAlerts([]))
+    getAlerts().then(setAlerts).catch(() => setAlerts([]))
     getFollows('me').then(setFollows).catch(() => setFollows([]))
   }, [])
 
@@ -1865,10 +2107,9 @@ function App() {
       setConversations={setConversations}
       threadMessages={threadMessages}
       setThreadMessages={setThreadMessages}
-      sellers={sellers}
-      setSellers={setSellers}
-      posts={posts}
+      socialPosts={socialPosts}
       notifications={notifications}
+      setNotifications={setNotifications}
       alerts={alerts}
       setAlerts={setAlerts}
       follows={follows}
