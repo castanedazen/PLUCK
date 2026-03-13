@@ -50,13 +50,13 @@ function defaultSeller() {
 function defaultBuyer() {
   return {
     id: 'buyer-me',
-    name: 'Local buyer',
+    name: 'Christian',
     email: '',
-    city: '',
-    state: '',
-    zip: '',
+    city: 'Mission Hills',
+    state: 'CA',
+    zip: '91345',
     radiusMiles: 25,
-    favoriteFruits: [],
+    favoriteFruits: ['Oranges', 'Peaches'],
   }
 }
 
@@ -126,14 +126,14 @@ function normalizeSeller(input = {}) {
 function normalizeBuyer(input = {}) {
   return {
     id: input.id || 'buyer-me',
-    name: String(input.name || 'Local buyer').trim(),
+    name: String(input.name || 'Buyer').trim(),
     email: String(input.email || '').trim(),
     city: String(input.city || '').trim(),
     state: String(input.state || '').trim(),
     zip: String(input.zip || '').trim(),
     radiusMiles: Number(input.radiusMiles) || 25,
     favoriteFruits: Array.isArray(input.favoriteFruits)
-      ? input.favoriteFruits.map((x) => String(x).trim()).filter(Boolean)
+      ? input.favoriteFruits.map((item) => String(item).trim()).filter(Boolean)
       : [],
   }
 }
@@ -161,7 +161,9 @@ function normalizeListing(body = {}, existingId = null, db = null) {
     sellerId: body.sellerId || 'me',
     sellerName: body.sellerName || matchedSeller?.name || 'Christian',
     description: body.description || 'Fresh local fruit available for pickup.',
-    pickupWindows: Array.isArray(body.pickupWindows) ? body.pickupWindows.filter(Boolean) : ['Pickup by message'],
+    pickupWindows: Array.isArray(body.pickupWindows)
+      ? body.pickupWindows.filter(Boolean)
+      : ['Pickup by message'],
     isFavorite: Boolean(body.isFavorite),
     status: body.status === 'archived' ? 'archived' : 'active',
     tags: Array.isArray(body.tags)
@@ -307,7 +309,7 @@ function updateFollowerCount(db, sellerId, delta) {
 }
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'pluck-server', version: '7.1.0' })
+  res.json({ ok: true, service: 'pluck-server', version: '7.2.0' })
 })
 
 app.get('/api/listings', (_req, res) => {
@@ -315,7 +317,11 @@ app.get('/api/listings', (_req, res) => {
     const db = readDb()
     const listings = (db.listings || [])
       .filter((item) => item.status !== 'archived')
-      .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt || b.createdAt || 0).getTime() -
+          new Date(a.updatedAt || a.createdAt || 0).getTime(),
+      )
       .map((item) => enrichListing(item, db))
 
     res.json(listings)
@@ -587,46 +593,19 @@ app.get('/api/seller/me', (_req, res) => {
 app.put('/api/seller/me', (req, res) => {
   try {
     const db = readDb()
-    const current = normalizeSeller(db.seller || defaultSeller())
-
-    const updated = normalizeSeller({
-      ...current,
+    const merged = {
+      ...normalizeSeller(db.seller || defaultSeller()),
       ...req.body,
-      id: current.id,
-      followers: req.body?.followers ?? current.followers,
-      rating: req.body?.rating ?? current.rating,
-      ratingCount: req.body?.ratingCount ?? current.ratingCount,
-      verified: req.body?.verified ?? current.verified,
-      responseScore: req.body?.responseScore ?? current.responseScore,
-      repeatBuyerScore: req.body?.repeatBuyerScore ?? current.repeatBuyerScore,
-    })
-
-    db.seller = updated
-
-    const idx = (db.sellers || []).findIndex((item) => item.id === updated.id)
-    if (idx >= 0) {
-      db.sellers[idx] = updated
-    } else {
-      db.sellers = [updated, ...(db.sellers || [])]
     }
 
-    db.listings = (db.listings || []).map((item) =>
-      item.sellerId === updated.id
-        ? {
-            ...item,
-            sellerName: updated.name,
-            sellerVerified: updated.verified,
-            sellerRating: updated.rating,
-            city: updated.city,
-            state: updated.state,
-            location: item.location || updated.locationLabel,
-            updatedAt: new Date().toISOString(),
-          }
-        : item,
+    db.seller = normalizeSeller(merged)
+
+    db.sellers = (db.sellers || []).map((item) =>
+      item.id === db.seller.id ? { ...item, ...db.seller } : item,
     )
 
     writeDb(db)
-    res.json(updated)
+    res.json(db.seller)
   } catch (error) {
     console.error('PUT /api/seller/me failed', error)
     res.status(500).json({ error: 'Failed to update seller profile' })
@@ -673,18 +652,14 @@ app.get('/api/buyer/me', (_req, res) => {
 app.put('/api/buyer/me', (req, res) => {
   try {
     const db = readDb()
-    const current = normalizeBuyer(db.buyer || defaultBuyer())
-
-    const updated = normalizeBuyer({
-      ...current,
+    const merged = {
+      ...normalizeBuyer(db.buyer || defaultBuyer()),
       ...req.body,
-      id: current.id,
-    })
+    }
 
-    db.buyer = updated
+    db.buyer = normalizeBuyer(merged)
     writeDb(db)
-
-    res.json(updated)
+    res.json(db.buyer)
   } catch (error) {
     console.error('PUT /api/buyer/me failed', error)
     res.status(500).json({ error: 'Failed to update buyer profile' })
@@ -857,8 +832,16 @@ app.post('/api/auth/signup', (req, res) => {
     }
 
     db.authUsers = [user, ...(db.authUsers || [])]
-    writeDb(db)
 
+    if (user.role === 'buyer') {
+      db.buyer = normalizeBuyer({
+        ...db.buyer,
+        name: user.name,
+        email: user.email,
+      })
+    }
+
+    writeDb(db)
     res.status(201).json(user)
   } catch (error) {
     console.error('POST /api/auth/signup failed', error)
