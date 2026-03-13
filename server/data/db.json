@@ -1,6 +1,44 @@
 {
   "listings": [
     {
+      "id": "8f1e543f-4bc6-44fa-8194-4ccbbe6c7f76",
+      "title": "tst",
+      "fruit": "t",
+      "price": 8,
+      "unit": "basket",
+      "image": "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80",
+      "location": "Mission Hills",
+      "city": "Mission Hills, CA",
+      "state": "",
+      "zip": "",
+      "distance": "Just added",
+      "inventory": 7,
+      "sellerId": "me",
+      "sellerName": "Christian",
+      "description": "t",
+      "pickupWindows": [
+        "2",
+        "2"
+      ],
+      "isFavorite": false,
+      "status": "active",
+      "tags": [
+        "t"
+      ],
+      "harvestLabel": "t",
+      "freshnessLabel": "Fresh harvest",
+      "availabilityLabel": "Available now",
+      "harvestNote": "t",
+      "sellerVerified": true,
+      "sellerRating": 4.9,
+      "geo": {
+        "lat": 34.2706,
+        "lng": -118.4728
+      },
+      "createdAt": "2026-03-12T16:44:08.995Z",
+      "updatedAt": "2026-03-12T16:45:22.053Z"
+    },
+    {
       "id": "1",
       "title": "Sun-warm Valencia Oranges",
       "fruit": "Oranges",
@@ -8,13 +46,37 @@
       "unit": "bag",
       "image": "https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=1200&q=80",
       "location": "Mission Hills",
+      "city": "Mission Hills, CA",
+      "state": "",
+      "zip": "",
       "distance": "0.8 mi",
       "inventory": 7,
       "sellerId": "s1",
       "sellerName": "Elena",
-      "description": "Picked this morning. Sweet, juicy, and perfect for juice or snacks.",
-      "pickupWindows": ["Today 5–7 PM", "Tomorrow 9–11 AM"],
-      "isFavorite": true
+      "description": "Picked this morning. Sweet, juicy, and ideal for snacking or fresh juice.",
+      "pickupWindows": [
+        "Today 5–7 PM",
+        "Tomorrow 9–11 AM"
+      ],
+      "isFavorite": false,
+      "status": "active",
+      "tags": [
+        "sweet",
+        "citrus",
+        "juice"
+      ],
+      "harvestLabel": "Just dropped",
+      "freshnessLabel": "Fresh harvest",
+      "availabilityLabel": "Available now",
+      "harvestNote": "Pulled from the tree at 7 AM.",
+      "sellerVerified": true,
+      "sellerRating": 4.8,
+      "geo": {
+        "lat": 34.2766,
+        "lng": -118.4671
+      },
+      "createdAt": "2026-03-12T16:44:08.996Z",
+      "updatedAt": "2026-03-12T16:45:22.054Z"
     },
     {
       "id": "2",
@@ -24,54 +86,328 @@
       "unit": "bundle",
       "image": "https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=1200&q=80",
       "location": "Granada Hills",
+      "city": "Granada Hills, CA",
+      "state": "",
+      "zip": "",
       "distance": "1.7 mi",
-      "inventory": 11,
+      "inventory": 10,
       "sellerId": "s2",
       "sellerName": "Marco",
-      "description": "Bright and floral. Great for cooking, cocktails, and lemon bars.",
-      "pickupWindows": ["Today 6–8 PM", "Saturday 10 AM–1 PM"]
+      "description": "Bright, floral lemons with strong color and a clean finish for cooking or cocktails.",
+      "pickupWindows": [
+        "Today 6–8 PM",
+        "Saturday 10 AM–1 PM"
+      ],
+      "isFavorite": false,
+      "status": "active",
+      "tags": [
+        "citrus",
+        "cocktails",
+        "kitchen"
+      ],
+      "harvestLabel": "New nearby",
+      "freshnessLabel": "Fresh harvest",
+      "availabilityLabel": "Available now",
+      "harvestNote": "Weekend cut with extra fragrant skins.",
+      "sellerVerified": false,
+      "sellerRating": 4.6,
+      "geo": {
+        "lat": 34.2726,
+        "lng": -118.5025
+      },
+      "createdAt": "2026-03-12T16:44:08.996Z",
+      "updatedAt": "2026-03-12T16:45:22.054Z"
     },
     {
       "id": "3",
-      "title": "Persimmon Porch Basket",
-      "fruit": "Persimmons",
+      "title": "Soft-ripe White Peaches",
+      "fruit": "Peaches",
       "price": 8,
-      "unit": "basket",
-      "image": "https://images.unsplash.com/photo-1471943311424-646960669fbc?auto=format&fit=crop&w=1200&q=80",
+      "unit": "crate",
+      "image": "https://images.unsplash.com/photo-1629828874514-3d5f9c6694cf?auto=format&fit=crop&w=1200&q=80",
       "location": "Northridge",
-      "distance": "2.4 mi",
+      "city": "Mission Hills, CA",
+      "state": "",
+      "zip": "",
+      "distance": "3.1 mi",
       "inventory": 4,
-      "sellerId": "s3",
-      "sellerName": "Jules",
-      "description": "Soft, honey-sweet persimmons from a mature backyard tree.",
-      "pickupWindows": ["Tomorrow 8–10 AM", "Sunday 4–6 PM"]
+      "sellerId": "me",
+      "sellerName": "Christian",
+      "description": "Sweet white peaches with soft texture. Best for immediate eating.",
+      "pickupWindows": [
+        "Tonight 7–8 PM",
+        "Tomorrow 8–10 AM"
+      ],
+      "isFavorite": false,
+      "status": "active",
+      "tags": [
+        "stone fruit",
+        "sweet",
+        "soft-ripe"
+      ],
+      "harvestLabel": "Just dropped",
+      "freshnessLabel": "Harvested today",
+      "availabilityLabel": "Limited batch",
+      "harvestNote": "Very ripe. Great for same-day pickup.",
+      "sellerVerified": true,
+      "sellerRating": 4.9,
+      "geo": {
+        "lat": 34.2381,
+        "lng": -118.5301
+      },
+      "createdAt": "2026-03-12T16:44:08.996Z",
+      "updatedAt": "2026-03-12T16:45:22.054Z"
     }
   ],
   "messages": [
     {
-      "id": "m1",
-      "listingId": "1",
-      "sellerName": "Elena",
-      "preview": "Yes, I can hold two bags until 6 PM.",
-      "updatedAt": "2h ago"
+      "id": "d29709b5-5822-4d49-af97-5b7222274d52",
+      "conversationId": "e206106b-077f-460f-b1e7-c6706d2d7ee8",
+      "senderId": "me",
+      "senderName": "Christian",
+      "content": "test",
+      "timestamp": "2026-03-12T07:55:02.652Z"
     },
     {
-      "id": "m2",
-      "listingId": "2",
-      "sellerName": "Marco",
-      "preview": "Pickup near the front gate works for me.",
-      "updatedAt": "Yesterday"
+      "id": "2359da0d-2541-47af-a16d-5590b94677f0",
+      "conversationId": "e206106b-077f-460f-b1e7-c6706d2d7ee8",
+      "senderId": "me",
+      "senderName": "Christian",
+      "content": "test",
+      "timestamp": "2026-03-12T07:55:09.715Z"
     }
   ],
+  "conversations": [
+    {
+      "id": "69cb1ce1-23ce-4d3d-8441-56fe2e831204",
+      "listingId": "2",
+      "listingTitle": "Backyard Meyer Lemons",
+      "sellerId": "s2",
+      "sellerName": "Marco",
+      "buyerId": "me",
+      "buyerName": "Christian",
+      "lastMessage": "Conversation started",
+      "updatedAt": "2026-03-12T16:45:22.054Z"
+    },
+    {
+      "id": "e206106b-077f-460f-b1e7-c6706d2d7ee8",
+      "listingId": "8f1e543f-4bc6-44fa-8194-4ccbbe6c7f76",
+      "listingTitle": "tst",
+      "sellerId": "me",
+      "sellerName": "Christian",
+      "buyerId": "me",
+      "buyerName": "Christian",
+      "lastMessage": "test",
+      "updatedAt": "2026-03-12T07:55:09.715Z"
+    }
+  ],
+  "favorites": [],
+  "pickups": [
+    {
+      "id": "5b05fe45-6910-43dd-89d8-05ed925fcc07",
+      "listingId": "2",
+      "buyerId": "me",
+      "buyerName": "Christian",
+      "sellerId": "s2",
+      "pickupWindow": "Today 6–8 PM",
+      "createdAt": "2026-03-12T08:04:14.221Z"
+    },
+    {
+      "id": "0b0d1ef7-243c-41d4-8390-1dd25cc2a1c9",
+      "listingId": "8f1e543f-4bc6-44fa-8194-4ccbbe6c7f76",
+      "buyerId": "me",
+      "buyerName": "Christian",
+      "sellerId": "me",
+      "pickupWindow": "2",
+      "createdAt": "2026-03-12T07:54:49.647Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "42bfced6-dc8e-424f-8d2f-35b7d09b327d",
+      "kind": "harvest",
+      "title": "t listing created",
+      "body": "tst is now live in Mission Hills.",
+      "createdAt": "2026-03-12T07:54:35.591Z",
+      "read": true
+    },
+    {
+      "id": "notif-1",
+      "kind": "nearby",
+      "title": "Fresh peaches nearby",
+      "body": "A new peach listing just dropped within your saved radius.",
+      "createdAt": "2026-03-12T07:23:58.906Z",
+      "read": true
+    },
+    {
+      "id": "notif-2",
+      "kind": "harvest",
+      "title": "Harvest reminder",
+      "body": "Elena opened a same-day orange pickup window for tonight.",
+      "createdAt": "2026-03-12T06:28:58.906Z",
+      "read": true
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert-1",
+      "userId": "me",
+      "fruit": "Peaches",
+      "location": "Mission Hills",
+      "radiusMiles": 5,
+      "sellerId": "",
+      "active": true
+    }
+  ],
+  "follows": [
+    {
+      "id": "follow-1",
+      "userId": "me",
+      "sellerId": "s1"
+    }
+  ],
+  "socialPosts": [
+    {
+      "id": "post-1",
+      "sellerId": "s1",
+      "sellerName": "Elena",
+      "sellerHandle": "@elenafruit",
+      "sellerAvatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1200&q=80",
+      "sellerVerified": true,
+      "type": "harvest",
+      "title": "Orange row just opened up",
+      "body": "Dropped a fresh citrus batch with two pickup windows tonight. Best sweetness all month.",
+      "fruit": "Oranges",
+      "location": "Mission Hills",
+      "image": "https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=1200&q=80",
+      "createdAt": "2026-03-12T07:23:58.906Z"
+    },
+    {
+      "id": "post-2",
+      "sellerId": "me",
+      "sellerName": "Christian",
+      "sellerHandle": "@pluckgrower",
+      "sellerAvatar": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
+      "sellerVerified": true,
+      "type": "orchard",
+      "title": "Peach harvest window tonight",
+      "body": "White peaches are peaking right now. Small batch only, best for nearby buyers who can come by fast.",
+      "fruit": "Peaches",
+      "location": "Northridge",
+      "image": "https://images.unsplash.com/photo-1629828874514-3d5f9c6694cf?auto=format&fit=crop&w=1200&q=80",
+      "createdAt": "2026-03-12T06:48:58.906Z"
+    },
+    {
+      "id": "post-3",
+      "sellerId": "s2",
+      "sellerName": "Marco",
+      "sellerHandle": "@marcoharvest",
+      "sellerAvatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=80",
+      "sellerVerified": false,
+      "type": "signal",
+      "title": "Neighborhood signal: citrus week",
+      "body": "Multiple lemon and orange listings are appearing within a few miles. Good week for local pickup.",
+      "fruit": "Citrus",
+      "location": "Granada Hills",
+      "image": "",
+      "createdAt": "2026-03-12T05:53:58.906Z"
+    }
+  ],
+  "sellers": [
+    {
+      "id": "me",
+      "name": "Christian",
+      "handle": "@pluckgrower",
+      "city": "Mission Hills, CA",
+      "state": "",
+      "zip": "",
+      "locationLabel": "Mission Hills, CA",
+      "bio": "Neighborhood grower sharing backyard harvests with nearby buyers.",
+      "avatar": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
+      "heroFruit": "https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=1200&q=80",
+      "verified": true,
+      "rating": 4.9,
+      "ratingCount": 31,
+      "followers": 126,
+      "responseScore": "98% reply rate",
+      "repeatBuyerScore": "41% repeat buyers",
+      "orchardName": "Mission Hills Backyard Grove",
+      "specialties": [
+        "Citrus",
+        "Seasonal bundles",
+        "Same-day pickup"
+      ]
+    },
+    {
+      "id": "s1",
+      "name": "Elena",
+      "handle": "@elenafruit",
+      "city": "Mission Hills, CA",
+      "state": "",
+      "zip": "",
+      "locationLabel": "Mission Hills, CA",
+      "bio": "Micro-orchard grower focused on sweet citrus and short-window harvest drops.",
+      "avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1200&q=80",
+      "heroFruit": "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80",
+      "verified": true,
+      "rating": 4.8,
+      "ratingCount": 22,
+      "followers": 87,
+      "responseScore": "96% same-day response",
+      "repeatBuyerScore": "34% repeat buyers",
+      "orchardName": "Elena Citrus Patch",
+      "specialties": [
+        "Valencia oranges",
+        "Meyer lemons"
+      ]
+    },
+    {
+      "id": "s2",
+      "name": "Marco",
+      "handle": "@marcoharvest",
+      "city": "Granada Hills, CA",
+      "state": "",
+      "zip": "",
+      "locationLabel": "Granada Hills, CA",
+      "bio": "Weekend harvest seller with clean bundles, flexible pickup windows, and orchard updates.",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=80",
+      "heroFruit": "https://images.unsplash.com/photo-1563746098251-d35aef196e83?auto=format&fit=crop&w=1200&q=80",
+      "verified": false,
+      "rating": 4.6,
+      "ratingCount": 15,
+      "followers": 43,
+      "responseScore": "91% response score",
+      "repeatBuyerScore": "28% repeat buyers",
+      "orchardName": "Marco Family Trees",
+      "specialties": [
+        "Lemons",
+        "Stone fruit"
+      ]
+    }
+  ],
+  "authUsers": [],
   "seller": {
     "id": "me",
     "name": "Christian",
     "handle": "@pluckgrower",
     "city": "Mission Hills, CA",
+    "state": "",
+    "zip": "",
+    "locationLabel": "Mission Hills, CA",
     "bio": "Neighborhood grower sharing backyard harvests with nearby buyers.",
-    "avatar": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=600&q=80",
-    "heroFruit": "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=1200&q=80"
+    "avatar": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80",
+    "heroFruit": "https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&w=1200&q=80",
+    "verified": true,
+    "rating": 4.9,
+    "ratingCount": 31,
+    "followers": 126,
+    "responseScore": "98% reply rate",
+    "repeatBuyerScore": "41% repeat buyers",
+    "orchardName": "Mission Hills Backyard Grove",
+    "specialties": [
+      "Citrus",
+      "Seasonal bundles",
+      "Same-day pickup"
+    ]
   }
 }
-
-
