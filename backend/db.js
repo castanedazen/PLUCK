@@ -139,7 +139,32 @@ db.exec(`
     active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS reviews (
+    id TEXT PRIMARY KEY,
+    listing_id TEXT NOT NULL,
+    seller_id TEXT NOT NULL,
+    buyer_id TEXT NOT NULL,
+    buyer_name TEXT NOT NULL,
+    rating INTEGER NOT NULL,
+    comment TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
 `)
+
+function addColumnIfMissing(tableName, columnName, sqlDefinition) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all()
+  const exists = columns.some((col) => col.name === columnName)
+  if (!exists) {
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${sqlDefinition}`)
+  }
+}
+
+addColumnIfMissing("listings", "is_sold", "INTEGER NOT NULL DEFAULT 0")
+addColumnIfMissing("listings", "pickup_completed_at", "TEXT")
+addColumnIfMissing("listings", "reserved_by_user_id", "TEXT")
+addColumnIfMissing("listings", "reserved_by_name", "TEXT")
+addColumnIfMissing("listings", "reserved_pickup_window", "TEXT")
 
 function safeJsonParse(value, fallback) {
   try {
@@ -167,18 +192,23 @@ function rowToListing(row) {
     sellerName: row.seller_name,
     description: row.description,
     pickupWindows: safeJsonParse(row.pickup_windows, ["Pickup by message"]),
-    status: row.status,
+    status: row.is_sold ? "sold" : row.status,
     tags: safeJsonParse(row.tags, []),
     harvestNote: row.harvest_note,
     harvestLabel: row.harvest_label,
     freshnessLabel: row.freshness_label,
-    availabilityLabel: row.availability_label,
+    availabilityLabel: row.is_sold ? "Sold" : row.availability_label,
     sellerVerified: Boolean(row.seller_verified),
     sellerRating: row.seller_rating,
     geo:
       typeof row.geo_lat === "number" && typeof row.geo_lng === "number"
         ? { lat: row.geo_lat, lng: row.geo_lng }
         : null,
+    isSold: Boolean(row.is_sold),
+    pickupCompletedAt: row.pickup_completed_at || null,
+    reservedByUserId: row.reserved_by_user_id || "",
+    reservedByName: row.reserved_by_name || "",
+    reservedPickupWindow: row.reserved_pickup_window || "",
     created_at: row.created_at,
     updated_at: row.updated_at,
   }
@@ -290,6 +320,35 @@ function rowToAlert(row) {
   }
 }
 
+function rowToReview(row) {
+  return {
+    id: row.id,
+    listingId: row.listing_id,
+    sellerId: row.seller_id,
+    buyerId: row.buyer_id,
+    buyerName: row.buyer_name,
+    rating: row.rating,
+    comment: row.comment,
+    createdAt: row.created_at,
+  }
+}
+
+function recalculateSellerRating(sellerId) {
+  const summary = db.prepare(`
+    SELECT
+      COUNT(*) AS count,
+      COALESCE(AVG(rating), 0) AS average_rating
+    FROM reviews
+    WHERE seller_id = ?
+  `).get(sellerId)
+
+  db.prepare(`
+    UPDATE sellers
+    SET rating = ?, rating_count = ?
+    WHERE id = ?
+  `).run(Number(summary.average_rating || 0), Number(summary.count || 0), sellerId)
+}
+
 function seedIfEmpty() {
   const listingsCount = db.prepare(`SELECT COUNT(*) AS count FROM listings`).get().count
   const sellersCount = db.prepare(`SELECT COUNT(*) AS count FROM sellers`).get().count
@@ -305,12 +364,14 @@ function seedIfEmpty() {
         id, title, fruit, price, unit, image, location, city, state, zip, distance,
         inventory, seller_id, seller_name, description, pickup_windows, status, tags,
         harvest_note, harvest_label, freshness_label, availability_label,
-        seller_verified, seller_rating, geo_lat, geo_lng, created_at, updated_at
+        seller_verified, seller_rating, geo_lat, geo_lng, created_at, updated_at,
+        is_sold, pickup_completed_at, reserved_by_user_id, reserved_by_name, reserved_pickup_window
       ) VALUES (
         @id, @title, @fruit, @price, @unit, @image, @location, @city, @state, @zip, @distance,
         @inventory, @seller_id, @seller_name, @description, @pickup_windows, @status, @tags,
         @harvest_note, @harvest_label, @freshness_label, @availability_label,
-        @seller_verified, @seller_rating, @geo_lat, @geo_lng, @created_at, @updated_at
+        @seller_verified, @seller_rating, @geo_lat, @geo_lng, @created_at, @updated_at,
+        @is_sold, @pickup_completed_at, @reserved_by_user_id, @reserved_by_name, @reserved_pickup_window
       )
     `)
 
@@ -343,6 +404,11 @@ function seedIfEmpty() {
       geo_lng: -118.4671,
       created_at: now,
       updated_at: now,
+      is_sold: 0,
+      pickup_completed_at: null,
+      reserved_by_user_id: "",
+      reserved_by_name: "",
+      reserved_pickup_window: "",
     })
 
     insertListing.run({
@@ -374,6 +440,11 @@ function seedIfEmpty() {
       geo_lng: -118.1445,
       created_at: now,
       updated_at: now,
+      is_sold: 0,
+      pickup_completed_at: null,
+      reserved_by_user_id: "",
+      reserved_by_name: "",
+      reserved_pickup_window: "",
     })
   }
 
@@ -514,4 +585,6 @@ module.exports = {
   rowToSocialPost,
   rowToNotification,
   rowToAlert,
+  rowToReview,
+  recalculateSellerRating,
 }

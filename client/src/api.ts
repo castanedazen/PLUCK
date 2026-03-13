@@ -195,6 +195,18 @@ export async function reservePickup(payload: {
   )
 }
 
+export async function completePickup(payload: {
+  listingId: string
+}): Promise<Listing> {
+  const res = await fetch(`${API_BASE}/pickups/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse<Listing>(res, 'Failed to complete pickup')
+}
+
 export async function getSeller(): Promise<SellerProfile> {
   const res = await fetch(`${API_BASE}/seller/me`)
   return parseResponse<SellerProfile>(res, 'Failed to load seller')
@@ -293,6 +305,48 @@ export async function toggleFollow(payload: {
   })
 
   return parseResponse<{ active: boolean }>(res, 'Failed to update follow')
+}
+
+export async function getReviewsForListing(listingId: string): Promise<
+  Array<{
+    id: string
+    listingId: string
+    sellerId: string
+    buyerId: string
+    buyerName: string
+    rating: number
+    comment: string
+    createdAt: string
+  }>
+> {
+  const res = await fetch(`${API_BASE}/reviews/listing/${listingId}`)
+  return parseResponse(res, 'Failed to load reviews')
+}
+
+export async function createReview(payload: {
+  listingId: string
+  sellerId: string
+  buyerId: string
+  buyerName: string
+  rating: number
+  comment: string
+}): Promise<{
+  id: string
+  listingId: string
+  sellerId: string
+  buyerId: string
+  buyerName: string
+  rating: number
+  comment: string
+  createdAt: string
+}> {
+  const res = await fetch(`${API_BASE}/reviews`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse(res, 'Failed to create review')
 }
 
 export async function signup(payload: {

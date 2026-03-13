@@ -15,6 +15,8 @@ const notificationsRouter = require("./routes/notifications")
 const alertsRouter = require("./routes/alerts")
 const uploadRouter = require("./routes/upload")
 const detectFruitRouter = require("./routes/detectFruit")
+const pickupsRouter = require("./routes/pickups")
+const reviewsRouter = require("./routes/reviews")
 
 const app = express()
 const PORT = 4000
@@ -47,6 +49,8 @@ app.get("/api/health", (_req, res) => {
     storage: "sqlite",
     uploadEnabled: true,
     aiDetectionEnabled: Boolean(process.env.OPENAI_API_KEY),
+    reviewsEnabled: true,
+    pickupCompletionEnabled: true,
   })
 })
 
@@ -62,6 +66,8 @@ app.use("/api/notifications", notificationsRouter)
 app.use("/api/alerts", alertsRouter)
 app.use("/api/upload", uploadRouter)
 app.use("/api/detect-fruit", detectFruitRouter)
+app.use("/api/pickups", pickupsRouter)
+app.use("/api/reviews", reviewsRouter)
 
 app.use((err, _req, res, _next) => {
   console.error("Unhandled backend error:", err)
