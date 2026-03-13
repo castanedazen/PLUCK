@@ -60,57 +60,59 @@ type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
 const fallbackListings: Listing[] = [
   {
     id: '1',
-    title: 'Sun-warm Valencia Oranges',
-    fruit: 'Oranges',
-    price: 6,
+    title: 'Fresh Backyard Lemons',
+    fruit: 'Lemons',
+    price: 4,
     unit: 'bag',
     image:
-      'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=1200&q=80',
     location: 'Mission Hills, CA',
-    city: 'Mission Hills',
+    city: 'Los Angeles',
     state: 'CA',
-    distance: '0.8 mi',
-    inventory: 7,
-    sellerId: 's1',
-    sellerName: 'Elena',
-    description: 'Picked this morning. Sweet, juicy, and ideal for snacking or fresh juice.',
+    zip: '91345',
+    distance: 'Just added',
+    inventory: 12,
+    sellerId: 'seller-1',
+    sellerName: "Maria's Garden",
+    description: 'Fresh picked backyard lemons from a local home grower.',
     pickupWindows: ['Today 5–7 PM', 'Tomorrow 9–11 AM'],
     status: 'active',
-    tags: ['sweet', 'citrus', 'juice'],
+    tags: ['citrus', 'fresh', 'local'],
     harvestLabel: 'Just dropped',
     freshnessLabel: 'Fresh harvest',
     availabilityLabel: 'Available now',
-    harvestNote: 'Pulled from the tree at 7 AM.',
+    harvestNote: 'Picked this morning for same-day pickup.',
     sellerVerified: true,
     sellerRating: 4.8,
     geo: { lat: 34.2766, lng: -118.4671 },
   },
   {
     id: '2',
-    title: 'Backyard Meyer Lemons',
-    fruit: 'Lemons',
-    price: 4,
-    unit: 'bundle',
+    title: 'Organic Avocados',
+    fruit: 'Avocados',
+    price: 3,
+    unit: 'each',
     image:
-      'https://images.unsplash.com/photo-1590502593747-42a996133562?auto=format&fit=crop&w=1200&q=80',
-    location: 'Granada Hills, CA',
-    city: 'Granada Hills',
+      'https://images.unsplash.com/photo-1601039641847-7857b994d704?auto=format&fit=crop&w=1200&q=80',
+    location: 'Pasadena, CA',
+    city: 'Pasadena',
     state: 'CA',
-    distance: '1.7 mi',
-    inventory: 11,
-    sellerId: 's2',
-    sellerName: 'Marco',
-    description: 'Bright, floral lemons with strong color and a clean finish for cooking or cocktails.',
+    zip: '91104',
+    distance: 'Just added',
+    inventory: 20,
+    sellerId: 'seller-2',
+    sellerName: 'Green Grove',
+    description: 'Creamy organic avocados, perfect for toast or guacamole.',
     pickupWindows: ['Today 6–8 PM', 'Saturday 10 AM–1 PM'],
     status: 'active',
-    tags: ['citrus', 'cocktails', 'kitchen'],
+    tags: ['avocados', 'organic', 'creamy'],
     harvestLabel: 'New nearby',
     freshnessLabel: 'Fresh harvest',
     availabilityLabel: 'Available now',
-    harvestNote: 'Weekend cut with extra fragrant skins.',
-    sellerVerified: false,
-    sellerRating: 4.6,
-    geo: { lat: 34.2726, lng: -118.5025 },
+    harvestNote: 'Picked at peak ripeness.',
+    sellerVerified: true,
+    sellerRating: 4.7,
+    geo: { lat: 34.1478, lng: -118.1445 },
   },
 ]
 
@@ -223,6 +225,45 @@ function hasGeo(listing: Listing) {
     typeof listing.geo?.lng === 'number' &&
     Number.isFinite(listing.geo.lng)
   )
+}
+
+function normalizeListing(listing: Listing): Listing {
+  const fruit = listing.fruit || 'Fruit'
+  const city = listing.city || ''
+  const state = listing.state || ''
+  const location =
+    listing.location || [city, state].filter(Boolean).join(', ') || 'Local pickup available'
+
+  return {
+    ...listing,
+    fruit,
+    unit: listing.unit || 'each',
+    image:
+      listing.image ||
+      'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80',
+    location,
+    city,
+    state,
+    zip: listing.zip || '',
+    distance: listing.distance || 'Just added',
+    inventory: Number.isFinite(listing.inventory) ? listing.inventory : 0,
+    sellerId: listing.sellerId || 'seller-unknown',
+    sellerName: listing.sellerName || 'Local Grower',
+    description: listing.description || 'Fresh local fruit available for pickup.',
+    pickupWindows:
+      listing.pickupWindows && listing.pickupWindows.length
+        ? listing.pickupWindows
+        : ['Pickup by message'],
+    status: listing.status || 'active',
+    tags: listing.tags && listing.tags.length ? listing.tags : [fruit.toLowerCase()],
+    harvestLabel: listing.harvestLabel || 'Just dropped',
+    freshnessLabel: listing.freshnessLabel || 'Fresh harvest',
+    availabilityLabel: listing.availabilityLabel || 'Available now',
+    harvestNote: listing.harvestNote || '',
+    sellerVerified: listing.sellerVerified ?? false,
+    sellerRating: listing.sellerRating ?? 0,
+    geo: listing.geo || null,
+  }
 }
 
 function ActionGrid({
@@ -1336,7 +1377,9 @@ function GrowerPage({
                     ${item.price}/{item.unit}
                   </span>
                 </div>
-                <p className="meta">{prettyLocation(item)} • {item.inventory} left</p>
+                <p className="meta">
+                  {prettyLocation(item)} • {item.inventory} left
+                </p>
                 <div className="listing-badge-row">
                   {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
                   {item.freshnessLabel ? <span className="trust-pill freshness">{item.freshnessLabel}</span> : null}
@@ -1587,18 +1630,18 @@ function AppLayout({
   }, [conversations, selectedConversationId])
 
   async function handleCreate(payload: Omit<Listing, 'id'>) {
-    const saved = await createListing(payload)
+    const saved = normalizeListing(await createListing(payload))
     setListings((current) => [saved, ...current])
   }
 
   async function handleUpdate(payload: Omit<Listing, 'id'>, listingId?: string) {
     if (!listingId) {
-      const saved = await createListing(payload)
+      const saved = normalizeListing(await createListing(payload))
       setListings((current) => [saved, ...current])
       return
     }
 
-    const updated = await updateListing(listingId, payload)
+    const updated = normalizeListing(await updateListing(listingId, payload))
     setListings((current) => current.map((item) => (item.id === listingId ? updated : item)))
   }
 
@@ -1630,7 +1673,7 @@ function AppLayout({
     }
 
     const refreshedListings = await getListings()
-    setListings(refreshedListings)
+    setListings(refreshedListings.map(normalizeListing))
   }
 
   async function handleConfirmReserve(listing: Listing, pickupWindow: string) {
@@ -1642,7 +1685,9 @@ function AppLayout({
       pickupWindow,
     })
 
-    setListings((current) => current.map((item) => (item.id === listing.id ? result.listing : item)))
+    setListings((current) =>
+      current.map((item) => (item.id === listing.id ? normalizeListing(result.listing) : item)),
+    )
     setReserveTarget(null)
 
     const conversation = await createOrGetConversation({
@@ -1901,7 +1946,9 @@ function AppLayout({
                             {item.availabilityLabel ? <span className="trust-pill available">{item.availabilityLabel}</span> : null}
                           </div>
 
-                          <p className="meta">{prettyLocation(item)} • {item.inventory} left</p>
+                          <p className="meta">
+                            {prettyLocation(item)} • {item.inventory} left
+                          </p>
 
                           <button className="seller-inline-link" onClick={() => navigate('/grower/' + item.sellerId)}>
                             {item.sellerVerified ? '✓ ' : ''}
@@ -2494,7 +2541,7 @@ function EditListingRoute({
 }
 
 function App() {
-  const [listings, setListings] = useState<Listing[]>(fallbackListings)
+  const [listings, setListings] = useState<Listing[]>([])
   const [seller, setSeller] = useState<SellerProfile>(fallbackSeller)
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -2506,7 +2553,10 @@ function App() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
-    getListings().then(setListings).catch(() => setListings(fallbackListings))
+    getListings()
+      .then((data) => setListings(data.map(normalizeListing)))
+      .catch(() => setListings(fallbackListings))
+
     getSeller().then(setSeller).catch(() => setSeller(fallbackSeller))
     getFavorites().then(setFavorites).catch(() => setFavorites([]))
     getConversations().then(setConversations).catch(() => setConversations([]))
