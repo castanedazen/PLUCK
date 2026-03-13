@@ -217,7 +217,12 @@ function prettyLocation(listing: Listing) {
 }
 
 function hasGeo(listing: Listing) {
-  return Boolean(listing.geo?.lat && listing.geo?.lng)
+  return (
+    typeof listing.geo?.lat === 'number' &&
+    Number.isFinite(listing.geo.lat) &&
+    typeof listing.geo?.lng === 'number' &&
+    Number.isFinite(listing.geo.lng)
+  )
 }
 
 function ActionGrid({
@@ -806,6 +811,174 @@ function GrowerTrust({
   )
 }
 
+function NationwideGeoMap({
+  listings,
+  onOpenListing,
+}: {
+  listings: Listing[]
+  onOpenListing: (listingId: string) => void
+}) {
+  const geoListings = listings.filter(hasGeo)
+
+  const bounds = {
+    minLat: 24,
+    maxLat: 49,
+    minLng: -125,
+    maxLng: -66,
+  }
+
+  function xFromLng(lng: number) {
+    return ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100
+  }
+
+  function yFromLat(lat: number) {
+    return 100 - ((lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) * 100
+  }
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        minHeight: 360,
+        borderRadius: 24,
+        overflow: 'hidden',
+        background:
+          'linear-gradient(180deg, rgba(233,245,250,1) 0%, rgba(241,249,244,1) 55%, rgba(247,250,244,1) 100%)',
+        border: '1px solid rgba(16,24,40,0.06)',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(circle at 18% 68%, rgba(98, 171, 103, 0.16), transparent 20%), radial-gradient(circle at 52% 52%, rgba(98, 171, 103, 0.12), transparent 28%), radial-gradient(circle at 74% 36%, rgba(98, 171, 103, 0.12), transparent 22%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'absolute',
+          inset: '12px 14px auto 14px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 12,
+          zIndex: 2,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: 12,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: '#6e7b67',
+              fontWeight: 800,
+            }}
+          >
+            Live geo layer
+          </div>
+          <div style={{ fontWeight: 760, fontSize: 18, color: '#203022' }}>
+            United States listing coverage
+          </div>
+        </div>
+        <div
+          style={{
+            padding: '8px 12px',
+            borderRadius: 999,
+            background: 'rgba(255,255,255,0.88)',
+            border: '1px solid rgba(16,24,40,0.06)',
+            fontSize: 13,
+            fontWeight: 700,
+            color: '#234030',
+          }}
+        >
+          {geoListings.length} pinned
+        </div>
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          paddingTop: 52,
+        }}
+      >
+        {geoListings.map((item) => {
+          const left = `${xFromLng(item.geo!.lng)}%`
+          const top = `${yFromLat(item.geo!.lat)}%`
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => onOpenListing(item.id)}
+              title={`${item.title} • ${prettyLocation(item)}`}
+              style={{
+                position: 'absolute',
+                left,
+                top,
+                transform: 'translate(-50%, -50%)',
+                width: 22,
+                height: 22,
+                borderRadius: '999px',
+                border: '2px solid white',
+                background: 'linear-gradient(180deg, #3f9745 0%, #2f7d32 100%)',
+                boxShadow: '0 10px 22px rgba(47,125,50,0.28)',
+                cursor: 'pointer',
+                zIndex: 2,
+              }}
+            />
+          )
+        })}
+      </div>
+
+      <div
+        style={{
+          position: 'absolute',
+          left: 14,
+          right: 14,
+          bottom: 14,
+          display: 'grid',
+          gap: 10,
+          zIndex: 2,
+        }}
+      >
+        {geoListings.slice(0, 3).map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onOpenListing(item.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              padding: '12px 14px',
+              borderRadius: 18,
+              border: '1px solid rgba(16,24,40,0.06)',
+              background: 'rgba(255,255,255,0.92)',
+              textAlign: 'left',
+              cursor: 'pointer',
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 760, color: '#203022' }}>{item.title}</div>
+              <div style={{ fontSize: 13, color: '#667085' }}>
+                {prettyLocation(item)} • {item.sellerName}
+              </div>
+            </div>
+            <div style={{ fontWeight: 800, color: '#2f7d32' }}>
+              ${item.price}/{item.unit}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function ListingDetailRoute({
   listings,
   favorites,
@@ -855,6 +1028,7 @@ function ListingDetailRoute({
             {listing.harvestLabel ? <span className="trust-pill harvest">{listing.harvestLabel}</span> : null}
             {listing.freshnessLabel ? <span className="trust-pill freshness">{listing.freshnessLabel}</span> : null}
             {listing.availabilityLabel ? <span className="trust-pill available">{listing.availabilityLabel}</span> : null}
+            {hasGeo(listing) ? <span className="trust-pill verified">Map ready</span> : null}
           </div>
 
           <p className="desc">{listing.description}</p>
@@ -1406,6 +1580,12 @@ function AppLayout({
     return result
   }, [listings, query, activeFilter])
 
+  useEffect(() => {
+    if (!selectedConversationId && conversations.length > 0) {
+      setSelectedConversationId(conversations[0].id)
+    }
+  }, [conversations, selectedConversationId])
+
   async function handleCreate(payload: Omit<Listing, 'id'>) {
     const saved = await createListing(payload)
     setListings((current) => [saved, ...current])
@@ -1555,7 +1735,7 @@ function AppLayout({
     <div className="app-shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">Pluck V7C shell</p>
+          <p className="eyebrow">Pluck V7D shell</p>
           <h1>Fresh fruit from neighbors</h1>
           <p className="subtle-copy">
             A sharper local marketplace for backyard harvests, same-day pickup, grower trust, and nationwide-ready discovery.
@@ -1850,8 +2030,13 @@ function AppLayout({
                   </div>
 
                   <p>
-                    This map view is now geo-aware and nationwide-ready. Listings with coordinates are ready for live pin rendering in the next step.
+                    This map view is now geo-aware and nationwide-ready. Listings with coordinates render as live pins on a U.S. board.
                   </p>
+
+                  <NationwideGeoMap
+                    listings={filtered}
+                    onOpenListing={(listingId) => navigate('/listing/' + listingId)}
+                  />
 
                   <div className="pin-list">
                     {filtered.map((item) => (
@@ -2230,8 +2415,12 @@ function AppLayout({
                     ) : null}
 
                     <div className="action-row">
-                      <button className="ghost">Upload profile photo</button>
-                      <button className="ghost">Upload lead fruit photo</button>
+                      <button className="ghost" onClick={() => navigate('/store/listings')}>
+                        Manage listings
+                      </button>
+                      <button className="ghost" onClick={() => navigate('/store/new')}>
+                        Add new listing
+                      </button>
                     </div>
                   </>
                 )}
