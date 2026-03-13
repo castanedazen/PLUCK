@@ -61,6 +61,8 @@ function defaultBuyer() {
 }
 
 function seedDb() {
+  const seller = defaultSeller()
+
   return {
     listings: [],
     messages: [],
@@ -71,9 +73,9 @@ function seedDb() {
     alerts: [],
     follows: [],
     socialPosts: [],
-    sellers: [],
+    sellers: [seller],
     authUsers: [],
-    seller: defaultSeller(),
+    seller,
     buyer: defaultBuyer(),
   }
 }
@@ -119,7 +121,9 @@ function normalizeSeller(input = {}) {
     responseScore: input.responseScore || '',
     repeatBuyerScore: input.repeatBuyerScore || '',
     orchardName: input.orchardName || '',
-    specialties: Array.isArray(input.specialties) ? input.specialties.filter(Boolean) : [],
+    specialties: Array.isArray(input.specialties)
+      ? input.specialties.map((item) => String(item).trim()).filter(Boolean)
+      : [],
   }
 }
 
@@ -135,6 +139,42 @@ function normalizeBuyer(input = {}) {
     favoriteFruits: Array.isArray(input.favoriteFruits)
       ? input.favoriteFruits.map((item) => String(item).trim()).filter(Boolean)
       : [],
+  }
+}
+
+function getSellerMap(db) {
+  const map = new Map()
+
+  if (db.seller?.id) {
+    map.set(db.seller.id, db.seller)
+  }
+
+  for (const seller of db.sellers || []) {
+    if (seller?.id) {
+      map.set(seller.id, seller)
+    }
+  }
+
+  return map
+}
+
+function findSellerById(db, sellerId) {
+  const map = getSellerMap(db)
+  return map.get(sellerId) || null
+}
+
+function syncPrimarySellerIntoSellers(db) {
+  if (!db.seller?.id) return
+  const existingIndex = (db.sellers || []).findIndex((item) => item.id === db.seller.id)
+
+  if (existingIndex === -1) {
+    db.sellers = [db.seller, ...(db.sellers || [])]
+    return
+  }
+
+  db.sellers[existingIndex] = {
+    ...db.sellers[existingIndex],
+    ...db.seller,
   }
 }
 
@@ -167,7 +207,7 @@ function normalizeListing(body = {}, existingId = null, db = null) {
     isFavorite: Boolean(body.isFavorite),
     status: body.status === 'archived' ? 'archived' : 'active',
     tags: Array.isArray(body.tags)
-      ? body.tags.filter(Boolean)
+      ? body.tags.map((x) => String(x).trim()).filter(Boolean)
       : String(body.tags || '')
           .split(',')
           .map((x) => x.trim())
@@ -255,32 +295,14 @@ function readDb() {
   db.listings = db.listings.map((item) => normalizeListing(item, item.id, db))
   db.buyer = normalizeBuyer(db.buyer)
 
+  syncPrimarySellerIntoSellers(db)
+
   return db
 }
 
 function writeDb(data) {
+  syncPrimarySellerIntoSellers(data)
   fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8')
-}
-
-function getSellerMap(db) {
-  const map = new Map()
-
-  if (db.seller?.id) {
-    map.set(db.seller.id, db.seller)
-  }
-
-  for (const seller of db.sellers || []) {
-    if (seller?.id) {
-      map.set(seller.id, seller)
-    }
-  }
-
-  return map
-}
-
-function findSellerById(db, sellerId) {
-  const map = getSellerMap(db)
-  return map.get(sellerId) || null
 }
 
 function enrichListing(listing, db) {
@@ -599,9 +621,21 @@ app.put('/api/seller/me', (req, res) => {
     }
 
     db.seller = normalizeSeller(merged)
+    syncPrimarySellerIntoSellers(db)
 
-    db.sellers = (db.sellers || []).map((item) =>
-      item.id === db.seller.id ? { ...item, ...db.seller } : item,
+    db.listings = (db.listings || []).map((item) =>
+      item.sellerId === db.seller.id
+        ? {
+            ...item,
+            sellerName: db.seller.name,
+            sellerVerified: db.seller.verified,
+            sellerRating: db.seller.rating,
+            city: item.city || db.seller.city,
+            state: item.state || db.seller.state,
+            location: item.location || db.seller.locationLabel,
+            updatedAt: new Date().toISOString(),
+          }
+        : item,
     )
 
     writeDb(db)
@@ -839,6 +873,14 @@ app.post('/api/auth/signup', (req, res) => {
         name: user.name,
         email: user.email,
       })
+    }
+
+    if (user.role === 'grower') {
+      db.seller = normalizeSeller({
+        ...db.seller,
+        name: user.name,
+      })
+      syncPrimarySellerIntoSellers(db)
     }
 
     writeDb(db)
