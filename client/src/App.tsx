@@ -22,6 +22,7 @@ import {
   createListing,
   createOrGetConversation,
   deleteListing,
+  detectFruitFromImage,
   getAlerts,
   getConversations,
   getFavorites,
@@ -41,6 +42,7 @@ import {
   toggleFavorite,
   toggleFollow,
   updateListing,
+  uploadListingImage,
 } from './api'
 import type {
   AlertItem,
@@ -264,6 +266,35 @@ function normalizeListing(listing: Listing): Listing {
     sellerRating: listing.sellerRating ?? 0,
     geo: listing.geo || null,
   }
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      resolve(typeof reader.result === 'string' ? reader.result : '')
+    }
+    reader.onerror = () => reject(new Error('Unable to read image file.'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function mergeTagCsv(existingCsv: string, incomingTags: string[]) {
+  const existing = existingCsv
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+  const merged = [...existing]
+  for (const tag of incomingTags) {
+    const clean = tag.trim()
+    if (!clean) continue
+    if (!merged.some((item) => item.toLowerCase() === clean.toLowerCase())) {
+      merged.push(clean)
+    }
+  }
+
+  return merged.join(', ')
 }
 
 function ActionGrid({
@@ -509,23 +540,69 @@ function ListingForm({
     }
   })
   const [isSaving, setIsSaving] = useState(false)
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState('')
+  const [imageStatus, setImageStatus] = useState('')
 
   function updateForm<K extends keyof ListingFormState>(key: K, value: ListingFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }))
   }
 
-  function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
+  async function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : ''
-      updateForm('imagePreview', result)
+    setSaveError('')
+    setSaveSuccess('')
+    setImageStatus('')
+    setIsAnalyzingImage(true)
+
+    try {
+      const preview = await readFileAsDataUrl(file)
+      updateForm('imagePreview', preview)
+      setImageStatus('Uploading image and detecting fruit...')
+
+      let uploadPayload: { imageUrl?: string; originalName?: string; fileName?: string } = {
+        originalName: file.name,
+      }
+
+      try {
+        const uploaded = await uploadListingImage(file)
+        uploadPayload = {
+          imageUrl: uploaded.absoluteUrl,
+          originalName: uploaded.originalName,
+          fileName: uploaded.fileName,
+        }
+      } catch {
+        uploadPayload = {
+          originalName: file.name,
+        }
+      }
+
+      const detection = await detectFruitFromImage(uploadPayload)
+
+      setForm((current) => ({
+        ...current,
+        imagePreview: current.imagePreview || preview,
+        fruit: current.fruit.trim() ? current.fruit : detection.fruit,
+        title: current.title.trim() ? current.title : detection.title,
+        tags: mergeTagCsv(current.tags, detection.tags || []),
+      }))
+
+      setImageStatus(
+        `Detected ${detection.fruit} • ${Math.round((detection.confidence || 0) * 100)}% confidence`,
+      )
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to process image.'
+      setSaveError(message)
+      setImageStatus('')
+    } finally {
+      setIsAnalyzingImage(false)
+      if (e.target) {
+        e.target.value = ''
+      }
     }
-    reader.readAsDataURL(file)
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -691,9 +768,17 @@ function ListingForm({
 
           <label className="full upload-zone">
             Upload photo
-            <input type="file" accept="image/*" onChange={handleImageUpload} />
-            <span className="upload-hint">Choose a fruit photo from your device for instant preview.</span>
+            <input type="file" accept="image/*" capture="environment" onChange={handleImageUpload} />
+            <span className="upload-hint">
+              Upload a fruit photo. PLUCK will try to detect the fruit and auto-fill your form.
+            </span>
           </label>
+
+          {imageStatus ? (
+            <div className="status-banner success full">
+              {isAnalyzingImage ? `${imageStatus} Please wait...` : imageStatus}
+            </div>
+          ) : null}
 
           {form.imagePreview && (
             <div className="image-preview-wrap full">
@@ -786,10 +871,10 @@ function ListingForm({
         )}
 
         <div className="action-row">
-          <button type="submit" className="primary" disabled={isSaving}>
-            {isSaving ? 'Saving...' : submitLabel}
+          <button type="submit" className="primary" disabled={isSaving || isAnalyzingImage}>
+            {isSaving ? 'Saving...' : isAnalyzingImage ? 'Analyzing image...' : submitLabel}
           </button>
-          <button type="button" className="ghost" disabled={isSaving} onClick={() => navigate('/store/listings')}>
+          <button type="button" className="ghost" disabled={isSaving || isAnalyzingImage} onClick={() => navigate('/store/listings')}>
             Cancel
           </button>
         </div>

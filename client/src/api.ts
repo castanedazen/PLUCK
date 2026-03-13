@@ -71,6 +71,46 @@ export async function deleteListing(id: string): Promise<{ ok: true }> {
   return parseResponse<{ ok: true }>(res, 'Failed to delete listing')
 }
 
+export async function uploadListingImage(file: File): Promise<{
+  ok: boolean
+  fileName: string
+  originalName: string
+  mimeType: string
+  size: number
+  url: string
+  absoluteUrl: string
+}> {
+  const formData = new FormData()
+  formData.append('image', file)
+
+  const res = await fetch(`${API_BASE}/upload`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  return parseResponse(res, 'Failed to upload image')
+}
+
+export async function detectFruitFromImage(payload: {
+  imageUrl?: string
+  originalName?: string
+  fileName?: string
+}): Promise<{
+  fruit: string
+  confidence: number
+  tags: string[]
+  title: string
+  source: string
+}> {
+  const res = await fetch(`${API_BASE}/detect-fruit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse(res, 'Failed to detect fruit')
+}
+
 export async function getMessages(): Promise<Message[]> {
   const res = await fetch(`${API_BASE}/messages`)
   return parseResponse<Message[]>(res, 'Failed to load messages')
