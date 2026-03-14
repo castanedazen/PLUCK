@@ -9,6 +9,7 @@ import type {
   Message,
   NotificationItem,
   PickupReservation,
+  Review,
   SellerProfile,
   SocialPost,
 } from './types'
@@ -307,18 +308,7 @@ export async function toggleFollow(payload: {
   return parseResponse<{ active: boolean }>(res, 'Failed to update follow')
 }
 
-export async function getReviewsForListing(listingId: string): Promise<
-  Array<{
-    id: string
-    listingId: string
-    sellerId: string
-    buyerId: string
-    buyerName: string
-    rating: number
-    comment: string
-    createdAt: string
-  }>
-> {
+export async function getReviewsForListing(listingId: string): Promise<Review[]> {
   const res = await fetch(`${API_BASE}/reviews/listing/${listingId}`)
   return parseResponse(res, 'Failed to load reviews')
 }
@@ -330,16 +320,7 @@ export async function createReview(payload: {
   buyerName: string
   rating: number
   comment: string
-}): Promise<{
-  id: string
-  listingId: string
-  sellerId: string
-  buyerId: string
-  buyerName: string
-  rating: number
-  comment: string
-  createdAt: string
-}> {
+}): Promise<Review> {
   const res = await fetch(`${API_BASE}/reviews`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

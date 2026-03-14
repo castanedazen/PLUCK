@@ -16,7 +16,7 @@ export type Listing = {
   description: string
   pickupWindows: string[]
   isFavorite?: boolean
-  status?: 'active' | 'archived'
+  status?: 'active' | 'archived' | 'sold'
   tags?: string[]
   harvestLabel?: string
   freshnessLabel?: string
@@ -30,6 +30,11 @@ export type Listing = {
   } | null
   createdAt?: string
   updatedAt?: string
+  isSold?: boolean
+  pickupCompletedAt?: string | null
+  reservedByUserId?: string
+  reservedByName?: string
+  reservedPickupWindow?: string
 }
 
 export type Message = {
@@ -38,7 +43,8 @@ export type Message = {
   senderId: string
   senderName: string
   content: string
-  timestamp: string
+  timestamp?: string
+  createdAt?: string
 }
 
 export type Conversation = {
@@ -51,6 +57,7 @@ export type Conversation = {
   listingTitle: string
   lastMessage: string
   updatedAt: string
+  createdAt?: string
 }
 
 export type Favorite = {
@@ -60,13 +67,13 @@ export type Favorite = {
 }
 
 export type PickupReservation = {
-  id: string
+  id?: string
   listingId: string
   buyerId: string
   buyerName: string
   sellerId: string
   pickupWindow: string
-  createdAt: string
+  createdAt?: string
 }
 
 export type SellerProfile = {
@@ -148,4 +155,15 @@ export type BuyerProfile = {
   zip: string
   radiusMiles: number
   favoriteFruits: string[]
+}
+
+export type Review = {
+  id: string
+  listingId: string
+  sellerId: string
+  buyerId: string
+  buyerName: string
+  rating: number
+  comment: string
+  createdAt: string
 }

@@ -1,0 +1,72 @@
+import { useMemo } from 'react'
+import { MapContainer, Marker, Popup, TileLayer, ZoomControl } from 'react-leaflet'
+import L from 'leaflet'
+import type { Listing } from '../types'
+
+const pluckIcon = L.divIcon({
+  className: 'pluck-marker-shell',
+  html: '<div class="pluck-marker-dot"></div>',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+})
+
+function hasGeo(listing: Listing) {
+  return (
+    typeof listing.geo?.lat === 'number' &&
+    Number.isFinite(listing.geo.lat) &&
+    typeof listing.geo?.lng === 'number' &&
+    Number.isFinite(listing.geo.lng)
+  )
+}
+
+function prettyLocation(listing: Listing) {
+  const parts = [listing.city || '', listing.state || ''].filter(Boolean)
+  if (parts.length) return parts.join(', ')
+  return listing.location
+}
+
+export function LeafletMapView({
+  listings,
+  onOpenListing,
+}: {
+  listings: Listing[]
+  onOpenListing: (listingId: string) => void
+}) {
+  const geoListings = useMemo(() => listings.filter(hasGeo), [listings])
+
+  const center = useMemo<[number, number]>(() => {
+    if (!geoListings.length) return [37.0902, -95.7129]
+    const lat = geoListings.reduce((sum, item) => sum + (item.geo?.lat || 0), 0) / geoListings.length
+    const lng = geoListings.reduce((sum, item) => sum + (item.geo?.lng || 0), 0) / geoListings.length
+    return [lat, lng]
+  }, [geoListings])
+
+  return (
+    <div className="leaflet-map-shell">
+      <MapContainer center={center} zoom={geoListings.length > 1 ? 5 : 9} scrollWheelZoom className="leaflet-map" zoomControl={false}>
+        <ZoomControl position="bottomright" />
+        <TileLayer
+          attribution='&copy; OpenStreetMap contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+
+        {geoListings.map((listing) => (
+          <Marker key={listing.id} position={[listing.geo!.lat, listing.geo!.lng]} icon={pluckIcon}>
+            <Popup>
+              <div className="map-popup">
+                <img src={listing.image} alt={listing.title} />
+                <strong>{listing.title}</strong>
+                <span>
+                  {prettyLocation(listing)} • ${listing.price}/{listing.unit}
+                </span>
+                <button type="button" className="primary popup-btn" onClick={() => onOpenListing(listing.id)}>
+                  View listing
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
+  )
+}
