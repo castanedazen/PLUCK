@@ -19,7 +19,7 @@ const pickupsRouter = require("./routes/pickups")
 const reviewsRouter = require("./routes/reviews")
 
 const app = express()
-const PORT = 4000
+const PORT = process.env.PORT || 4000
 
 app.use(
   cors({
@@ -74,6 +74,6 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: err.message || "Internal server error" })
 })
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`PLUCK backend running on http://localhost:${PORT}`)
 })
