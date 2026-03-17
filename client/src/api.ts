@@ -14,7 +14,7 @@ import type {
   SocialPost,
 } from './types'
 
-const API_BASE = (import.meta.env.VITE_API_BASE || '').replace(//$/, '') + '/api'
+const API_BASE = (import.meta.env.VITE_API_BASE || '').replace(/\\/$/, '') + '/api'
 
 async function parseResponse<T>(res: Response, fallbackMessage: string): Promise<T> {
   if (res.ok) {
