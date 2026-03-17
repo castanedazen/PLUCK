@@ -17,6 +17,8 @@ const uploadRouter = require("./routes/upload")
 const detectFruitRouter = require("./routes/detectFruit")
 const pickupsRouter = require("./routes/pickups")
 const reviewsRouter = require("./routes/reviews")
+const authRouter = require("./routes/auth")
+const buyerRouter = require("./routes/buyer")
 
 const app = express()
 const PORT = process.env.PORT || 4000
@@ -68,6 +70,8 @@ app.use("/api/upload", uploadRouter)
 app.use("/api/detect-fruit", detectFruitRouter)
 app.use("/api/pickups", pickupsRouter)
 app.use("/api/reviews", reviewsRouter)
+app.use("/api/auth", authRouter)
+app.use("/api/buyer", buyerRouter)
 
 app.use((err, _req, res, _next) => {
   console.error("Unhandled backend error:", err)
