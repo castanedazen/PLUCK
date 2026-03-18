@@ -3294,3 +3294,215 @@ button.ghost:active,
 .nav-item.active {
   box-shadow: 0 10px 22px rgba(48, 125, 50, 0.16);
 }
+
+
+
+/* Final polish overrides */
+.trust-strip,
+.listing-badge-row,
+.pill-row,
+.trust-metrics,
+.cinematic-pill-row,
+.filter-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.trust-mini,
+.trust-pill,
+.metric-chip,
+.pill,
+.cinematic-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(21, 36, 28, 0.10);
+  background: rgba(255,255,255,0.92);
+  color: #294132;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  box-shadow: 0 6px 18px rgba(20, 30, 22, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.trust-mini,
+.metric-chip {
+  font-size: 0.95rem;
+}
+
+.card .trust-strip,
+.card .listing-badge-row {
+  margin-top: 12px;
+}
+
+.rating-stars {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.rating-stars .star {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  min-width: 28px;
+  min-height: 28px;
+  line-height: 1;
+  font-size: 1.35rem;
+  cursor: default;
+}
+.rating-stars.interactive .star {
+  cursor: pointer;
+  transition: transform .16s ease, color .16s ease;
+}
+.rating-stars.interactive .star:hover {
+  transform: translateY(-1px) scale(1.08);
+  color: #f1b929;
+}
+
+.topbar {
+  overflow: hidden;
+}
+.topbar h1 {
+  max-width: 14ch;
+}
+.brand-lockup {
+  min-width: 0;
+}
+.subtle-copy {
+  max-width: 42rem;
+}
+
+.hero-card,
+.hero-band,
+.profile-card,
+.map-panel,
+.card,
+.thread-panel,
+.messages-sidebar,
+.messages-main {
+  overflow: hidden;
+}
+
+.card,
+.premium-card,
+.listing-card-v2 {
+  min-width: 0;
+}
+.card-body,
+.profile-row,
+.price-row {
+  min-width: 0;
+}
+.price-row > *:first-child,
+.profile-row div,
+.review-card-head strong {
+  min-width: 0;
+}
+.listing-title-link,
+.price-row strong,
+.review-card-head strong {
+  overflow-wrap: anywhere;
+}
+
+.auth-page .auth-card,
+.review-panel,
+.profile-card,
+.messages-shell,
+.thread-panel {
+  position: relative;
+  z-index: 1;
+}
+
+.bottom-nav {
+  backdrop-filter: blur(18px);
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    border-radius: 24px;
+    padding: 18px;
+  }
+  .topbar h1 {
+    max-width: none;
+    font-size: clamp(1.9rem, 8vw, 2.4rem);
+  }
+  .topbar-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .topbar-actions .ghost,
+  .topbar-actions .primary {
+    width: 100%;
+  }
+  .hero-band,
+  .hero-card--gallery,
+  .listing-detail-hero,
+  .messages-shell {
+    grid-template-columns: 1fr !important;
+  }
+  .cinematic-hero,
+  .hero-card-gallery {
+    grid-template-columns: 1fr !important;
+  }
+  .cinematic-side-stack,
+  .hero-card-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .cinematic-side-stack > *,
+  .hero-fruit-tile {
+    min-width: 0;
+  }
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+  .messages-shell {
+    gap: 16px;
+  }
+  .messages-sidebar,
+  .messages-main {
+    width: 100%;
+    min-width: 0;
+  }
+  .review-summary {
+    justify-content: flex-start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    max-width: 100%;
+    padding: 12px 12px 104px;
+  }
+  .topbar-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .trust-mini,
+  .trust-pill,
+  .metric-chip,
+  .pill,
+  .cinematic-pill {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 0.88rem;
+  }
+  .cinematic-side-stack,
+  .hero-card-gallery {
+    grid-template-columns: 1fr 1fr;
+  }
+  .messages-main,
+  .thread-panel,
+  .profile-card,
+  .card {
+    border-radius: 22px;
+  }
+}

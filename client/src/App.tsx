@@ -1867,6 +1867,7 @@ type AppLayoutProps = {
   reviews: ReviewItem[]
   setReviews: Dispatch<SetStateAction<ReviewItem[]>>
   onAuthSuccess: (user: AuthUser) => void
+  onLogout: () => void
 }
 
 function AppLayout({
@@ -1890,6 +1891,7 @@ function AppLayout({
   reviews,
   setReviews,
   onAuthSuccess,
+  onLogout,
 }: AppLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -2204,6 +2206,12 @@ function AppLayout({
               </button>
               <button className="ghost" onClick={() => goTo('/alerts')}>
                 Alerts {unreadNotifications.length ? `(${unreadNotifications.length})` : ''}
+              </button>
+              <button className="ghost" onClick={() => goTo('/profile')}>
+                Profile
+              </button>
+              <button className="ghost" onClick={onLogout}>
+                Log out
               </button>
               <button className="primary" onClick={() => goTo('/store/new')}>
                 + New listing
@@ -2973,6 +2981,9 @@ function AppLayout({
                       <button className="ghost" onClick={() => navigate('/store/new')}>
                         Add new listing
                       </button>
+                      <button className="ghost" onClick={onLogout}>
+                        Log out
+                      </button>
                     </div>
                   </>
                 )}
@@ -3055,7 +3066,14 @@ function App() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [follows, setFollows] = useState<Follow[]>([])
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
+    try {
+      const raw = window.localStorage.getItem('pluck-auth-user')
+      return raw ? (JSON.parse(raw) as AuthUser) : null
+    } catch {
+      return null
+    }
+  })
   const [reviews, setReviews] = useState<ReviewItem[]>(() => {
     try {
       const raw = window.localStorage.getItem('pluck-reviews')
@@ -3081,9 +3099,13 @@ function App() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem('pluck-reviews', JSON.stringify(reviews))
+      if (authUser) {
+        window.localStorage.setItem('pluck-auth-user', JSON.stringify(authUser))
+      } else {
+        window.localStorage.removeItem('pluck-auth-user')
+      }
     } catch {}
-  }, [reviews])
+  }, [authUser])
 
   return (
     <AppLayout
@@ -3107,6 +3129,7 @@ function App() {
       reviews={reviews}
       setReviews={setReviews}
       onAuthSuccess={setAuthUser}
+      onLogout={() => setAuthUser(null)}
     />
   )
 }

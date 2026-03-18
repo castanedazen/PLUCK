@@ -33,6 +33,11 @@ app.use(
 app.use(bodyParser.json({ limit: "10mb" }))
 app.use(bodyParser.urlencoded({ extended: true }))
 
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`)
+  next()
+})
+
 const uploadsDir = path.join(__dirname, "uploads")
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
