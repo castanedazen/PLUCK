@@ -36,8 +36,6 @@ import {
   getSocialPosts,
   login,
   markNotificationRead,
-  requestPasswordReset,
-  resetPassword,
   reservePickup,
   sendMessage,
   signup,
@@ -59,6 +57,7 @@ import type {
   SellerProfile,
   SocialPost,
 } from './types'
+import CommunityBoard from './components/CommunityBoard'
 import { LeafletMapView } from './components/LeafletMapView'
 
 type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
@@ -196,16 +195,17 @@ const quickFilters: { key: QuickFilter; label: string }[] = [
 ]
 
 const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: string }[] = [
-  { match: /^\/$/, eyebrow: 'PLUCK orchard market', title: 'Grow local. Trade local.', subtitle: 'Fresh nearby. No middlemen.' },
-  { match: /^\/map/, eyebrow: 'Field map', title: 'See what is growing around you.', subtitle: 'Near first. Decide fast.' },
+  { match: /^\/$/, eyebrow: 'PLUCK orchard market', title: 'Grow local. Trade local.', subtitle: 'Fruit, people, pickup.' },
+  { match: /^\/map/, eyebrow: 'Field map', title: 'See what is growing around you.', subtitle: 'Nearby first. Move fast.' },
+  { match: /^\/board/, eyebrow: 'Local board', title: 'Grow a seed. Make a friend.', subtitle: 'Events, barter, help.' },
   { match: /^\/favorites/, eyebrow: 'Saved', title: 'Keep what matters close.', subtitle: 'Come back when it is ripe.' },
-  { match: /^\/messages/, eyebrow: 'Direct line', title: 'Talk. Then pick up.', subtitle: 'Clear threads. Fast pickup.' },
-  { match: /^\/alerts/, eyebrow: 'Signals', title: 'Know when fresh drops hit.', subtitle: 'Quiet alerts. Quick action.' },
-  { match: /^\/store/, eyebrow: 'Storefront', title: 'Run your stand your way.', subtitle: 'List, reply, move fruit.' },
+  { match: /^\/messages/, eyebrow: 'Direct line', title: 'Talk. Then pick up.', subtitle: 'No middlemen. No noise.' },
+  { match: /^\/alerts/, eyebrow: 'Signals', title: 'Know when fresh drops hit.', subtitle: 'Quiet alerts. Fast action.' },
+  { match: /^\/store/, eyebrow: 'Storefront', title: 'Run your stand your way.', subtitle: 'List. Reply. Move fruit.' },
   { match: /^\/profile/, eyebrow: 'Reputation', title: 'Earn trust. Keep it.', subtitle: 'Known grower. Clear signals.' },
   { match: /^\/grower\//, eyebrow: 'Grower', title: 'Meet the grower.', subtitle: 'Trust first. Reserve second.' },
   { match: /^\/listing\//, eyebrow: 'Listing', title: 'See it. Decide fast.', subtitle: 'Big photos. Clear next step.' },
-  { match: /^\/login/, eyebrow: 'Welcome back', title: 'Back to the orchard.', subtitle: 'Saved fruit and messages waiting.' },
+  { match: /^\/login/, eyebrow: 'Welcome back', title: 'Back to the orchard.', subtitle: 'Saved fruit. Alerts. Threads.' },
   { match: /^\/signup/, eyebrow: 'Join local', title: 'Start small. Grow strong.', subtitle: 'Buy, barter, sell, repeat.' },
 ]
 
@@ -226,6 +226,7 @@ type ReviewItem = {
 function routeTheme(pathname: string) {
   if (/^\/map/.test(pathname)) return 'route-theme-map'
   if (/^\/favorites/.test(pathname)) return 'route-theme-favorites'
+  if (/^\/board/.test(pathname)) return 'route-theme-board'
   if (/^\/messages/.test(pathname)) return 'route-theme-messages'
   if (/^\/store/.test(pathname)) return 'route-theme-store'
   if (/^\/profile/.test(pathname) || /^\/grower\//.test(pathname)) return 'route-theme-profile'
@@ -555,67 +556,35 @@ function AuthShell({
   mode,
   onAuthSuccess,
 }: {
-  mode: 'login' | 'signup' | 'reset'
+  mode: 'login' | 'signup'
   onAuthSuccess: (user: AuthUser) => void
 }) {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'buyer' | 'grower'>('buyer')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [resetCode, setResetCode] = useState('')
-  const [resetTokenPreview, setResetTokenPreview] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [info, setInfo] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
     setError('')
-    setInfo('')
 
     try {
-      if (mode === 'signup') {
-        if (password.length < 6) {
-          throw new Error('Password must be at least 6 characters.')
-        }
-        if (password !== confirmPassword) {
-          throw new Error('Passwords do not match.')
-        }
-        const user = await signup({
-          name: name.trim() || 'User',
-          email: email.trim(),
-          role,
-          password,
-        })
-        onAuthSuccess(user)
-        navigate('/profile')
-      } else if (mode === 'login') {
-        const user = await login({
-          email: email.trim(),
-          password,
-        })
-        onAuthSuccess(user)
-        navigate('/profile')
-      } else {
-        if (!resetTokenPreview && !resetCode) {
-          const result = await requestPasswordReset({ email: email.trim() })
-          setResetTokenPreview(result.resetToken)
-          setInfo(`Reset code: ${result.resetToken} — enter it below with your new password.`)
-        } else {
-          if (password.length < 6) throw new Error('Password must be at least 6 characters.')
-          if (password !== confirmPassword) throw new Error('Passwords do not match.')
-          await resetPassword({
-            email: email.trim(),
-            resetToken: resetCode.trim(),
-            password,
-          })
-          setInfo('Password updated. You can log in now.')
-          setTimeout(() => navigate('/login'), 700)
-        }
-      }
+      const user =
+        mode === 'signup'
+          ? await signup({
+              name: name.trim() || 'User',
+              email: email.trim(),
+              role,
+            })
+          : await login({
+              email: email.trim(),
+            })
+
+      onAuthSuccess(user)
+      navigate('/')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to continue.'
       setError(message)
@@ -628,19 +597,17 @@ function AuthShell({
     <section className="auth-page">
       <div className="auth-hero">
         <p className="eyebrow">PLUCK account</p>
-        <h1>{mode === 'signup' ? 'Create your account' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}</h1>
+        <h1>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
         <p>
-          {mode === 'reset'
-            ? 'Secure your account with a fresh password and get back into your orchard dashboard.'
-            : 'Join as a buyer or grower. Save favorites, message growers, and manage harvests with one secure account.'}
+          Join as a buyer or grower. This is the foundation for real profiles, saved searches, and nationwide discovery.
         </p>
       </div>
 
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="form-header">
           <div>
-            <p className="eyebrow">{mode === 'signup' ? 'New account' : mode === 'reset' ? 'Recovery' : 'Login'}</p>
-            <h2>{mode === 'signup' ? 'Start using PLUCK' : mode === 'reset' ? 'Reset account password' : 'Sign into your account'}</h2>
+            <p className="eyebrow">{mode === 'signup' ? 'New account' : 'Login'}</p>
+            <h2>{mode === 'signup' ? 'Start using PLUCK' : 'Sign into your account'}</h2>
           </div>
         </div>
 
@@ -685,69 +652,21 @@ function AuthShell({
                 </div>
               </label>
             ) : null}
-
-            <label className="full">
-              Password
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'reset' ? 'Create a new password' : 'Enter your password'}
-                required
-              />
-            </label>
-
-            {(mode === 'signup' || mode === 'reset') ? (
-              <label className="full">
-                Confirm password
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
-                  required
-                />
-              </label>
-            ) : null}
-
-            {mode === 'reset' && resetTokenPreview ? (
-              <label className="full">
-                Reset code
-                <input
-                  value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value.toUpperCase())}
-                  placeholder="Paste the reset code"
-                  required
-                />
-              </label>
-            ) : null}
           </div>
 
-          {info ? <div className="status-banner success">{info}</div> : null}
           {error ? <div className="status-banner error">{error}</div> : null}
 
-          <div className="action-row auth-action-row">
+          <div className="action-row">
             <button className="primary" type="submit" disabled={busy}>
-              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : mode === 'reset' ? (resetTokenPreview ? 'Save new password' : 'Send reset code') : 'Log in'}
+              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Log in'}
             </button>
-            {mode === 'login' ? (
-              <>
-                <button type="button" className="ghost" onClick={() => navigate('/signup')}>
-                  Create account
-                </button>
-                <button type="button" className="text-btn" onClick={() => navigate('/reset-password')}>
-                  Forgot password?
-                </button>
-              </>
-            ) : mode === 'signup' ? (
-              <button type="button" className="ghost" onClick={() => navigate('/login')}>
-                Have an account?
-              </button>
-            ) : (
-              <button type="button" className="ghost" onClick={() => navigate('/login')}>
-                Back to login
-              </button>
-            )}
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => navigate(mode === 'signup' ? '/login' : '/signup')}
+            >
+              {mode === 'signup' ? 'Have an account?' : 'Create account'}
+            </button>
           </div>
         </div>
       </form>
@@ -1896,7 +1815,6 @@ type AppLayoutProps = {
   reviews: ReviewItem[]
   setReviews: Dispatch<SetStateAction<ReviewItem[]>>
   onAuthSuccess: (user: AuthUser) => void
-  onLogout: () => void
 }
 
 function AppLayout({
@@ -1920,7 +1838,6 @@ function AppLayout({
   reviews,
   setReviews,
   onAuthSuccess,
-  onLogout,
 }: AppLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -2230,17 +2147,14 @@ function AppLayout({
             </>
           ) : (
             <>
+              <button className="ghost" onClick={() => goTo('/board')}>
+                Board
+              </button>
               <button className="ghost" onClick={() => goTo('/favorites')}>
                 Saved {favoriteListings.length ? `(${favoriteListings.length})` : ''}
               </button>
               <button className="ghost" onClick={() => goTo('/alerts')}>
                 Alerts {unreadNotifications.length ? `(${unreadNotifications.length})` : ''}
-              </button>
-              <button className="ghost" onClick={() => goTo('/profile')}>
-                Profile
-              </button>
-              <button className="ghost" onClick={onLogout}>
-                Log out
               </button>
               <button className="primary" onClick={() => goTo('/store/new')}>
                 + New listing
@@ -2404,7 +2318,7 @@ function AppLayout({
         <Routes>
           <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
-          <Route path="/reset-password" element={<AuthShell mode="reset" onAuthSuccess={onAuthSuccess} />} />
+          <Route path="/board" element={<CommunityBoard />} />
 
           <Route
             path="/"
@@ -2412,9 +2326,9 @@ function AppLayout({
               <>
                 <section className="hero-card hero-card--gallery">
                   <div className="hero-card-copy">
-                    <p className="eyebrow">Curated fruit edit</p>
-                    <h2>Fresh picks worth opening, saving, and reserving.</h2>
-                    <p>Discover local fruit with richer photos, clearer trust, and faster pickup moves.</p>
+                    <p className="eyebrow">PLUCK orchard market</p>
+                    <h2>Fruit worth leaving home for.</h2>
+                    <p>Grown nearby. Picked soon. Open fast.</p>
                   </div>
                   <div className="hero-card-gallery">
                     {(fruitRibbon.length ? fruitRibbon : listings.slice(0, 4)).slice(0, 4).map((item) => (
@@ -2438,10 +2352,10 @@ function AppLayout({
 
                 <section className="section-heading">
                   <div>
-                    <p className="eyebrow">Featured near you</p>
-                    <h2>Beautiful fruit worth opening</h2>
+                    <p className="eyebrow">Fresh nearby</p>
+                    <h2>Open what is ripe now</h2>
                   </div>
-                  <span className="section-meta">{filtered.length} listings</span>
+                  <span className="section-meta">{filtered.length} nearby</span>
                 </section>
 
                 <section className="grid">
@@ -3011,9 +2925,6 @@ function AppLayout({
                       <button className="ghost" onClick={() => navigate('/store/new')}>
                         Add new listing
                       </button>
-                      <button className="ghost" onClick={onLogout}>
-                        Log out
-                      </button>
                     </div>
                   </>
                 )}
@@ -3029,14 +2940,14 @@ function AppLayout({
         <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Home
         </NavLink>
-        <NavLink to="/favorites" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          Favorites
+        <NavLink to="/map" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Map
+        </NavLink>
+        <NavLink to="/board" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Board
         </NavLink>
         <NavLink to="/messages" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Messages
-        </NavLink>
-        <NavLink to="/store" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          My Store
         </NavLink>
         <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Profile
@@ -3096,14 +3007,7 @@ function App() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [follows, setFollows] = useState<Follow[]>([])
-  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
-    try {
-      const raw = window.localStorage.getItem('pluck-auth-user')
-      return raw ? (JSON.parse(raw) as AuthUser) : null
-    } catch {
-      return null
-    }
-  })
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
   const [reviews, setReviews] = useState<ReviewItem[]>(() => {
     try {
       const raw = window.localStorage.getItem('pluck-reviews')
@@ -3129,13 +3033,9 @@ function App() {
 
   useEffect(() => {
     try {
-      if (authUser) {
-        window.localStorage.setItem('pluck-auth-user', JSON.stringify(authUser))
-      } else {
-        window.localStorage.removeItem('pluck-auth-user')
-      }
+      window.localStorage.setItem('pluck-reviews', JSON.stringify(reviews))
     } catch {}
-  }, [authUser])
+  }, [reviews])
 
   return (
     <AppLayout
@@ -3159,7 +3059,6 @@ function App() {
       reviews={reviews}
       setReviews={setReviews}
       onAuthSuccess={setAuthUser}
-      onLogout={() => setAuthUser(null)}
     />
   )
 }
