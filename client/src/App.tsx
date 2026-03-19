@@ -9,7 +9,6 @@ import {
   useState,
 } from 'react'
 import {
-  Link,
   NavLink,
   Navigate,
   Route,
@@ -57,7 +56,7 @@ import type {
   SellerProfile,
   SocialPost,
 } from './types'
-import { LeafletMapView } from './components/LeafletMapView'
+import CommunityBoard from './components/CommunityBoard'
 
 type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
 
@@ -74,7 +73,7 @@ const fallbackListings: Listing[] = [
     city: 'Los Angeles',
     state: 'CA',
     zip: '91345',
-    distance: 'Just added',
+    distance: 'Just dropped',
     inventory: 12,
     sellerId: 'seller-1',
     sellerName: "Maria's Garden",
@@ -102,7 +101,7 @@ const fallbackListings: Listing[] = [
     city: 'Pasadena',
     state: 'CA',
     zip: '91104',
-    distance: 'Just added',
+    distance: 'Just dropped',
     inventory: 20,
     sellerId: 'seller-2',
     sellerName: 'Green Grove',
@@ -187,235 +186,11 @@ const emptyForm: ListingFormState = {
 
 const quickFilters: { key: QuickFilter; label: string }[] = [
   { key: 'all', label: 'All harvests' },
-  { key: 'just-added', label: 'Just added' },
+  { key: 'just-added', label: 'Just dropped' },
   { key: 'under-5', label: 'Under $5' },
   { key: 'citrus', label: 'Citrus' },
   { key: 'high-stock', label: 'High stock' },
 ]
-
-const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: string }[] = [
-  {
-    match: /^\/$/,
-    eyebrow: 'Pluck orchard market',
-    title: 'Find the sweetest local fruit near you.',
-    subtitle: 'Browse harvests, save favorites, and reserve pickup in a few taps.',
-  },
-  {
-    match: /^\/map/,
-    eyebrow: 'Discovery map',
-    title: 'See harvests on the map, not just in a list.',
-    subtitle: 'Tap pins, compare nearby growers, and jump straight into the real listing.',
-  },
-  {
-    match: /^\/favorites/,
-    eyebrow: 'Saved fruit',
-    title: 'Your favorite finds, all in one place.',
-    subtitle: 'Revisit the fruit and growers you wanted to come back to.',
-  },
-  {
-    match: /^\/messages/,
-    eyebrow: 'Grower inbox',
-    title: 'Talk with growers and lock in pickup quickly.',
-    subtitle: 'Open a thread, confirm details, and keep your fruit plans moving.',
-  },
-  {
-    match: /^\/alerts/,
-    eyebrow: 'Alerts',
-    title: 'Stay ahead of fresh drops and nearby harvests.',
-    subtitle: 'Track new fruit, saved growers, and pickup updates without the noise.',
-  },
-  {
-    match: /^\/store/,
-    eyebrow: 'My store',
-    title: 'Run your orchard storefront with less friction.',
-    subtitle: 'Manage listings, inventory, and responses from one clean dashboard.',
-  },
-  {
-    match: /^\/profile/,
-    eyebrow: 'Profile',
-    title: 'Build trust with a grower profile people remember.',
-    subtitle: 'Show what you grow, where you are, and why buyers come back.',
-  },
-  {
-    match: /^\/grower\//,
-    eyebrow: 'Grower profile',
-    title: 'Meet the grower behind the fruit.',
-    subtitle: 'Check trust signals, specialties, and active harvests before you reserve.',
-  },
-  {
-    match: /^\/listing\//,
-    eyebrow: 'Listing',
-    title: 'See the fruit first, then decide fast.',
-    subtitle: 'Photos, pickup windows, trust signals, and next steps are all right here.',
-  },
-  {
-    match: /^\/login/,
-    eyebrow: 'Welcome back',
-    title: 'Log in and get back to the orchard.',
-    subtitle: 'Pick up where you left off with saved fruit, alerts, and messages.',
-  },
-  {
-    match: /^\/signup/,
-    eyebrow: 'Create account',
-    title: 'Join Pluck and start finding fruit nearby.',
-    subtitle: 'Save growers, reserve pickup, and build your own orchard storefront.',
-  },
-]
-
-function getRouteMeta(pathname: string) {
-  return routeMeta.find((item) => item.match.test(pathname)) || routeMeta[0]
-}
-
-type ReviewItem = {
-  id: string
-  listingId: string
-  sellerId: string
-  sellerName: string
-  rating: number
-  comment: string
-  createdAt: string
-}
-
-function routeTheme(pathname: string) {
-  if (/^\/map/.test(pathname)) return 'route-theme-map'
-  if (/^\/favorites/.test(pathname)) return 'route-theme-favorites'
-  if (/^\/messages/.test(pathname)) return 'route-theme-messages'
-  if (/^\/store/.test(pathname)) return 'route-theme-store'
-  if (/^\/profile/.test(pathname) || /^\/grower\//.test(pathname)) return 'route-theme-profile'
-  if (/^\/alerts/.test(pathname)) return 'route-theme-alerts'
-  return 'route-theme-home'
-}
-
-function memberSinceLabel(_seller: SellerProfile) {
-  return 'Member since 2023'
-}
-
-function pickupConfidenceLabel(listing: Listing) {
-  if (listing.inventory >= 10) return 'Pickup confidence high'
-  if (listing.inventory >= 4) return 'Pickup confidence solid'
-  return 'Limited harvest window'
-}
-
-function trustSignalsForListing(listing: Listing) {
-  const signals = [] as string[]
-  if (listing.sellerVerified) signals.push('Verified grower')
-  if (listing.sellerRating) signals.push(`★ ${listing.sellerRating.toFixed(1)} trusted`)
-  signals.push('Quick reply')
-  signals.push(pickupConfidenceLabel(listing))
-  return signals.slice(0, 4)
-}
-
-function formatReviewDate(value: string) {
-  return new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' })
-}
-
-function TrustStrip({ listing }: { listing: Listing }) {
-  return (
-    <div className="trust-strip">
-      {trustSignalsForListing(listing).map((item) => (
-        <span className="trust-mini" key={`${listing.id}-${item}`}>
-          {item}
-        </span>
-      ))}
-    </div>
-  )
-}
-
-function RatingStars({ value, onChange, interactive = false }: { value: number; onChange?: (value: number) => void; interactive?: boolean }) {
-  return (
-    <div className={interactive ? 'rating-stars interactive' : 'rating-stars'}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          className={star <= value ? 'star active' : 'star'}
-          onClick={() => interactive && onChange?.(star)}
-          aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
-        >
-          ★
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function ReviewsPanel({
-  listing,
-  reviews,
-  onAddReview,
-}: {
-  listing: Listing
-  reviews: ReviewItem[]
-  onAddReview: (input: { listingId: string; sellerId: string; sellerName: string; rating: number; comment: string }) => void
-}) {
-  const [draftRating, setDraftRating] = useState(5)
-  const [draftComment, setDraftComment] = useState('')
-
-  return (
-    <section className="review-panel">
-      <div className="section-heading compact-heading no-top-gap">
-        <div>
-          <p className="eyebrow">Pickup trust</p>
-          <h2>Reviews & grower confidence</h2>
-        </div>
-        <div className="review-summary">
-          <RatingStars value={listing.sellerRating ? Math.round(listing.sellerRating) : 5} />
-          <span>{listing.sellerRating ? listing.sellerRating.toFixed(1) : 'New'} {reviews.length ? `${reviews.length} reviews` : 'Be the first to review this pickup'}</span>
-        </div>
-      </div>
-
-      <div className="review-compose">
-        <div>
-          <strong>Rate this pickup</strong>
-          <p>Share fruit quality, pickup ease, and communication.</p>
-        </div>
-        <RatingStars value={draftRating} onChange={setDraftRating} interactive />
-        <textarea
-          value={draftComment}
-          onChange={(e) => setDraftComment(e.target.value)}
-          rows={3}
-          placeholder="How was the pickup?"
-        />
-        <div className="action-row">
-          <button
-            className="primary"
-            onClick={() => {
-              onAddReview({
-                listingId: listing.id,
-                sellerId: listing.sellerId,
-                sellerName: listing.sellerName,
-                rating: draftRating,
-                comment: draftComment.trim() || 'Great pickup and clear communication.',
-              })
-              setDraftComment('')
-              setDraftRating(5)
-            }}
-          >
-            Submit rating
-          </button>
-        </div>
-      </div>
-
-      {reviews.length ? (
-        <div className="review-list">
-          {reviews.map((review) => (
-            <article className="review-card" key={review.id}>
-              <div className="review-card-head">
-                <strong>{review.sellerName}</strong>
-                <span>{formatReviewDate(review.createdAt)}</span>
-              </div>
-              <RatingStars value={review.rating} />
-              <p>{review.comment}</p>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <div className="empty-panel">Be the first to review this pickup and help the next buyer feel confident.</div>
-      )}
-    </section>
-  )
-}
-
 
 function formatTime(value?: string) {
   if (!value) return ''
@@ -473,7 +248,7 @@ function normalizeListing(listing: Listing): Listing {
     city,
     state,
     zip: listing.zip || '',
-    distance: listing.distance || 'Just added',
+    distance: listing.distance || 'Just dropped',
     inventory: Number.isFinite(listing.inventory) ? listing.inventory : 0,
     sellerId: listing.sellerId || 'seller-unknown',
     sellerName: listing.sellerName || 'Local Grower',
@@ -856,7 +631,7 @@ function ListingForm({
         city: form.city.trim(),
         state: form.state.trim(),
         zip: form.zip.trim(),
-        distance: initialValues?.distance || 'Just added',
+        distance: initialValues?.distance || 'Just dropped',
         inventory: Number(form.inventory) || 1,
         sellerId: seller.id,
         sellerName: seller.name,
@@ -1135,15 +910,13 @@ function GrowerTrust({
 
       <p className="desc">{seller.bio}</p>
 
-      <div className="trust-metrics trust-metrics--spacious">
+      <div className="trust-metrics">
         <div className="metric-chip">
           ★ {(seller.rating || 0).toFixed(1)} {seller.ratingCount ? `(${seller.ratingCount})` : ''}
         </div>
         <div className="metric-chip">{seller.followers || 0} followers</div>
         {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
         {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
-        <div className="metric-chip">Pickup confidence high</div>
-        <div className="metric-chip">{memberSinceLabel(seller)}</div>
       </div>
 
       {seller.specialties?.length ? (
@@ -1156,11 +929,10 @@ function GrowerTrust({
         </div>
       ) : null}
 
-      <div className="action-row action-row--grower">
+      <div className="action-row">
         <button className="primary" onClick={onToggleFollow}>
           {isFollowing ? 'Following' : 'Follow grower'}
         </button>
-        <button className="ghost">Message grower</button>
       </div>
     </div>
   )
@@ -1343,8 +1115,6 @@ function ListingDetailRoute({
   onToggleFollow,
   onOpenReserve,
   onStartConversation,
-  reviews,
-  onAddReview,
 }: {
   listings: Listing[]
   favorites: Favorite[]
@@ -1354,8 +1124,6 @@ function ListingDetailRoute({
   onToggleFollow: (sellerId: string) => Promise<void>
   onOpenReserve: (listing: Listing) => void
   onStartConversation: (listing: Listing) => Promise<void>
-  reviews: ReviewItem[]
-  onAddReview: (input: { listingId: string; sellerId: string; sellerName: string; rating: number; comment: string }) => void
 }) {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -1391,7 +1159,6 @@ function ListingDetailRoute({
           </div>
 
           <p className="desc">{listing.description}</p>
-          <TrustStrip listing={listing} />
           <p className="meta">
             {prettyLocation(listing)} • {listing.inventory} left • {sellerLabel(listing)}
           </p>
@@ -1438,12 +1205,6 @@ function ListingDetailRoute({
           </ActionGrid>
         </div>
       </div>
-
-      <ReviewsPanel
-        listing={listing}
-        reviews={reviews.filter((item) => item.listingId === listing.id)}
-        onAddReview={onAddReview}
-      />
     </section>
   )
 }
@@ -1499,7 +1260,7 @@ function MessagesPage({
               )
             })
           ) : (
-            <div className="empty-panel">Talk with growers about pickup once you start a conversation.</div>
+            <div className="empty-panel">No conversations yet.</div>
           )}
         </div>
       </aside>
@@ -1535,7 +1296,7 @@ function MessagesPage({
                     </div>
                   ))
                 ) : (
-                  <div className="empty-panel">No messages in this thread yet. Say hello and lock in pickup details.</div>
+                  <div className="empty-panel">No messages yet.</div>
                 )}
               </div>
 
@@ -1559,7 +1320,7 @@ function MessagesPage({
               </div>
             </>
           ) : (
-            <div className="empty-panel">Pick a grower conversation to see pickup details and replies here.</div>
+            <div className="empty-panel">Choose a conversation to view the thread.</div>
           )}
         </div>
       </section>
@@ -1658,8 +1419,6 @@ function GrowerPage({
           {grower.responseScore ? <div className="metric-chip">{grower.responseScore}</div> : null}
           {grower.repeatBuyerScore ? <div className="metric-chip">{grower.repeatBuyerScore}</div> : null}
           {grower.orchardName ? <div className="metric-chip">{grower.orchardName}</div> : null}
-          <div className="metric-chip">Pickup confidence high</div>
-          <div className="metric-chip">{memberSinceLabel(grower)}</div>
         </div>
 
         {grower.specialties?.length ? (
@@ -1838,7 +1597,7 @@ function AlertsPage({
               </div>
             ))
           ) : (
-            <div className="empty-panel">Fresh drops, alerts, and pickup updates will appear here.</div>
+            <div className="empty-panel">No notifications yet.</div>
           )}
         </div>
       </div>
@@ -1864,10 +1623,7 @@ type AppLayoutProps = {
   follows: Follow[]
   setFollows: Dispatch<SetStateAction<Follow[]>>
   authUser: AuthUser | null
-  reviews: ReviewItem[]
-  setReviews: Dispatch<SetStateAction<ReviewItem[]>>
   onAuthSuccess: (user: AuthUser) => void
-  onLogout: () => void
 }
 
 function AppLayout({
@@ -1888,16 +1644,11 @@ function AppLayout({
   follows,
   setFollows,
   authUser,
-  reviews,
-  setReviews,
   onAuthSuccess,
-  onLogout,
 }: AppLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [draftQuery, setDraftQuery] = useState('')
-  const [appliedQuery, setAppliedQuery] = useState('')
-  const [searchFeedback, setSearchFeedback] = useState('')
+  const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<QuickFilter>('all')
   const [reserveTarget, setReserveTarget] = useState<Listing | null>(null)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
@@ -1905,7 +1656,7 @@ function AppLayout({
   const favoriteListingIds = new Set(favorites.map((fav) => fav.listingId))
   const favoriteListings = listings.filter((item) => favoriteListingIds.has(item.id))
   const myListings = listings.filter((item) => item.sellerName === seller.name)
-  const justAdded = listings.filter((item) => item.distance === 'Just added')
+  const justAdded = listings.filter((item) => item.distance === 'Just dropped')
   const totalInventory = myListings.reduce((sum, item) => sum + item.inventory, 0)
   const averagePrice =
     myListings.length > 0
@@ -1916,7 +1667,7 @@ function AppLayout({
   const followingSellerIds = new Set(follows.map((item) => item.sellerId))
 
   const filtered = useMemo(() => {
-    const q = appliedQuery.trim().toLowerCase()
+    const q = query.trim().toLowerCase()
 
     let result = listings.filter((item) =>
       [
@@ -1936,7 +1687,7 @@ function AppLayout({
     )
 
     if (activeFilter === 'just-added') {
-      result = result.filter((item) => item.distance === 'Just added')
+      result = result.filter((item) => item.distance === 'Just dropped')
     }
 
     if (activeFilter === 'under-5') {
@@ -1956,12 +1707,7 @@ function AppLayout({
     }
 
     return result
-  }, [listings, appliedQuery, activeFilter])
-
-  const showcaseListings = (filtered.length ? filtered : listings).slice(0, 5)
-  const leadShowcase = showcaseListings[0] || listings[0] || null
-  const sideShowcase = showcaseListings.slice(1, 4)
-  const fruitRibbon = showcaseListings.length ? showcaseListings : listings.slice(0, 5)
+  }, [listings, query, activeFilter])
 
   useEffect(() => {
     if (!selectedConversationId && conversations.length > 0) {
@@ -2112,108 +1858,39 @@ function AppLayout({
     setNotifications((current) => current.map((item) => (item.id === id ? updated : item)))
   }
 
-  function handleAddReview(input: { listingId: string; sellerId: string; sellerName: string; rating: number; comment: string }) {
-    const review: ReviewItem = {
-      id: crypto.randomUUID(),
-      listingId: input.listingId,
-      sellerId: input.sellerId,
-      sellerName: input.sellerName,
-      rating: input.rating,
-      comment: input.comment,
-      createdAt: new Date().toISOString(),
-    }
-    setReviews((current) => [review, ...current])
-  }
-
   function isActivePath(path: string) {
     return location.pathname === path
   }
 
-  function describeSearchTarget(raw: string) {
-    if (!raw.trim()) return ''
-    return /^\d{5}$/.test(raw.trim()) ? `Showing fruit near ${raw.trim()}` : `Showing results for “${raw.trim()}”`
-  }
-
-  function submitSearch(targetId = 'listing-feed') {
-    const normalized = draftQuery.trim()
-    setAppliedQuery(normalized)
-    setSearchFeedback(describeSearchTarget(normalized))
-    scrollToId(targetId)
-  }
-
-  function clearSearch() {
-    setDraftQuery('')
-    setAppliedQuery('')
-    setSearchFeedback('')
-  }
-
-  function useNearMe() {
-    const fallback = seller.zip || seller.city || seller.locationLabel || ''
-    setDraftQuery(fallback)
-    setAppliedQuery(fallback)
-    setSearchFeedback(describeSearchTarget(fallback))
-    goTo('/map', 'map-panel')
-  }
-
-  function goTo(path: string, targetId = 'route-start') {
-    navigate(path)
-    window.requestAnimationFrame(() => {
-      setTimeout(() => {
-        document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 40)
-    })
-  }
-
-  function scrollToId(targetId: string) {
-    document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
-  const currentMeta = getRouteMeta(location.pathname)
-  const currentRouteTheme = routeTheme(location.pathname)
-
-  useEffect(() => {
-    window.requestAnimationFrame(() => {
-      setTimeout(() => {
-        document.getElementById('route-start')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 20)
-    })
-  }, [location.pathname])
-
   return (
     <div className="app-shell">
-      <header className={`topbar topbar--slim ${currentRouteTheme}`}>
-        <div className="brand-lockup">
-          <p className="eyebrow">Pluck orchard market</p>
-          <h1>{currentMeta.title}</h1>
+      <header className="topbar">
+        <div>
+          <p className="eyebrow">Pluck V7D shell</p>
+          <h1>Fresh fruit from neighbors</h1>
           <p className="subtle-copy">
-            {currentMeta.subtitle}
+            A sharper local marketplace for backyard harvests, same-day pickup, grower trust, and nationwide-ready discovery.
           </p>
         </div>
         <div className="topbar-actions">
           {!authUser ? (
             <>
-              <button className="ghost" onClick={() => goTo('/login')}>
+              <button className="ghost" onClick={() => navigate('/login')}>
                 Log in
               </button>
-              <button className="primary" onClick={() => goTo('/signup')}>
+              <button className="primary" onClick={() => navigate('/signup')}>
                 Create account
               </button>
             </>
           ) : (
             <>
-              <button className="ghost" onClick={() => goTo('/favorites')}>
-                Saved {favoriteListings.length ? `(${favoriteListings.length})` : ''}
-              </button>
-              <button className="ghost" onClick={() => goTo('/alerts')}>
+              <button className="ghost" onClick={() => navigate('/alerts')}>
                 Alerts {unreadNotifications.length ? `(${unreadNotifications.length})` : ''}
               </button>
-              <button className="ghost" onClick={() => goTo('/profile')}>
-                Profile
+              <button className="ghost" onClick={() => navigate('/profile')}>
+                {[seller.city, seller.state].filter(Boolean).join(', ') || 'Profile'}
               </button>
-              <button className="ghost" onClick={onLogout}>
-                Log out
-              </button>
-              <button className="primary" onClick={() => goTo('/store/new')}>
+              <button className="primary" onClick={() => navigate('/store/new')}>
                 + New listing
               </button>
             </>
@@ -2221,126 +1898,59 @@ function AppLayout({
         </div>
       </header>
 
-      {leadShowcase ? (
-        <section className="cinematic-hero">
-          <div className="cinematic-backdrop">
-            <img src={leadShowcase.image} alt={leadShowcase.title} />
-            <div className="cinematic-overlay">
-              <p className="eyebrow eyebrow--light">Pluck orchard market</p>
-              <h2>{leadShowcase.title}</h2>
-              <p>Backyard harvests, orchard trust, and quick pickup plans—all surfaced in one beautiful place.</p>
-              <div className="cinematic-pill-row">
-                <span className="cinematic-pill">{leadShowcase.fruit}</span>
-                <span className="cinematic-pill">${leadShowcase.price}/{leadShowcase.unit}</span>
-                <span className="cinematic-pill">{prettyLocation(leadShowcase)}</span>
-                {leadShowcase.sellerRating ? <span className="cinematic-pill">★ {leadShowcase.sellerRating.toFixed(1)}</span> : null}
-              </div>
-              <div className="hero-cta-row">
-                <button className="primary" onClick={() => scrollToId('live-picks')}>
-                  Shop featured fruit
-                </button>
-                <button className="ghost ghost--light" onClick={() => goTo('/map', 'map-panel')}>
-                  Explore nearby map
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="cinematic-side-rail">
-            {(sideShowcase.length ? sideShowcase : listings.slice(1, 4)).slice(0, 3).map((item) => (
-              <button className="cinematic-fruit-card cinematic-link-card" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
-                <img src={item.image} alt={item.title} />
-                <div className="cinematic-fruit-card-copy">
-                  <strong>{item.title}</strong>
-                  <span>${item.price}/{item.unit}</span>
-                  <TrustStrip listing={item} />
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {leadShowcase ? (
-        <section id="live-picks" className="hero-live-grid">
-          <div className="section-heading section-heading--compact">
-            <div>
-              <p className="eyebrow">Live orchard picks</p>
-              <h2>Tap any fruit to open the real listing.</h2>
-            </div>
-            <span className="section-meta">{fruitRibbon.length} live now</span>
-          </div>
-
-          <div className="hero-live-grid__cards">
-            {fruitRibbon.slice(0, 6).map((item) => (
-              <button className="hero-live-card cinematic-link-card" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
-                <img src={item.image} alt={item.title} />
-                <div className="hero-live-card__overlay">
-                  <span className="hero-live-card__kicker">{item.harvestLabel || item.distance || 'Fresh nearby'}</span>
-                  <strong>{item.title}</strong>
-                  <span>
-                    ${item.price}/{item.unit} • {item.city || item.location}
-                  </span>
-                  <TrustStrip listing={item} />
-                </div>
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {fruitRibbon.length ? (
-        <section className="fruit-ribbon">
-          {fruitRibbon.map((item) => (
-            <button className="fruit-ribbon-card cinematic-link-card" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
-              <img src={item.image} alt={item.title} />
-              <div>
-                <strong>{item.title}</strong>
-                <span>
-                  ${item.price}/{item.unit} • {item.city || item.location}
-                </span>
-                <TrustStrip listing={item} />
-              </div>
+      <section className="hero-band">
+        <div className="hero-copy">
+          <p className="eyebrow">Sovereign local market</p>
+          <h2>Grow local. Trade local. Keep it human.</h2>
+          <p>
+            Post what is ripe, barter what you can, and build a neighborhood food network that feels real.
+          </p>
+          <div className="hero-cta-row">
+            <button className="primary" onClick={() => navigate('/store/new')}>
+              Start a stand
             </button>
-          ))}
-        </section>
-      ) : null}
-
-      <div className="search-wrap search-wrap--floating">
-        <div className="search-form-row search-form-row--premium">
-          <input
-            value={draftQuery}
-            onChange={(e) => setDraftQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                submitSearch(isActivePath('/map') ? 'map-panel' : 'listing-feed')
-              }
-            }}
-            placeholder="Search fruit, growers, city, state, or ZIP... Press Enter to search."
-          />
-          <div className="search-action-stack">
-            <button className="search-submit" onClick={() => submitSearch(isActivePath('/map') ? 'map-panel' : 'listing-feed')}>
-              Search
+            <button className="ghost" onClick={() => navigate('/map')}>
+              See the map
             </button>
-            <button className="ghost compact-btn" onClick={clearSearch}>
-              Clear
+            <button className="ghost" onClick={() => navigate('/alerts')}>
+              Open signals
             </button>
           </div>
         </div>
-        <div className="search-meta-row">
-          <p className="search-hint">Type what you want, then press Enter or tap Search to jump to the matching fruit below.</p>
-          <button className="ghost compact-btn" onClick={useNearMe}>Near me</button>
+
+        <div className="stats-grid">
+          <button className="stat-card stat-link" onClick={() => navigate('/')}>
+            <span>Nearby</span>
+            <strong>{listings.length}</strong>
+          </button>
+          <button className="stat-card stat-link" onClick={() => navigate('/favorites')}>
+            <span>Saved</span>
+            <strong>{favoriteListings.length}</strong>
+          </button>
+          <button className="stat-card stat-link" onClick={() => navigate('/store/inventory')}>
+            <span>In stock</span>
+            <strong>{totalInventory}</strong>
+          </button>
+          <button className="stat-card stat-link" onClick={() => navigate('/messages')}>
+            <span>Threads</span>
+            <strong>{conversations.length}</strong>
+          </button>
         </div>
-        {searchFeedback ? <div className="search-feedback-pill">{searchFeedback}</div> : null}
-        {appliedQuery ? <div className="search-applied-copy">Live search locked in for <strong>{appliedQuery}</strong></div> : null}
+      </section>
+
+      <div className="search-wrap">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search fruit, growers, city, state, or ZIP..."
+        />
 
         <div className="search-bottom-row">
           <div className="toggle-row">
-            <button className={isActivePath('/') ? 'toggle active' : 'toggle'} onClick={() => goTo('/', 'listing-feed')}>
+            <button className={isActivePath('/') ? 'toggle active' : 'toggle'} onClick={() => navigate('/')}>
               List
             </button>
-            <button className={isActivePath('/map') ? 'toggle active' : 'toggle'} onClick={() => goTo('/map', 'map-panel')}>
+            <button className={isActivePath('/map') ? 'toggle active' : 'toggle'} onClick={() => navigate('/map')}>
               Map
             </button>
           </div>
@@ -2350,7 +1960,7 @@ function AppLayout({
               <button
                 key={filter.key}
                 className={activeFilter === filter.key ? 'filter-chip active' : 'filter-chip'}
-                onClick={() => { setActiveFilter(filter.key); setTimeout(() => scrollToId('listing-feed'), 30) }}
+                onClick={() => setActiveFilter(filter.key)}
               >
                 {filter.label}
               </button>
@@ -2359,47 +1969,31 @@ function AppLayout({
         </div>
       </div>
 
-      <section id="route-start" className={`route-intro-card ${currentRouteTheme}`}>
-        <div>
-          <p className="eyebrow">{currentMeta.eyebrow}</p>
-          <h2>{currentMeta.title}</h2>
-          <p>{currentMeta.subtitle}</p>
-        </div>
-        <div className="route-intro-actions">
-          <button className="ghost" onClick={() => goTo('/map', 'map-panel')}>Open map</button>
-          <button className="primary" onClick={() => scrollToId('listing-feed')}>Browse fruit</button>
-        </div>
-      </section>
-
-      <main id="listing-feed" className="content">
+      <main className="content">
         <Routes>
           <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
+          <Route path="/board" element={<CommunityBoard />} />
 
           <Route
             path="/"
             element={
               <>
-                <section className="hero-card hero-card--gallery">
-                  <div className="hero-card-copy">
-                    <p className="eyebrow">Curated fruit edit</p>
-                    <h2>Fresh picks worth opening, saving, and reserving.</h2>
-                    <p>Discover local fruit with richer photos, clearer trust, and faster pickup moves.</p>
+                <section className="hero-card">
+                  <div>
+                    <p className="eyebrow">Today nearby</p>
+                    <h2>Backyard harvests, same-day pickup</h2>
+                    <p>Browse fruit from local growers, reserve by message, and coordinate a clear pickup window.</p>
                   </div>
-                  <div className="hero-card-gallery">
-                    {(fruitRibbon.length ? fruitRibbon : listings.slice(0, 4)).slice(0, 4).map((item) => (
-                      <button className="hero-fruit-tile" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
-                        <img src={item.image} alt={item.title} />
-                        <span>{item.fruit}</span>
-                      </button>
-                    ))}
-                  </div>
+                  <button className="primary" onClick={() => navigate('/store/new')}>
+                    Create listing
+                  </button>
                 </section>
 
                 {unreadNotifications.length ? (
                   <section className="signal-strip">
                     {unreadNotifications.slice(0, 2).map((item) => (
-                      <button className="signal-pill" key={item.id} onClick={() => goTo('/alerts')}>
+                      <button className="signal-pill" key={item.id} onClick={() => navigate('/alerts')}>
                         {item.title}
                       </button>
                     ))}
@@ -2408,8 +2002,8 @@ function AppLayout({
 
                 <section className="section-heading">
                   <div>
-                    <p className="eyebrow">Featured near you</p>
-                    <h2>Beautiful fruit worth opening</h2>
+                    <p className="eyebrow">Picked nearby</p>
+                    <h2>Fruit worth leaving home for</h2>
                   </div>
                   <span className="section-meta">{filtered.length} listings</span>
                 </section>
@@ -2421,13 +2015,13 @@ function AppLayout({
 
                     return (
                       <article className="card premium-card listing-card-v2" key={item.id}>
-                        <button className="card-image-wrap card-image-button" onClick={() => goTo('/listing/' + item.id)}>
+                        <div className="card-image-wrap">
                           <img src={item.image} alt={item.title} />
                           <span className="card-badge">{item.distance}</span>
-                        </button>
+                        </div>
                         <div className="card-body">
                           <div className="price-row">
-                            <button className="listing-title-link" onClick={() => goTo('/listing/' + item.id)}>{item.title}</button>
+                            <h3>{item.title}</h3>
                             <span>
                               ${item.price}/{item.unit}
                             </span>
@@ -2447,8 +2041,6 @@ function AppLayout({
                             {item.sellerVerified ? '✓ ' : ''}
                             {sellerLabel(item)}
                           </button>
-
-                          <TrustStrip listing={item} />
 
                           <p className="desc">{item.description}</p>
 
@@ -2476,7 +2068,7 @@ function AppLayout({
                             <button className="primary fill-btn" onClick={() => handleStartConversation(item)}>
                               Message
                             </button>
-                            <button className="ghost fill-btn" onClick={() => goTo('/listing/' + item.id)}>
+                            <button className="ghost fill-btn" onClick={() => navigate('/listing/' + item.id)}>
                               View
                             </button>
                             <button className="ghost fill-btn" onClick={() => handleToggleFavorite(item.id)}>
@@ -2496,8 +2088,8 @@ function AppLayout({
                   <>
                     <section className="section-heading section-gap-top">
                       <div>
-                        <p className="eyebrow">Harvest feed</p>
-                        <h2>Grower signals</h2>
+                        <p className="eyebrow">Local signal</p>
+                        <h2>From the neighborhood</h2>
                       </div>
                     </section>
 
@@ -2535,13 +2127,13 @@ function AppLayout({
                 <section className="section-heading section-gap-top">
                   <div>
                     <p className="eyebrow">Fresh activity</p>
-                    <h2>Just added</h2>
+                    <h2>Just dropped</h2>
                   </div>
                 </section>
 
                 <section className="mini-grid">
                   {(justAdded.length ? justAdded : listings.slice(0, 2)).map((item) => (
-                    <button className="activity-card activity-card--live" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
+                    <div className="activity-card" key={item.id}>
                       <img src={item.image} alt={item.title} />
                       <div>
                         <strong>{item.title}</strong>
@@ -2549,7 +2141,7 @@ function AppLayout({
                           {prettyLocation(item)} • ${item.price}/{item.unit}
                         </p>
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </section>
               </>
@@ -2559,43 +2151,30 @@ function AppLayout({
           <Route
             path="/map"
             element={
-              <section id="map-panel" className="map-panel">
+              <section className="map-panel">
                 <div className="map-fallback premium-map">
                   <div className="map-header-row">
                     <div>
                       <p className="eyebrow">Discovery map</p>
                       <h3>Location-first neighborhood browsing</h3>
                     </div>
-                    <button className="ghost" onClick={() => goTo('/store/new')}>
+                    <button className="ghost" onClick={() => navigate('/store/new')}>
                       Add your harvest
                     </button>
                   </div>
 
                   <p>
-                    Zoom into any neighborhood, type a ZIP to recenter the map, and open live fruit listings directly from the pins or the list below.
+                    This map view is now geo-aware and nationwide-ready. Listings with coordinates render as live pins on a U.S. board.
                   </p>
 
-                  <div className="leaflet-map-panel">
-                    <LeafletMapView
-                      listings={filtered}
-                      searchQuery={appliedQuery}
-                      onOpenListing={(listingId) => navigate('/listing/' + listingId)}
-                    />
-                  </div>
+                  <NationwideGeoMap
+                    listings={filtered}
+                    onOpenListing={(listingId) => navigate('/listing/' + listingId)}
+                  />
 
-                  <div className="map-support-row">
-                    <div className="map-support-copy">
-                      <strong>Search any ZIP, city, or neighborhood</strong>
-                      <span>The map now recenters to the place you typed, then keeps the nearby fruit cards underneath in sync.</span>
-                    </div>
-                    <button className="ghost" onClick={() => scrollToId('listing-feed')}>
-                      Jump to matching fruit
-                    </button>
-                  </div>
-
-                  <div className="pin-list premium-pin-list">
+                  <div className="pin-list">
                     {filtered.map((item) => (
-                      <button className="pin-row premium-pin-row premium-pin-button" key={item.id} onClick={() => navigate('/listing/' + item.id)}>
+                      <div className="pin-row premium-pin-row" key={item.id}>
                         <div>
                           <strong>{item.fruit}</strong>
                           <p>
@@ -2603,14 +2182,14 @@ function AppLayout({
                           </p>
                           <div className="listing-badge-row">
                             {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
-                            {item.sellerVerified ? <span className="trust-pill verified">Verified grower</span> : null}
-                            {hasGeo(item) ? <span className="trust-pill available">Map ready</span> : null}
+                            {item.sellerVerified ? <span className="trust-pill verified">Verified</span> : null}
+                            {hasGeo(item) ? <span className="trust-pill available">Geo-ready</span> : null}
                           </div>
                         </div>
                         <span>
                           ${item.price}/{item.unit}
                         </span>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -2630,8 +2209,6 @@ function AppLayout({
                 onToggleFollow={handleToggleFollow}
                 onOpenReserve={setReserveTarget}
                 onStartConversation={handleStartConversation}
-                reviews={reviews}
-                onAddReview={handleAddReview}
               />
             }
           />
@@ -2671,16 +2248,15 @@ function AppLayout({
                             {prettyLocation(item)} • ${item.price}/{item.unit}
                           </p>
                           <span>{item.pickupWindows[0]}</span>
-                          <TrustStrip listing={item} />
                         </div>
-                        <button className="ghost" onClick={() => goTo('/listing/' + item.id)}>
+                        <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
                           View
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="empty-panel">Save fruit you want to revisit and it will land here.</div>
+                  <div className="empty-panel">No saved listings yet.</div>
                 )}
               </section>
             }
@@ -2800,10 +2376,9 @@ function AppLayout({
                             {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
                             {item.availabilityLabel ? <span className="trust-pill available">{item.availabilityLabel}</span> : null}
                           </div>
-                          <TrustStrip listing={item} />
                         </div>
                         <div className="listing-row-actions">
-                          <button className="ghost" onClick={() => goTo('/listing/' + item.id)}>
+                          <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
                             View
                           </button>
                           <button className="ghost" onClick={() => navigate('/store/edit/' + item.id)}>
@@ -2817,7 +2392,7 @@ function AppLayout({
                     ))}
                   </div>
                 ) : (
-                  <div className="empty-panel">Add your first harvest and your storefront listings will appear here.</div>
+                  <div className="empty-panel">You do not have any listings yet.</div>
                 )}
               </section>
             }
@@ -2846,7 +2421,7 @@ function AppLayout({
                       </div>
                     ))
                   ) : (
-                    <div className="empty-panel">Your active inventory will show up here once you publish a harvest.</div>
+                    <div className="empty-panel">You do not have inventory yet.</div>
                   )}
                 </div>
               </section>
@@ -2928,10 +2503,10 @@ function AppLayout({
                   <>
                     <p>Create an account or log in to make this profile live across devices.</p>
                     <div className="action-row">
-                      <button className="primary" onClick={() => goTo('/signup')}>
+                      <button className="primary" onClick={() => navigate('/signup')}>
                         Create account
                       </button>
-                      <button className="ghost" onClick={() => goTo('/login')}>
+                      <button className="ghost" onClick={() => navigate('/login')}>
                         Log in
                       </button>
                     </div>
@@ -2961,7 +2536,6 @@ function AppLayout({
                       {seller.followers ? <div className="metric-chip">{seller.followers} followers</div> : null}
                       {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
                       {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
-                      <div className="metric-chip">{memberSinceLabel(seller)}</div>
                     </div>
 
                     {seller.specialties?.length ? (
@@ -2981,9 +2555,6 @@ function AppLayout({
                       <button className="ghost" onClick={() => navigate('/store/new')}>
                         Add new listing
                       </button>
-                      <button className="ghost" onClick={onLogout}>
-                        Log out
-                      </button>
                     </div>
                   </>
                 )}
@@ -2999,14 +2570,17 @@ function AppLayout({
         <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Home
         </NavLink>
-        <NavLink to="/favorites" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          Favorites
+        <NavLink to="/map" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Map
+        </NavLink>
+        <NavLink to="/board" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Board
         </NavLink>
         <NavLink to="/messages" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Messages
         </NavLink>
         <NavLink to="/store" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          My Store
+          Store
         </NavLink>
         <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Profile
@@ -3066,22 +2640,7 @@ function App() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [follows, setFollows] = useState<Follow[]>([])
-  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
-    try {
-      const raw = window.localStorage.getItem('pluck-auth-user')
-      return raw ? (JSON.parse(raw) as AuthUser) : null
-    } catch {
-      return null
-    }
-  })
-  const [reviews, setReviews] = useState<ReviewItem[]>(() => {
-    try {
-      const raw = window.localStorage.getItem('pluck-reviews')
-      return raw ? (JSON.parse(raw) as ReviewItem[]) : []
-    } catch {
-      return []
-    }
-  })
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
     getListings()
@@ -3096,16 +2655,6 @@ function App() {
     getAlerts().then(setAlerts).catch(() => setAlerts([]))
     getFollows('me').then(setFollows).catch(() => setFollows([]))
   }, [])
-
-  useEffect(() => {
-    try {
-      if (authUser) {
-        window.localStorage.setItem('pluck-auth-user', JSON.stringify(authUser))
-      } else {
-        window.localStorage.removeItem('pluck-auth-user')
-      }
-    } catch {}
-  }, [authUser])
 
   return (
     <AppLayout
@@ -3126,10 +2675,7 @@ function App() {
       follows={follows}
       setFollows={setFollows}
       authUser={authUser}
-      reviews={reviews}
-      setReviews={setReviews}
       onAuthSuccess={setAuthUser}
-      onLogout={() => setAuthUser(null)}
     />
   )
 }
