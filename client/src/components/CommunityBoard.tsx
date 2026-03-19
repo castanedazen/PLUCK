@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 type BoardPost = {
   id: string
@@ -19,6 +19,20 @@ export default function CommunityBoard() {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [category, setCategory] = useState('Grow & Share')
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+
+  const categoryPrompt = useMemo(() => {
+    switch (category) {
+      case 'Trade & Help':
+        return 'What can you trade, carry, fix, or help with?'
+      case 'Local Event':
+        return 'What is happening and when should people show up?'
+      case 'Needs Volunteers':
+        return 'What help is needed, and who should come through?'
+      default:
+        return 'What is growing, needed, or ready to share?'
+    }
+  }, [category])
 
   function createPost() {
     if (!title.trim()) return
@@ -26,16 +40,25 @@ export default function CommunityBoard() {
     setTitle('')
     setBody('')
     setCategory('Grow & Share')
+    setReplyingTo(null)
+  }
+
+  function handleReply(post: BoardPost) {
+    setCategory(post.category)
+    setTitle(`Replying to: ${post.title}`)
+    setBody(`I can help with this. Here is what I can offer...`)
+    setReplyingTo(post.id)
+    document.getElementById('board-create')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return (
-    <section className="stack board-shell" id="board-create">
+    <section className="stack board-shell" id="board-shell">
       <div className="board-hero">
         <p className="eyebrow">Community board</p>
-        <h2>Post what matters. Gather who is needed.</h2>
-        <p>Events, barter, volunteer asks, and neighborhood signal in one place.</p>
+        <h2>Post what matters. Bring the block in.</h2>
+        <p>Barter, help, events, and neighborhood signal in one place.</p>
       </div>
-      <div className="board-create">
+      <div className="board-create" id="board-create">
         <div className="board-create-row">
           <select value={category} onChange={(e) => setCategory(e.target.value)}>
             <option>Grow & Share</option>
@@ -43,11 +66,11 @@ export default function CommunityBoard() {
             <option>Local Event</option>
             <option>Needs Volunteers</option>
           </select>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What is happening?" />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={categoryPrompt} />
         </div>
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Keep it short, clear, and local." rows={3} />
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Keep it short, clear, and useful." rows={3} />
         <div className="action-row board-actions">
-          <button className="primary" onClick={createPost}>Post it</button>
+          <button className="primary" onClick={createPost}>{replyingTo ? 'Send reply' : 'Post it'}</button>
           <span className="board-note">For the block. For the neighborhood.</span>
         </div>
       </div>
@@ -60,7 +83,7 @@ export default function CommunityBoard() {
             </div>
             <h3>{post.title}</h3>
             <p>{post.body}</p>
-            <button className="ghost">Reply</button>
+            <button className="ghost" onClick={() => handleReply(post)}>Reply</button>
           </article>
         ))}
       </div>

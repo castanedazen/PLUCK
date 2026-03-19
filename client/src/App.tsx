@@ -35,6 +35,8 @@ import {
   getSocialPosts,
   login,
   markNotificationRead,
+  requestPasswordReset,
+  resetPassword,
   reservePickup,
   sendMessage,
   signup,
@@ -218,7 +220,7 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
       kicker: 'For the everyman. For the neighborhood.',
       links: [
         { label: 'See the market', targetId: 'market-listings', primary: true },
-        { label: 'Open the board', route: '/board' },
+        { label: 'Open the board', route: '/board', targetId: 'board-shell' },
         { label: 'Start your stand', route: '/store/new' },
       ],
     },
@@ -227,12 +229,12 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/map/,
     theme: {
       eyebrow: 'Ground game map',
-      title: 'See what is growing close enough to matter.',
-      subtitle: 'Nearby harvests, pickup routes, and growers worth knowing.',
-      kicker: 'Local first. Store shelves second.',
+      title: 'Know what is growing close enough to carry home.',
+      subtitle: 'Fruit, growers, and pickup points worth leaving the house for.',
+      kicker: 'Ground truth for local fruit.',
       links: [
         { label: 'See nearby fruit', targetId: 'map-panel', primary: true },
-        { label: 'Open the board', route: '/board' },
+        { label: 'Open the board', route: '/board', targetId: 'board-shell' },
         { label: 'List your harvest', route: '/store/new' },
       ],
     },
@@ -241,13 +243,13 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/board/,
     theme: {
       eyebrow: 'Community signal board',
-      title: 'Post what matters. Gather who is needed.',
-      subtitle: 'Events, barter, volunteer asks, and neighborhood signal in one place.',
+      title: 'Post what matters. Bring the block in.',
+      subtitle: 'Barter, help, events, and neighborhood signal in one place.',
       kicker: 'Not followers. Neighbors.',
       links: [
         { label: 'Post a signal', targetId: 'board-create', primary: true },
-        { label: 'See the market', route: '/' },
-        { label: 'Check the map', route: '/map' },
+        { label: 'See the market', route: '/', targetId: 'market-listings' },
+        { label: 'Check the map', route: '/map', targetId: 'map-panel' },
       ],
     },
   },
@@ -260,8 +262,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
       kicker: 'Small scale. Serious presence.',
       links: [
         { label: 'New listing', route: '/store/new', primary: true },
-        { label: 'See your market', route: '/' },
-        { label: 'Open the board', route: '/board' },
+        { label: 'See your market', route: '/', targetId: 'market-listings' },
+        { label: 'Open the board', route: '/board', targetId: 'board-shell' },
       ],
     },
   },
@@ -269,13 +271,13 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/messages/,
     theme: {
       eyebrow: 'Direct line',
-      title: 'Set the pickup. Keep the thread clear.',
-      subtitle: 'Direct words, clear times, real follow-through.',
-      kicker: 'Clear words beat complicated systems.',
+      title: 'Lock the details. Make the pickup happen.',
+      subtitle: 'Clear notes, real times, no crossed wires.',
+      kicker: 'Direct beats complicated.',
       links: [
         { label: 'Open threads', targetId: 'messages-shell', primary: true },
-        { label: 'See the market', route: '/' },
-        { label: 'Open the board', route: '/board' },
+        { label: 'See the market', route: '/', targetId: 'market-listings' },
+        { label: 'Open the board', route: '/board', targetId: 'board-shell' },
       ],
     },
   },
@@ -289,7 +291,7 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
       links: [
         { label: 'View profile', targetId: 'profile-shell', primary: true },
         { label: 'Open your stand', route: '/store' },
-        { label: 'Open messages', route: '/messages' },
+        { label: 'Open messages', route: '/messages', targetId: 'messages-shell' },
       ],
     },
   },
@@ -503,35 +505,48 @@ function AuthShell({
   mode,
   onAuthSuccess,
 }: {
-  mode: 'login' | 'signup'
+  mode: 'login' | 'signup' | 'reset'
   onAuthSuccess: (user: AuthUser) => void
 }) {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [role, setRole] = useState<'buyer' | 'grower'>('buyer')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [resetCode, setResetCode] = useState('')
+  const [resetRequested, setResetRequested] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
     setError('')
+    setInfo('')
 
     try {
-      const user =
-        mode === 'signup'
-          ? await signup({
-              name: name.trim() || 'User',
-              email: email.trim(),
-              role,
-            })
-          : await login({
-              email: email.trim(),
-            })
-
-      onAuthSuccess(user)
-      navigate('/')
+      if (mode === 'signup') {
+        if (!name.trim() || !email.trim() || !password.trim()) throw new Error('Name, email, and password are required')
+        const user = await signup({ name: name.trim(), email: email.trim(), role: 'buyer', password })
+        onAuthSuccess(user)
+        navigate('/')
+      } else if (mode === 'login') {
+        const user = await login({ email: email.trim(), password })
+        onAuthSuccess(user)
+        navigate('/')
+      } else {
+        if (!resetRequested) {
+          const result = await requestPasswordReset({ email: email.trim() })
+          setInfo(`Reset code sent. Use: ${result.resetToken}`)
+          setResetRequested(true)
+        } else {
+          if (!resetCode.trim() || !password.trim()) throw new Error('Reset code and new password are required')
+          await resetPassword({ email: email.trim(), resetToken: resetCode.trim(), password })
+          setInfo('Password updated. You can log in now.')
+          window.setTimeout(() => navigate('/login'), 800)
+        }
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to continue.'
       setError(message)
@@ -544,17 +559,15 @@ function AuthShell({
     <section className="auth-page">
       <div className="auth-hero">
         <p className="eyebrow">PLUCK account</p>
-        <h1>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
-        <p>
-          Join as a buyer or grower. This is the foundation for real profiles, saved searches, and nationwide discovery.
-        </p>
+        <h1>{mode === 'signup' ? 'Start using PLUCK' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}</h1>
+        <p>{mode === 'reset' ? 'Reset your password and get back into the market.' : 'Create an account, save fruit, and keep pickup direct.'}</p>
       </div>
 
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="form-header">
           <div>
-            <p className="eyebrow">{mode === 'signup' ? 'New account' : 'Login'}</p>
-            <h2>{mode === 'signup' ? 'Start using PLUCK' : 'Sign into your account'}</h2>
+            <p className="eyebrow">{mode === 'signup' ? 'New account' : mode === 'reset' ? 'Password reset' : 'Login'}</p>
+            <h2>{mode === 'signup' ? 'Create your account' : mode === 'reset' ? 'Forgot your password?' : 'Sign into your account'}</h2>
           </div>
         </div>
 
@@ -563,57 +576,52 @@ function AuthShell({
             {mode === 'signup' ? (
               <label className="full">
                 Full name
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Miller" />
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Christian Castaneda" />
               </label>
             ) : null}
 
             <label className="full">
               Email
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-              />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+            </label>
+
+            <label className="full">
+              Password
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'reset' ? 'New password' : 'Enter your password'} required={mode !== 'reset' || resetRequested} />
             </label>
 
             {mode === 'signup' ? (
               <label className="full">
-                Role
-                <div className="auth-role-row">
-                  <button
-                    type="button"
-                    className={role === 'buyer' ? 'ghost auth-role active-soft' : 'ghost auth-role'}
-                    onClick={() => setRole('buyer')}
-                  >
-                    Buyer
-                  </button>
-                  <button
-                    type="button"
-                    className={role === 'grower' ? 'ghost auth-role active-soft' : 'ghost auth-role'}
-                    onClick={() => setRole('grower')}
-                  >
-                    Grower
-                  </button>
-                </div>
+                Confirm password
+                <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm password" />
+              </label>
+            ) : null}
+
+            {mode === 'reset' && resetRequested ? (
+              <label className="full">
+                Reset code
+                <input value={resetCode} onChange={(e) => setResetCode(e.target.value)} placeholder="Paste reset code" required />
               </label>
             ) : null}
           </div>
 
+          {info ? <div className="status-banner success">{info}</div> : null}
           {error ? <div className="status-banner error">{error}</div> : null}
 
-          <div className="action-row">
+          <div className="action-row auth-action-row">
             <button className="primary" type="submit" disabled={busy}>
-              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Log in'}
+              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : mode === 'reset' ? (resetRequested ? 'Save new password' : 'Send reset code') : 'Log in'}
             </button>
-            <button
-              type="button"
-              className="ghost"
-              onClick={() => navigate(mode === 'signup' ? '/login' : '/signup')}
-            >
-              {mode === 'signup' ? 'Have an account?' : 'Create account'}
-            </button>
+            {mode === 'login' ? (
+              <>
+                <button type="button" className="ghost" onClick={() => navigate('/signup')}>Create account</button>
+                <button type="button" className="ghost" onClick={() => navigate('/reset-password')}>Forgot password?</button>
+              </>
+            ) : mode === 'signup' ? (
+              <button type="button" className="ghost" onClick={() => navigate('/login')}>Have an account?</button>
+            ) : (
+              <button type="button" className="ghost" onClick={() => navigate('/login')}>Back to login</button>
+            )}
           </div>
         </div>
       </form>
@@ -1066,13 +1074,10 @@ function NationwideGeoMap({
   onOpenListing: (listingId: string) => void
 }) {
   const geoListings = listings.filter(hasGeo)
+  const [zoom, setZoom] = useState(1)
+  const [compact, setCompact] = useState(false)
 
-  const bounds = {
-    minLat: 24,
-    maxLat: 49,
-    minLng: -125,
-    maxLng: -66,
-  }
+  const bounds = { minLat: 24, maxLat: 49, minLng: -125, maxLng: -66 }
 
   function xFromLng(lng: number) {
     return ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100
@@ -1083,667 +1088,52 @@ function NationwideGeoMap({
   }
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-        minHeight: 360,
-        borderRadius: 24,
-        overflow: 'hidden',
-        background:
-          'linear-gradient(180deg, rgba(233,245,250,1) 0%, rgba(241,249,244,1) 55%, rgba(247,250,244,1) 100%)',
-        border: '1px solid rgba(16,24,40,0.06)',
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'radial-gradient(circle at 18% 68%, rgba(98, 171, 103, 0.16), transparent 20%), radial-gradient(circle at 52% 52%, rgba(98, 171, 103, 0.12), transparent 28%), radial-gradient(circle at 74% 36%, rgba(98, 171, 103, 0.12), transparent 22%)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      <div
-        style={{
-          position: 'absolute',
-          inset: '12px 14px auto 14px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 12,
-          zIndex: 2,
-        }}
-      >
+    <div className={`nationwide-map ${compact ? 'compact' : ''}`}>
+      <div className="nationwide-map__top">
         <div>
-          <div
-            style={{
-              fontSize: 12,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: '#6e7b67',
-              fontWeight: 800,
-            }}
-          >
-            Live geo layer
-          </div>
-          <div style={{ fontWeight: 760, fontSize: 18, color: '#203022' }}>
-            United States listing coverage
-          </div>
+          <div className="nationwide-map__eyebrow">Live geo layer</div>
+          <div className="nationwide-map__title">United States listing coverage</div>
         </div>
-        <div
-          style={{
-            padding: '8px 12px',
-            borderRadius: 999,
-            background: 'rgba(255,255,255,0.88)',
-            border: '1px solid rgba(16,24,40,0.06)',
-            fontSize: 13,
-            fontWeight: 700,
-            color: '#234030',
-          }}
-        >
-          {geoListings.length} pinned
+        <div className="nationwide-map__actions">
+          <button className="ghost compact-btn" onClick={() => setZoom((z) => Math.max(0.8, +(z - 0.1).toFixed(1)))}>-</button>
+          <button className="ghost compact-btn" onClick={() => setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(1)))}>+</button>
+          <button className="ghost compact-btn" onClick={() => setCompact((c) => !c)}>{compact ? 'Expand' : 'Compact'}</button>
+          <div className="nationwide-map__count">{geoListings.length} pinned</div>
         </div>
       </div>
 
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          paddingTop: 52,
-        }}
-      >
+      <div className="nationwide-map__canvas" style={{ transform: `scale(${zoom})` }}>
+        <div className="nationwide-map__usa" />
         {geoListings.map((item) => {
           const left = `${xFromLng(item.geo!.lng)}%`
           const top = `${yFromLat(item.geo!.lat)}%`
-
           return (
             <button
               key={item.id}
+              className="nationwide-map__pin"
               onClick={() => onOpenListing(item.id)}
               title={`${item.title} • ${prettyLocation(item)}`}
-              style={{
-                position: 'absolute',
-                left,
-                top,
-                transform: 'translate(-50%, -50%)',
-                width: 22,
-                height: 22,
-                borderRadius: '999px',
-                border: '2px solid white',
-                background: 'linear-gradient(180deg, #3f9745 0%, #2f7d32 100%)',
-                boxShadow: '0 10px 22px rgba(47,125,50,0.28)',
-                cursor: 'pointer',
-                zIndex: 2,
-              }}
+              style={{ left, top }}
             />
           )
         })}
       </div>
 
-      <div
-        style={{
-          position: 'absolute',
-          left: 14,
-          right: 14,
-          bottom: 14,
-          display: 'grid',
-          gap: 10,
-          zIndex: 2,
-        }}
-      >
-        {geoListings.slice(0, 3).map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onOpenListing(item.id)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-              padding: '12px 14px',
-              borderRadius: 18,
-              border: '1px solid rgba(16,24,40,0.06)',
-              background: 'rgba(255,255,255,0.92)',
-              textAlign: 'left',
-              cursor: 'pointer',
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 760, color: '#203022' }}>{item.title}</div>
-              <div style={{ fontSize: 13, color: '#667085' }}>
-                {prettyLocation(item)} • {item.sellerName}
+      {!compact ? (
+        <div className="nationwide-map__list">
+          {geoListings.slice(0, 3).map((item) => (
+            <button key={item.id} className="nationwide-map__row" onClick={() => onOpenListing(item.id)}>
+              <div>
+                <div className="nationwide-map__rowTitle">{item.title}</div>
+                <div className="nationwide-map__rowMeta">{prettyLocation(item)} • {item.sellerName}</div>
               </div>
-            </div>
-            <div style={{ fontWeight: 800, color: '#2f7d32' }}>
-              ${item.price}/{item.unit}
-            </div>
-          </button>
-        ))}
-      </div>
+              <div className="nationwide-map__rowPrice">${item.price}/{item.unit}</div>
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
-}
-
-function ListingDetailRoute({
-  listings,
-  favorites,
-  follows,
-  onEdit,
-  onToggleFavorite,
-  onToggleFollow,
-  onOpenReserve,
-  onStartConversation,
-}: {
-  listings: Listing[]
-  favorites: Favorite[]
-  follows: Follow[]
-  onEdit: (id: string) => void
-  onToggleFavorite: (listingId: string) => Promise<void>
-  onToggleFollow: (sellerId: string) => Promise<void>
-  onOpenReserve: (listing: Listing) => void
-  onStartConversation: (listing: Listing) => Promise<void>
-}) {
-  const navigate = useNavigate()
-  const { id } = useParams()
-  const listing = listings.find((item) => item.id === id)
-
-  if (!listing) {
-    return (
-      <section className="stack">
-        <h2>Listing not found</h2>
-      </section>
-    )
-  }
-
-  const isFavorite = favorites.some((fav) => fav.listingId === listing.id)
-  const isFollowing = follows.some((item) => item.sellerId === listing.sellerId)
-
-  return (
-    <section className="stack">
-      <div className="listing-detail-hero">
-        <img className="listing-detail-image" src={listing.image} alt={listing.title} />
-        <div className="listing-detail-copy">
-          <p className="eyebrow">{listing.fruit}</p>
-          <h2>{listing.title}</h2>
-          <p className="listing-detail-price">
-            ${listing.price}/{listing.unit}
-          </p>
-
-          <div className="listing-top-badges">
-            {listing.harvestLabel ? <span className="trust-pill harvest">{listing.harvestLabel}</span> : null}
-            {listing.freshnessLabel ? <span className="trust-pill freshness">{listing.freshnessLabel}</span> : null}
-            {listing.availabilityLabel ? <span className="trust-pill available">{listing.availabilityLabel}</span> : null}
-            {hasGeo(listing) ? <span className="trust-pill verified">Map ready</span> : null}
-          </div>
-
-          <p className="desc">{listing.description}</p>
-          <p className="meta">
-            {prettyLocation(listing)} • {listing.inventory} left • {sellerLabel(listing)}
-          </p>
-
-          {listing.harvestNote ? <div className="harvest-note">“{listing.harvestNote}”</div> : null}
-
-          {(listing.tags || []).length ? (
-            <div className="pill-row">
-              {listing.tags?.map((tag) => (
-                <span className="pill" key={tag}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="pill-row">
-            {listing.pickupWindows.map((slot, index) => (
-              <span className="pill" key={`${listing.id}-${slot}-${index}`}>
-                {slot}
-              </span>
-            ))}
-          </div>
-
-          <ActionGrid columns={2}>
-            <button className="primary fill-btn" onClick={() => onOpenReserve(listing)} disabled={listing.inventory <= 0}>
-              {listing.inventory <= 0 ? 'Sold out' : 'Reserve pickup'}
-            </button>
-            <button className="ghost fill-btn" onClick={() => onStartConversation(listing)}>
-              Message seller
-            </button>
-            <button className="ghost fill-btn" onClick={() => onToggleFavorite(listing.id)}>
-              {isFavorite ? 'Saved' : 'Save'}
-            </button>
-            <button className="ghost fill-btn" onClick={() => onToggleFollow(listing.sellerId)}>
-              {isFollowing ? 'Following' : 'Follow grower'}
-            </button>
-            <button className="ghost fill-btn" onClick={() => navigate('/grower/' + listing.sellerId)}>
-              Grower profile
-            </button>
-            <button className="ghost fill-btn" onClick={() => onEdit(listing.id)}>
-              Edit listing
-            </button>
-          </ActionGrid>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function MessagesPage({
-  conversations,
-  selectedConversationId,
-  threadMessages,
-  seller,
-  onSelectConversation,
-  onSendMessage,
-}: {
-  conversations: Conversation[]
-  selectedConversationId: string | null
-  threadMessages: Message[]
-  seller: SellerProfile
-  onSelectConversation: (id: string) => Promise<void>
-  onSendMessage: (conversationId: string, content: string) => Promise<void>
-}) {
-  const [draft, setDraft] = useState('')
-
-  const activeConversation =
-    conversations.find((item) => item.id === selectedConversationId) || conversations[0] || null
-
-  return (
-    <section className="messages-shell" id="messages-shell">
-      <aside className="messages-sidebar">
-        <div className="section-heading compact-heading no-top-gap">
-          <div>
-            <p className="eyebrow">Conversations</p>
-            <h2>Inbox</h2>
-          </div>
-          <span className="section-meta">{conversations.length} threads</span>
-        </div>
-
-        <div className="messages-list">
-          {conversations.length ? (
-            conversations.map((conversation) => {
-              const active = conversation.id === activeConversation?.id
-              return (
-                <button
-                  key={conversation.id}
-                  className={active ? 'thread-card active' : 'thread-card'}
-                  onClick={() => onSelectConversation(conversation.id)}
-                >
-                  <div className="thread-card-top">
-                    <strong>{conversation.sellerName}</strong>
-                    <span>{formatShortDate(conversation.updatedAt)}</span>
-                  </div>
-                  <div className="thread-card-title">{conversation.listingTitle}</div>
-                  <p>{conversation.lastMessage || 'No messages yet'}</p>
-                </button>
-              )
-            })
-          ) : (
-            <div className="empty-panel">No conversations yet.</div>
-          )}
-        </div>
-      </aside>
-
-      <section className="messages-main">
-        <div className="section-heading compact-heading no-top-gap">
-          <div>
-            <p className="eyebrow">Thread</p>
-            <h2>{activeConversation ? activeConversation.listingTitle : 'Select a conversation'}</h2>
-          </div>
-        </div>
-
-        <div className="thread-panel">
-          {activeConversation ? (
-            <>
-              <div className="thread-context">
-                <div>
-                  <strong>{activeConversation.sellerName}</strong>
-                  <p>{activeConversation.lastMessage || 'Conversation started'}</p>
-                </div>
-                <span>{formatTime(activeConversation.updatedAt)}</span>
-              </div>
-
-              <div className="message-thread">
-                {threadMessages.length ? (
-                  threadMessages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={msg.senderId === seller.id ? 'message-bubble mine' : 'message-bubble'}
-                    >
-                      <strong>{msg.senderName}</strong>
-                      <p>{msg.content}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="empty-panel">No messages yet.</div>
-                )}
-              </div>
-
-              <div className="message-compose">
-                <textarea
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Write a message..."
-                  rows={3}
-                />
-                <button
-                  className="primary fill-btn"
-                  onClick={async () => {
-                    if (!draft.trim()) return
-                    await onSendMessage(activeConversation.id, draft)
-                    setDraft('')
-                  }}
-                >
-                  Send
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="empty-panel">Choose a conversation to view the thread.</div>
-          )}
-        </div>
-      </section>
-    </section>
-  )
-}
-
-function GrowerPage({
-  listings,
-  currentSeller,
-  follows,
-  onToggleFollow,
-}: {
-  listings: Listing[]
-  currentSeller: SellerProfile
-  follows: Follow[]
-  onToggleFollow: (sellerId: string) => Promise<void>
-}) {
-  const { id } = useParams()
-  const [grower, setGrower] = useState<SellerProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!id) return
-    let cancelled = false
-    setLoading(true)
-
-    getSellerById(id)
-      .then((data) => {
-        if (!cancelled) setGrower(data)
-      })
-      .catch(() => {
-        if (!cancelled) setGrower(null)
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [id])
-
-  if (loading) {
-    return (
-      <section className="stack">
-        <p>Loading grower...</p>
-      </section>
-    )
-  }
-
-  if (!grower) {
-    return (
-      <section className="stack">
-        <h2>Grower not found</h2>
-      </section>
-    )
-  }
-
-  const growerListings = listings.filter((item) => item.sellerId === grower.id)
-  const isFollowing = follows.some((item) => item.sellerId === grower.id)
-
-  return (
-    <section className="stack">
-      <section className="profile-card premium-profile" id="profile-shell">
-        <img className="hero-fruit" src={grower.heroFruit} alt="Grower orchard" />
-        <div className="profile-row">
-          <img className="avatar" src={grower.avatar} alt={grower.name} />
-          <div>
-            <h2>{grower.name}</h2>
-            <p>
-              {grower.handle} • {[grower.city, grower.state].filter(Boolean).join(', ')}
-            </p>
-          </div>
-        </div>
-
-        <p>{grower.bio}</p>
-
-        <div className="dashboard-stats profile-stats">
-          <div className="dashboard-card">
-            <span>Listings</span>
-            <strong>{growerListings.length}</strong>
-          </div>
-          <div className="dashboard-card">
-            <span>Followers</span>
-            <strong>{grower.followers || 0}</strong>
-          </div>
-          <div className="dashboard-card">
-            <span>Rating</span>
-            <strong>{(grower.rating || 0).toFixed(1)}</strong>
-          </div>
-        </div>
-
-        <div className="trust-metrics">
-          {grower.verified ? <div className="metric-chip">Verified grower</div> : null}
-          {grower.responseScore ? <div className="metric-chip">{grower.responseScore}</div> : null}
-          {grower.repeatBuyerScore ? <div className="metric-chip">{grower.repeatBuyerScore}</div> : null}
-          {grower.orchardName ? <div className="metric-chip">{grower.orchardName}</div> : null}
-        </div>
-
-        {grower.specialties?.length ? (
-          <div className="pill-row">
-            {grower.specialties.map((item) => (
-              <span className="pill" key={item}>
-                {item}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        {grower.id !== currentSeller.id ? (
-          <div className="action-row">
-            <button className="primary" onClick={() => onToggleFollow(grower.id)}>
-              {isFollowing ? 'Following' : 'Follow grower'}
-            </button>
-          </div>
-        ) : null}
-      </section>
-
-      <section>
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Grower listings</p>
-            <h2>Current harvests</h2>
-          </div>
-          <span className="section-meta">{growerListings.length} live</span>
-        </div>
-
-        <section className="grid">
-          {growerListings.map((item) => (
-            <article className="card premium-card" key={item.id}>
-              <div className="card-image-wrap">
-                <img src={item.image} alt={item.title} />
-                <span className="card-badge">{item.distance}</span>
-              </div>
-              <div className="card-body">
-                <div className="price-row">
-                  <h3>{item.title}</h3>
-                  <span>
-                    ${item.price}/{item.unit}
-                  </span>
-                </div>
-                <p className="meta">
-                  {prettyLocation(item)} • {item.inventory} left
-                </p>
-                <div className="listing-badge-row">
-                  {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
-                  {item.freshnessLabel ? <span className="trust-pill freshness">{item.freshnessLabel}</span> : null}
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
-      </section>
-    </section>
-  )
-}
-
-function AlertsPage({
-  seller,
-  alerts,
-  notifications,
-  onCreateAlert,
-  onToggleAlert,
-  onReadNotification,
-}: {
-  seller: SellerProfile
-  alerts: AlertItem[]
-  notifications: NotificationItem[]
-  onCreateAlert: (payload: Omit<AlertItem, 'id'>) => Promise<void>
-  onToggleAlert: (id: string) => Promise<void>
-  onReadNotification: (id: string) => Promise<void>
-}) {
-  const [fruit, setFruit] = useState('')
-  const [location, setLocation] = useState('Anywhere, USA')
-  const [radiusMiles, setRadiusMiles] = useState('25')
-
-  return (
-    <section className="alerts-layout">
-      <div className="stack">
-        <div className="section-heading compact-heading no-top-gap">
-          <div>
-            <p className="eyebrow">Saved alerts</p>
-            <h2>Watchlist</h2>
-          </div>
-          <span className="section-meta">{alerts.length} alerts</span>
-        </div>
-
-        <form
-          className="listing-form"
-          onSubmit={async (e) => {
-            e.preventDefault()
-            await onCreateAlert({
-              userId: seller.id,
-              fruit: fruit || 'Fruit',
-              location: location || 'Anywhere, USA',
-              radiusMiles: Number(radiusMiles) || 25,
-              sellerId: '',
-              active: true,
-            })
-            setFruit('')
-            setLocation('Anywhere, USA')
-            setRadiusMiles('25')
-          }}
-        >
-          <div className="form-grid">
-            <label>
-              Fruit
-              <input value={fruit} onChange={(e) => setFruit(e.target.value)} placeholder="Peaches" />
-            </label>
-            <label>
-              Location
-              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Denver, CO" />
-            </label>
-            <label className="full">
-              Radius miles
-              <input
-                type="number"
-                min="1"
-                max="500"
-                value={radiusMiles}
-                onChange={(e) => setRadiusMiles(e.target.value)}
-              />
-            </label>
-          </div>
-
-          <div className="action-row">
-            <button className="primary" type="submit">
-              Create alert
-            </button>
-          </div>
-        </form>
-
-        <div className="stack-list">
-          {alerts.map((alert) => (
-            <div className="alert-card-row" key={alert.id}>
-              <div>
-                <strong>{alert.fruit}</strong>
-                <p>
-                  {alert.location} • {alert.radiusMiles} miles
-                </p>
-              </div>
-              <button className={alert.active ? 'ghost active-soft' : 'ghost'} onClick={() => onToggleAlert(alert.id)}>
-                {alert.active ? 'Active' : 'Paused'}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="stack">
-        <div className="section-heading compact-heading no-top-gap">
-          <div>
-            <p className="eyebrow">Notifications</p>
-            <h2>Recent signals</h2>
-          </div>
-          <span className="section-meta">{notifications.filter((n) => !n.read).length} unread</span>
-        </div>
-
-        <div className="stack-list">
-          {notifications.length ? (
-            notifications.map((item) => (
-              <div className={item.read ? 'notification-card' : 'notification-card unread'} key={item.id}>
-                <div className="notification-copy">
-                  <strong>{item.title}</strong>
-                  <p>{item.body}</p>
-                  <span>{formatTime(item.createdAt)}</span>
-                </div>
-                {!item.read ? (
-                  <button className="ghost compact-btn" onClick={() => onReadNotification(item.id)}>
-                    Mark read
-                  </button>
-                ) : null}
-              </div>
-            ))
-          ) : (
-            <div className="empty-panel">No notifications yet.</div>
-          )}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-type AppLayoutProps = {
-  listings: Listing[]
-  setListings: Dispatch<SetStateAction<Listing[]>>
-  seller: SellerProfile
-  favorites: Favorite[]
-  setFavorites: Dispatch<SetStateAction<Favorite[]>>
-  conversations: Conversation[]
-  setConversations: Dispatch<SetStateAction<Conversation[]>>
-  threadMessages: Message[]
-  setThreadMessages: Dispatch<SetStateAction<Message[]>>
-  socialPosts: SocialPost[]
-  notifications: NotificationItem[]
-  setNotifications: Dispatch<SetStateAction<NotificationItem[]>>
-  alerts: AlertItem[]
-  setAlerts: Dispatch<SetStateAction<AlertItem[]>>
-  follows: Follow[]
-  setFollows: Dispatch<SetStateAction<Follow[]>>
-  authUser: AuthUser | null
-  onAuthSuccess: (user: AuthUser) => void
 }
 
 function AppLayout({
@@ -2113,6 +1503,7 @@ function AppLayout({
         <Routes>
           <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
+          <Route path="/reset-password" element={<AuthShell mode="reset" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/board" element={<CommunityBoard />} />
 
           <Route
@@ -2368,7 +1759,7 @@ function AppLayout({
           <Route
             path="/favorites"
             element={
-              <section className="stack">
+              <section className="stack" id="store-shell">
                 <div className="section-heading compact-heading no-top-gap">
                   <div>
                     <p className="eyebrow">Saved for later</p>
