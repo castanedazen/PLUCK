@@ -36,6 +36,8 @@ import {
   getSocialPosts,
   login,
   markNotificationRead,
+  requestPasswordReset,
+  resetPassword,
   reservePickup,
   sendMessage,
   signup,
@@ -556,35 +558,76 @@ function AuthShell({
   mode,
   onAuthSuccess,
 }: {
-  mode: 'login' | 'signup'
+  mode: 'login' | 'signup' | 'reset'
   onAuthSuccess: (user: AuthUser) => void
 }) {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'buyer' | 'grower'>('buyer')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [resetCode, setResetCode] = useState('')
+  const [resetTokenPreview, setResetTokenPreview] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
     setError('')
+    setInfo('')
 
     try {
-      const user =
-        mode === 'signup'
-          ? await signup({
-              name: name.trim() || 'User',
-              email: email.trim(),
-              role,
-            })
-          : await login({
-              email: email.trim(),
-            })
+      if (mode === 'signup') {
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters.')
+        }
+        if (password !== confirmPassword) {
+          throw new Error('Passwords do not match.')
+        }
 
-      onAuthSuccess(user)
-      navigate('/')
+        const user = await signup({
+          name: name.trim() || 'User',
+          email: email.trim(),
+          role,
+          password,
+        })
+
+        onAuthSuccess(user)
+        navigate('/profile')
+      } else if (mode === 'login') {
+        const user = await login({
+          email: email.trim(),
+          password,
+        })
+
+        onAuthSuccess(user)
+        navigate('/profile')
+      } else {
+        if (!resetTokenPreview) {
+          const result = await requestPasswordReset({ email: email.trim() })
+          setResetTokenPreview(result.resetToken)
+          setInfo(`Reset code: ${result.resetToken}`)
+        } else {
+          if (password.length < 6) {
+            throw new Error('Password must be at least 6 characters.')
+          }
+          if (password !== confirmPassword) {
+            throw new Error('Passwords do not match.')
+          }
+
+          await resetPassword({
+            email: email.trim(),
+            resetToken: resetCode.trim(),
+            password,
+          })
+
+          setInfo('Password updated. You can log in now.')
+          setTimeout(() => navigate('/login'), 700)
+        }
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to continue.'
       setError(message)
@@ -597,17 +640,19 @@ function AuthShell({
     <section className="auth-page">
       <div className="auth-hero">
         <p className="eyebrow">PLUCK account</p>
-        <h1>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
+        <h1>{mode === 'signup' ? 'Join local' : mode === 'reset' ? 'Reset password' : 'Welcome back'}</h1>
         <p>
-          Join as a buyer or grower. This is the foundation for real profiles, saved searches, and nationwide discovery.
+          {mode === 'reset'
+            ? 'Reset your password and get back to the orchard.'
+            : 'Buy, barter, sell, and stay connected locally.'}
         </p>
       </div>
 
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="form-header">
           <div>
-            <p className="eyebrow">{mode === 'signup' ? 'New account' : 'Login'}</p>
-            <h2>{mode === 'signup' ? 'Start using PLUCK' : 'Sign into your account'}</h2>
+            <p className="eyebrow">{mode === 'signup' ? 'New account' : mode === 'reset' ? 'Recovery' : 'Login'}</p>
+            <h2>{mode === 'signup' ? 'Start using PLUCK' : mode === 'reset' ? 'Reset your account' : 'Sign into your account'}</h2>
           </div>
         </div>
 
@@ -652,1144 +697,81 @@ function AuthShell({
                 </div>
               </label>
             ) : null}
-          </div>
 
-          {error ? <div className="status-banner error">{error}</div> : null}
-
-          <div className="action-row">
-            <button className="primary" type="submit" disabled={busy}>
-              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Log in'}
-            </button>
-            <button
-              type="button"
-              className="ghost"
-              onClick={() => navigate(mode === 'signup' ? '/login' : '/signup')}
-            >
-              {mode === 'signup' ? 'Have an account?' : 'Create account'}
-            </button>
-          </div>
-        </div>
-      </form>
-    </section>
-  )
-}
-
-type ListingFormProps = {
-  seller: SellerProfile
-  initialValues?: Listing
-  submitLabel: string
-  onSubmitListing: (payload: Omit<Listing, 'id'>, existingId?: string) => Promise<void>
-  existingId?: string
-}
-
-function ListingForm({
-  seller,
-  initialValues,
-  submitLabel,
-  onSubmitListing,
-  existingId,
-}: ListingFormProps) {
-  const navigate = useNavigate()
-  const [form, setForm] = useState<ListingFormState>(() => {
-    if (!initialValues) return emptyForm
-    return {
-      title: initialValues.title,
-      fruit: initialValues.fruit,
-      price: String(initialValues.price),
-      unit: initialValues.unit,
-      imagePreview: initialValues.image,
-      location: initialValues.location,
-      city: initialValues.city || '',
-      state: initialValues.state || '',
-      zip: initialValues.zip || '',
-      inventory: String(initialValues.inventory),
-      description: initialValues.description,
-      pickup1: initialValues.pickupWindows?.[0] || '',
-      pickup2: initialValues.pickupWindows?.[1] || '',
-      tags: (initialValues.tags || []).join(', '),
-      harvestNote: initialValues.harvestNote || '',
-      harvestLabel: initialValues.harvestLabel || 'Just dropped',
-      freshnessLabel: initialValues.freshnessLabel || 'Fresh harvest',
-      availabilityLabel: initialValues.availabilityLabel || 'Available now',
-    }
-  })
-  const [isSaving, setIsSaving] = useState(false)
-  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false)
-  const [saveError, setSaveError] = useState('')
-  const [saveSuccess, setSaveSuccess] = useState('')
-  const [imageStatus, setImageStatus] = useState('')
-
-  function updateForm<K extends keyof ListingFormState>(key: K, value: ListingFormState[K]) {
-    setForm((current) => ({ ...current, [key]: value }))
-  }
-
-  async function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setSaveError('')
-    setSaveSuccess('')
-    setImageStatus('')
-    setIsAnalyzingImage(true)
-
-    try {
-      const preview = await readFileAsDataUrl(file)
-      updateForm('imagePreview', preview)
-      setImageStatus('Uploading image and detecting fruit...')
-
-      let uploadPayload: { imageUrl?: string; originalName?: string; fileName?: string } = {
-        originalName: file.name,
-      }
-
-      try {
-        const uploaded = await uploadListingImage(file)
-        uploadPayload = {
-          imageUrl: uploaded.absoluteUrl,
-          originalName: uploaded.originalName,
-          fileName: uploaded.fileName,
-        }
-      } catch {
-        uploadPayload = {
-          originalName: file.name,
-        }
-      }
-
-      const detection = await detectFruitFromImage(uploadPayload)
-
-      setForm((current) => ({
-        ...current,
-        imagePreview: current.imagePreview || preview,
-        fruit: current.fruit.trim() ? current.fruit : detection.fruit,
-        title: current.title.trim() ? current.title : detection.title,
-        tags: mergeTagCsv(current.tags, detection.tags || []),
-      }))
-
-      setImageStatus(
-        `Detected ${detection.fruit} • ${Math.round((detection.confidence || 0) * 100)}% confidence`,
-      )
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to process image.'
-      setSaveError(message)
-      setImageStatus('')
-    } finally {
-      setIsAnalyzingImage(false)
-      if (e.target) {
-        e.target.value = ''
-      }
-    }
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    setIsSaving(true)
-    setSaveError('')
-    setSaveSuccess('')
-
-    try {
-      const pickupWindows = [form.pickup1, form.pickup2].map((x) => x.trim()).filter(Boolean)
-      const locationLabel =
-        form.location.trim() ||
-        [form.city.trim(), form.state.trim()].filter(Boolean).join(', ') ||
-        'Anywhere, USA'
-
-      const payload: Omit<Listing, 'id'> = {
-        title: form.title.trim() || `${form.fruit.trim()} Listing`,
-        fruit: form.fruit.trim() || 'Fruit',
-        price: Number(form.price) || 0,
-        unit: form.unit.trim() || 'basket',
-        image:
-          form.imagePreview ||
-          'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=1200&q=80',
-        location: locationLabel,
-        city: form.city.trim(),
-        state: form.state.trim(),
-        zip: form.zip.trim(),
-        distance: initialValues?.distance || 'Just added',
-        inventory: Number(form.inventory) || 1,
-        sellerId: seller.id,
-        sellerName: seller.name,
-        description: form.description.trim() || 'Fresh local fruit available for pickup.',
-        pickupWindows: pickupWindows.length ? pickupWindows : ['Pickup by message'],
-        isFavorite: initialValues?.isFavorite || false,
-        status: initialValues?.status || 'active',
-        tags: form.tags
-          .split(',')
-          .map((x) => x.trim())
-          .filter(Boolean),
-        harvestNote: form.harvestNote.trim(),
-        harvestLabel: form.harvestLabel,
-        freshnessLabel: form.freshnessLabel,
-        availabilityLabel: form.availabilityLabel,
-        sellerVerified: seller.verified,
-        sellerRating: seller.rating,
-        geo: initialValues?.geo || null,
-      }
-
-      await onSubmitListing(payload, existingId)
-      setSaveSuccess(existingId ? 'Listing updated successfully.' : 'Listing created successfully.')
-
-      setTimeout(() => {
-        navigate('/store/listings')
-      }, 450)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to save listing right now.'
-      setSaveError(message)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  return (
-    <section className="stack form-stack premium-form-shell">
-      <div className="form-header">
-        <div>
-          <p className="eyebrow">{existingId ? 'Edit listing' : 'New listing'}</p>
-          <h2>{existingId ? 'Update listing details' : 'Create a premium fruit listing'}</h2>
-          <p>
-            Stronger titles, clearer pickup windows, trust badges, and nationwide-ready location fields.
-          </p>
-        </div>
-      </div>
-
-      <form className="listing-form" onSubmit={handleSubmit}>
-        <div className="form-grid">
-          <label>
-            Title
-            <input
-              value={form.title}
-              onChange={(e) => updateForm('title', e.target.value)}
-              placeholder="Golden backyard avocados"
-            />
-          </label>
-
-          <label>
-            Fruit
-            <input
-              value={form.fruit}
-              onChange={(e) => updateForm('fruit', e.target.value)}
-              placeholder="Avocados"
-            />
-          </label>
-
-          <label>
-            Price
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.price}
-              onChange={(e) => updateForm('price', e.target.value)}
-              placeholder="8"
-            />
-          </label>
-
-          <label>
-            Unit
-            <input
-              value={form.unit}
-              onChange={(e) => updateForm('unit', e.target.value)}
-              placeholder="bag"
-            />
-          </label>
-
-          <label>
-            City
-            <input
-              value={form.city}
-              onChange={(e) => updateForm('city', e.target.value)}
-              placeholder="Austin"
-            />
-          </label>
-
-          <label>
-            State
-            <input
-              value={form.state}
-              onChange={(e) => updateForm('state', e.target.value)}
-              placeholder="TX"
-            />
-          </label>
-
-          <label>
-            ZIP code
-            <input
-              value={form.zip}
-              onChange={(e) => updateForm('zip', e.target.value)}
-              placeholder="78704"
-            />
-          </label>
-
-          <label>
-            Location label
-            <input
-              value={form.location}
-              onChange={(e) => updateForm('location', e.target.value)}
-              placeholder="South Austin, TX"
-            />
-          </label>
-
-          <label>
-            Inventory
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={form.inventory}
-              onChange={(e) => updateForm('inventory', e.target.value)}
-              placeholder="6"
-            />
-          </label>
-
-          <label className="full upload-zone">
-            Upload photo
-            <input type="file" accept="image/*" capture="environment" onChange={handleImageUpload} />
-            <span className="upload-hint">
-              Upload a fruit photo. PLUCK will try to detect the fruit and auto-fill your form.
-            </span>
-          </label>
-
-          {imageStatus ? (
-            <div className="status-banner success full">
-              {isAnalyzingImage ? `${imageStatus} Please wait...` : imageStatus}
-            </div>
-          ) : null}
-
-          {form.imagePreview && (
-            <div className="image-preview-wrap full">
-              <img className="image-preview" src={form.imagePreview} alt="Preview" />
-              <button type="button" className="ghost compact-btn" onClick={() => updateForm('imagePreview', '')}>
-                Remove image
-              </button>
-            </div>
-          )}
-
-          <label className="full">
-            Description
-            <textarea
-              value={form.description}
-              onChange={(e) => updateForm('description', e.target.value)}
-              placeholder="Tell buyers what makes this fruit special."
-              rows={4}
-            />
-          </label>
-
-          <label className="full">
-            Tags
-            <input
-              value={form.tags}
-              onChange={(e) => updateForm('tags', e.target.value)}
-              placeholder="sweet, citrus, juice"
-            />
-          </label>
-
-          <label className="full">
-            Harvest note
-            <textarea
-              value={form.harvestNote}
-              onChange={(e) => updateForm('harvestNote', e.target.value)}
-              placeholder="Picked at dawn. Best same-day."
-              rows={3}
-            />
-          </label>
-
-          <label>
-            Harvest badge
-            <input
-              value={form.harvestLabel}
-              onChange={(e) => updateForm('harvestLabel', e.target.value)}
-              placeholder="Just dropped"
-            />
-          </label>
-
-          <label>
-            Freshness badge
-            <input
-              value={form.freshnessLabel}
-              onChange={(e) => updateForm('freshnessLabel', e.target.value)}
-              placeholder="Fresh harvest"
-            />
-          </label>
-
-          <label className="full">
-            Availability badge
-            <input
-              value={form.availabilityLabel}
-              onChange={(e) => updateForm('availabilityLabel', e.target.value)}
-              placeholder="Available now"
-            />
-          </label>
-
-          <label>
-            Pickup window 1
-            <input
-              value={form.pickup1}
-              onChange={(e) => updateForm('pickup1', e.target.value)}
-              placeholder="Today 5–7 PM"
-            />
-          </label>
-
-          <label>
-            Pickup window 2
-            <input
-              value={form.pickup2}
-              onChange={(e) => updateForm('pickup2', e.target.value)}
-              placeholder="Tomorrow 10 AM–12 PM"
-            />
-          </label>
-        </div>
-
-        {(saveError || saveSuccess) && (
-          <div className={saveError ? 'status-banner error' : 'status-banner success'}>
-            {saveError || saveSuccess}
-          </div>
-        )}
-
-        <div className="action-row">
-          <button type="submit" className="primary" disabled={isSaving || isAnalyzingImage}>
-            {isSaving ? 'Saving...' : isAnalyzingImage ? 'Analyzing image...' : submitLabel}
-          </button>
-          <button type="button" className="ghost" disabled={isSaving || isAnalyzingImage} onClick={() => navigate('/store/listings')}>
-            Cancel
-          </button>
-        </div>
-      </form>
-    </section>
-  )
-}
-
-function GrowerTrust({
-  seller,
-  isFollowing,
-  onToggleFollow,
-}: {
-  seller: SellerProfile
-  isFollowing: boolean
-  onToggleFollow: () => Promise<void>
-}) {
-  return (
-    <div className="grower-trust-card">
-      <div className="grower-head">
-        <img className="avatar" src={seller.avatar} alt={seller.name} />
-        <div>
-          <div className="grower-name-row">
-            <h3>{seller.name}</h3>
-            {seller.verified ? <span className="trust-pill verified">Verified grower</span> : null}
-          </div>
-          <p className="meta">
-            {seller.handle} • {[seller.city, seller.state].filter(Boolean).join(', ')}
-          </p>
-        </div>
-      </div>
-
-      <p className="desc">{seller.bio}</p>
-
-      <div className="trust-metrics trust-metrics--spacious">
-        <div className="metric-chip">
-          ★ {(seller.rating || 0).toFixed(1)} {seller.ratingCount ? `(${seller.ratingCount})` : ''}
-        </div>
-        <div className="metric-chip">{seller.followers || 0} followers</div>
-        {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
-        {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
-        <div className="metric-chip">Pickup confidence high</div>
-        <div className="metric-chip">{memberSinceLabel(seller)}</div>
-      </div>
-
-      {seller.specialties?.length ? (
-        <div className="pill-row">
-          {seller.specialties.map((item) => (
-            <span className="pill" key={item}>
-              {item}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      <div className="action-row action-row--grower">
-        <button className="primary" onClick={onToggleFollow}>
-          {isFollowing ? 'Following' : 'Follow grower'}
-        </button>
-        <button className="ghost">Message grower</button>
-      </div>
-    </div>
-  )
-}
-
-function NationwideGeoMap({
-  listings,
-  onOpenListing,
-}: {
-  listings: Listing[]
-  onOpenListing: (listingId: string) => void
-}) {
-  const geoListings = listings.filter(hasGeo)
-
-  const bounds = {
-    minLat: 24,
-    maxLat: 49,
-    minLng: -125,
-    maxLng: -66,
-  }
-
-  function xFromLng(lng: number) {
-    return ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100
-  }
-
-  function yFromLat(lat: number) {
-    return 100 - ((lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) * 100
-  }
-
-  return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-        minHeight: 360,
-        borderRadius: 24,
-        overflow: 'hidden',
-        background:
-          'linear-gradient(180deg, rgba(233,245,250,1) 0%, rgba(241,249,244,1) 55%, rgba(247,250,244,1) 100%)',
-        border: '1px solid rgba(16,24,40,0.06)',
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'radial-gradient(circle at 18% 68%, rgba(98, 171, 103, 0.16), transparent 20%), radial-gradient(circle at 52% 52%, rgba(98, 171, 103, 0.12), transparent 28%), radial-gradient(circle at 74% 36%, rgba(98, 171, 103, 0.12), transparent 22%)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      <div
-        style={{
-          position: 'absolute',
-          inset: '12px 14px auto 14px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 12,
-          zIndex: 2,
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontSize: 12,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              color: '#6e7b67',
-              fontWeight: 800,
-            }}
-          >
-            Live geo layer
-          </div>
-          <div style={{ fontWeight: 760, fontSize: 18, color: '#203022' }}>
-            United States listing coverage
-          </div>
-        </div>
-        <div
-          style={{
-            padding: '8px 12px',
-            borderRadius: 999,
-            background: 'rgba(255,255,255,0.88)',
-            border: '1px solid rgba(16,24,40,0.06)',
-            fontSize: 13,
-            fontWeight: 700,
-            color: '#234030',
-          }}
-        >
-          {geoListings.length} pinned
-        </div>
-      </div>
-
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          paddingTop: 52,
-        }}
-      >
-        {geoListings.map((item) => {
-          const left = `${xFromLng(item.geo!.lng)}%`
-          const top = `${yFromLat(item.geo!.lat)}%`
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => onOpenListing(item.id)}
-              title={`${item.title} • ${prettyLocation(item)}`}
-              style={{
-                position: 'absolute',
-                left,
-                top,
-                transform: 'translate(-50%, -50%)',
-                width: 22,
-                height: 22,
-                borderRadius: '999px',
-                border: '2px solid white',
-                background: 'linear-gradient(180deg, #3f9745 0%, #2f7d32 100%)',
-                boxShadow: '0 10px 22px rgba(47,125,50,0.28)',
-                cursor: 'pointer',
-                zIndex: 2,
-              }}
-            />
-          )
-        })}
-      </div>
-
-      <div
-        style={{
-          position: 'absolute',
-          left: 14,
-          right: 14,
-          bottom: 14,
-          display: 'grid',
-          gap: 10,
-          zIndex: 2,
-        }}
-      >
-        {geoListings.slice(0, 3).map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onOpenListing(item.id)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-              padding: '12px 14px',
-              borderRadius: 18,
-              border: '1px solid rgba(16,24,40,0.06)',
-              background: 'rgba(255,255,255,0.92)',
-              textAlign: 'left',
-              cursor: 'pointer',
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 760, color: '#203022' }}>{item.title}</div>
-              <div style={{ fontSize: 13, color: '#667085' }}>
-                {prettyLocation(item)} • {item.sellerName}
-              </div>
-            </div>
-            <div style={{ fontWeight: 800, color: '#2f7d32' }}>
-              ${item.price}/{item.unit}
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function ListingDetailRoute({
-  listings,
-  favorites,
-  follows,
-  onEdit,
-  onToggleFavorite,
-  onToggleFollow,
-  onOpenReserve,
-  onStartConversation,
-  reviews,
-  onAddReview,
-}: {
-  listings: Listing[]
-  favorites: Favorite[]
-  follows: Follow[]
-  onEdit: (id: string) => void
-  onToggleFavorite: (listingId: string) => Promise<void>
-  onToggleFollow: (sellerId: string) => Promise<void>
-  onOpenReserve: (listing: Listing) => void
-  onStartConversation: (listing: Listing) => Promise<void>
-  reviews: ReviewItem[]
-  onAddReview: (input: { listingId: string; sellerId: string; sellerName: string; rating: number; comment: string }) => void
-}) {
-  const navigate = useNavigate()
-  const { id } = useParams()
-  const listing = listings.find((item) => item.id === id)
-
-  if (!listing) {
-    return (
-      <section className="stack">
-        <h2>Listing not found</h2>
-      </section>
-    )
-  }
-
-  const isFavorite = favorites.some((fav) => fav.listingId === listing.id)
-  const isFollowing = follows.some((item) => item.sellerId === listing.sellerId)
-
-  return (
-    <section className="stack">
-      <div className="listing-detail-hero">
-        <img className="listing-detail-image" src={listing.image} alt={listing.title} />
-        <div className="listing-detail-copy">
-          <p className="eyebrow">{listing.fruit}</p>
-          <h2>{listing.title}</h2>
-          <p className="listing-detail-price">
-            ${listing.price}/{listing.unit}
-          </p>
-
-          <div className="listing-top-badges">
-            {listing.harvestLabel ? <span className="trust-pill harvest">{listing.harvestLabel}</span> : null}
-            {listing.freshnessLabel ? <span className="trust-pill freshness">{listing.freshnessLabel}</span> : null}
-            {listing.availabilityLabel ? <span className="trust-pill available">{listing.availabilityLabel}</span> : null}
-            {hasGeo(listing) ? <span className="trust-pill verified">Map ready</span> : null}
-          </div>
-
-          <p className="desc">{listing.description}</p>
-          <TrustStrip listing={listing} />
-          <p className="meta">
-            {prettyLocation(listing)} • {listing.inventory} left • {sellerLabel(listing)}
-          </p>
-
-          {listing.harvestNote ? <div className="harvest-note">“{listing.harvestNote}”</div> : null}
-
-          {(listing.tags || []).length ? (
-            <div className="pill-row">
-              {listing.tags?.map((tag) => (
-                <span className="pill" key={tag}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="pill-row">
-            {listing.pickupWindows.map((slot, index) => (
-              <span className="pill" key={`${listing.id}-${slot}-${index}`}>
-                {slot}
-              </span>
-            ))}
-          </div>
-
-          <ActionGrid columns={2}>
-            <button className="primary fill-btn" onClick={() => onOpenReserve(listing)} disabled={listing.inventory <= 0}>
-              {listing.inventory <= 0 ? 'Sold out' : 'Reserve pickup'}
-            </button>
-            <button className="ghost fill-btn" onClick={() => onStartConversation(listing)}>
-              Message seller
-            </button>
-            <button className="ghost fill-btn" onClick={() => onToggleFavorite(listing.id)}>
-              {isFavorite ? 'Saved' : 'Save'}
-            </button>
-            <button className="ghost fill-btn" onClick={() => onToggleFollow(listing.sellerId)}>
-              {isFollowing ? 'Following' : 'Follow grower'}
-            </button>
-            <button className="ghost fill-btn" onClick={() => navigate('/grower/' + listing.sellerId)}>
-              Grower profile
-            </button>
-            <button className="ghost fill-btn" onClick={() => onEdit(listing.id)}>
-              Edit listing
-            </button>
-          </ActionGrid>
-        </div>
-      </div>
-
-      <ReviewsPanel
-        listing={listing}
-        reviews={reviews.filter((item) => item.listingId === listing.id)}
-        onAddReview={onAddReview}
-      />
-    </section>
-  )
-}
-
-function MessagesPage({
-  conversations,
-  selectedConversationId,
-  threadMessages,
-  seller,
-  onSelectConversation,
-  onSendMessage,
-}: {
-  conversations: Conversation[]
-  selectedConversationId: string | null
-  threadMessages: Message[]
-  seller: SellerProfile
-  onSelectConversation: (id: string) => Promise<void>
-  onSendMessage: (conversationId: string, content: string) => Promise<void>
-}) {
-  const [draft, setDraft] = useState('')
-
-  const activeConversation =
-    conversations.find((item) => item.id === selectedConversationId) || conversations[0] || null
-
-  return (
-    <section className="messages-shell">
-      <aside className="messages-sidebar">
-        <div className="section-heading compact-heading no-top-gap">
-          <div>
-            <p className="eyebrow">Conversations</p>
-            <h2>Inbox</h2>
-          </div>
-          <span className="section-meta">{conversations.length} threads</span>
-        </div>
-
-        <div className="messages-list">
-          {conversations.length ? (
-            conversations.map((conversation) => {
-              const active = conversation.id === activeConversation?.id
-              return (
-                <button
-                  key={conversation.id}
-                  className={active ? 'thread-card active' : 'thread-card'}
-                  onClick={() => onSelectConversation(conversation.id)}
-                >
-                  <div className="thread-card-top">
-                    <strong>{conversation.sellerName}</strong>
-                    <span>{formatShortDate(conversation.updatedAt)}</span>
-                  </div>
-                  <div className="thread-card-title">{conversation.listingTitle}</div>
-                  <p>{conversation.lastMessage || 'No messages yet'}</p>
-                </button>
-              )
-            })
-          ) : (
-            <div className="empty-panel">Talk with growers about pickup once you start a conversation.</div>
-          )}
-        </div>
-      </aside>
-
-      <section className="messages-main">
-        <div className="section-heading compact-heading no-top-gap">
-          <div>
-            <p className="eyebrow">Thread</p>
-            <h2>{activeConversation ? activeConversation.listingTitle : 'Select a conversation'}</h2>
-          </div>
-        </div>
-
-        <div className="thread-panel">
-          {activeConversation ? (
-            <>
-              <div className="thread-context">
-                <div>
-                  <strong>{activeConversation.sellerName}</strong>
-                  <p>{activeConversation.lastMessage || 'Conversation started'}</p>
-                </div>
-                <span>{formatTime(activeConversation.updatedAt)}</span>
-              </div>
-
-              <div className="message-thread">
-                {threadMessages.length ? (
-                  threadMessages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={msg.senderId === seller.id ? 'message-bubble mine' : 'message-bubble'}
-                    >
-                      <strong>{msg.senderName}</strong>
-                      <p>{msg.content}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="empty-panel">No messages in this thread yet. Say hello and lock in pickup details.</div>
-                )}
-              </div>
-
-              <div className="message-compose">
-                <textarea
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Write a message..."
-                  rows={3}
-                />
-                <button
-                  className="primary fill-btn"
-                  onClick={async () => {
-                    if (!draft.trim()) return
-                    await onSendMessage(activeConversation.id, draft)
-                    setDraft('')
-                  }}
-                >
-                  Send
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="empty-panel">Pick a grower conversation to see pickup details and replies here.</div>
-          )}
-        </div>
-      </section>
-    </section>
-  )
-}
-
-function GrowerPage({
-  listings,
-  currentSeller,
-  follows,
-  onToggleFollow,
-}: {
-  listings: Listing[]
-  currentSeller: SellerProfile
-  follows: Follow[]
-  onToggleFollow: (sellerId: string) => Promise<void>
-}) {
-  const { id } = useParams()
-  const [grower, setGrower] = useState<SellerProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!id) return
-    let cancelled = false
-    setLoading(true)
-
-    getSellerById(id)
-      .then((data) => {
-        if (!cancelled) setGrower(data)
-      })
-      .catch(() => {
-        if (!cancelled) setGrower(null)
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [id])
-
-  if (loading) {
-    return (
-      <section className="stack">
-        <p>Loading grower...</p>
-      </section>
-    )
-  }
-
-  if (!grower) {
-    return (
-      <section className="stack">
-        <h2>Grower not found</h2>
-      </section>
-    )
-  }
-
-  const growerListings = listings.filter((item) => item.sellerId === grower.id)
-  const isFollowing = follows.some((item) => item.sellerId === grower.id)
-
-  return (
-    <section className="stack">
-      <section className="profile-card premium-profile">
-        <img className="hero-fruit" src={grower.heroFruit} alt="Grower orchard" />
-        <div className="profile-row">
-          <img className="avatar" src={grower.avatar} alt={grower.name} />
-          <div>
-            <h2>{grower.name}</h2>
-            <p>
-              {grower.handle} • {[grower.city, grower.state].filter(Boolean).join(', ')}
-            </p>
-          </div>
-        </div>
-
-        <p>{grower.bio}</p>
-
-        <div className="dashboard-stats profile-stats">
-          <div className="dashboard-card">
-            <span>Listings</span>
-            <strong>{growerListings.length}</strong>
-          </div>
-          <div className="dashboard-card">
-            <span>Followers</span>
-            <strong>{grower.followers || 0}</strong>
-          </div>
-          <div className="dashboard-card">
-            <span>Rating</span>
-            <strong>{(grower.rating || 0).toFixed(1)}</strong>
-          </div>
-        </div>
-
-        <div className="trust-metrics">
-          {grower.verified ? <div className="metric-chip">Verified grower</div> : null}
-          {grower.responseScore ? <div className="metric-chip">{grower.responseScore}</div> : null}
-          {grower.repeatBuyerScore ? <div className="metric-chip">{grower.repeatBuyerScore}</div> : null}
-          {grower.orchardName ? <div className="metric-chip">{grower.orchardName}</div> : null}
-          <div className="metric-chip">Pickup confidence high</div>
-          <div className="metric-chip">{memberSinceLabel(grower)}</div>
-        </div>
-
-        {grower.specialties?.length ? (
-          <div className="pill-row">
-            {grower.specialties.map((item) => (
-              <span className="pill" key={item}>
-                {item}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        {grower.id !== currentSeller.id ? (
-          <div className="action-row">
-            <button className="primary" onClick={() => onToggleFollow(grower.id)}>
-              {isFollowing ? 'Following' : 'Follow grower'}
-            </button>
-          </div>
-        ) : null}
-      </section>
-
-      <section>
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Grower listings</p>
-            <h2>Current harvests</h2>
-          </div>
-          <span className="section-meta">{growerListings.length} live</span>
-        </div>
-
-        <section className="grid">
-          {growerListings.map((item) => (
-            <article className="card premium-card" key={item.id}>
-              <div className="card-image-wrap">
-                <img src={item.image} alt={item.title} />
-                <span className="card-badge">{item.distance}</span>
-              </div>
-              <div className="card-body">
-                <div className="price-row">
-                  <h3>{item.title}</h3>
-                  <span>
-                    ${item.price}/{item.unit}
-                  </span>
-                </div>
-                <p className="meta">
-                  {prettyLocation(item)} • {item.inventory} left
-                </p>
-                <div className="listing-badge-row">
-                  {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
-                  {item.freshnessLabel ? <span className="trust-pill freshness">{item.freshnessLabel}</span> : null}
-                </div>
-              </div>
-            </article>
-          ))}
-        </section>
-      </section>
-    </section>
-  )
-}
-
-function AlertsPage({
-  seller,
-  alerts,
-  notifications,
-  onCreateAlert,
-  onToggleAlert,
-  onReadNotification,
-}: {
-  seller: SellerProfile
-  alerts: AlertItem[]
-  notifications: NotificationItem[]
-  onCreateAlert: (payload: Omit<AlertItem, 'id'>) => Promise<void>
-  onToggleAlert: (id: string) => Promise<void>
-  onReadNotification: (id: string) => Promise<void>
-}) {
-  const [fruit, setFruit] = useState('')
-  const [location, setLocation] = useState('Anywhere, USA')
-  const [radiusMiles, setRadiusMiles] = useState('25')
-
-  return (
-    <section className="alerts-layout">
-      <div className="stack">
-        <div className="section-heading compact-heading no-top-gap">
-          <div>
-            <p className="eyebrow">Saved alerts</p>
-            <h2>Watchlist</h2>
-          </div>
-          <span className="section-meta">{alerts.length} alerts</span>
-        </div>
-
-        <form
-          className="listing-form"
-          onSubmit={async (e) => {
-            e.preventDefault()
-            await onCreateAlert({
-              userId: seller.id,
-              fruit: fruit || 'Fruit',
-              location: location || 'Anywhere, USA',
-              radiusMiles: Number(radiusMiles) || 25,
-              sellerId: '',
-              active: true,
-            })
-            setFruit('')
-            setLocation('Anywhere, USA')
-            setRadiusMiles('25')
-          }}
-        >
-          <div className="form-grid">
-            <label>
-              Fruit
-              <input value={fruit} onChange={(e) => setFruit(e.target.value)} placeholder="Peaches" />
-            </label>
-            <label>
-              Location
-              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Denver, CO" />
-            </label>
             <label className="full">
-              Radius miles
+              Password
               <input
-                type="number"
-                min="1"
-                max="500"
-                value={radiusMiles}
-                onChange={(e) => setRadiusMiles(e.target.value)}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === 'reset' ? 'Create a new password' : 'Enter your password'}
+                required
               />
             </label>
+
+            {mode === 'signup' || mode === 'reset' ? (
+              <label className="full">
+                Confirm password
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password"
+                  required
+                />
+              </label>
+            ) : null}
+
+            {mode === 'reset' && resetTokenPreview ? (
+              <label className="full">
+                Reset code
+                <input
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value.toUpperCase())}
+                  placeholder="Paste the reset code"
+                  required
+                />
+              </label>
+            ) : null}
           </div>
 
-          <div className="action-row">
-            <button className="primary" type="submit">
-              Create alert
+          {info ? <div className="status-banner success">{info}</div> : null}
+          {error ? <div className="status-banner error">{error}</div> : null}
+
+          <div className="action-row auth-action-row">
+            <button className="primary" type="submit" disabled={busy}>
+              {busy
+                ? 'Please wait...'
+                : mode === 'signup'
+                  ? 'Create account'
+                  : mode === 'reset'
+                    ? resetTokenPreview
+                      ? 'Save new password'
+                      : 'Send reset code'
+                    : 'Log in'}
             </button>
-          </div>
-        </form>
 
-        <div className="stack-list">
-          {alerts.map((alert) => (
-            <div className="alert-card-row" key={alert.id}>
-              <div>
-                <strong>{alert.fruit}</strong>
-                <p>
-                  {alert.location} • {alert.radiusMiles} miles
-                </p>
-              </div>
-              <button className={alert.active ? 'ghost active-soft' : 'ghost'} onClick={() => onToggleAlert(alert.id)}>
-                {alert.active ? 'Active' : 'Paused'}
+            {mode === 'login' ? (
+              <>
+                <button type="button" className="ghost" onClick={() => navigate('/signup')}>
+                  Create account
+                </button>
+                <button type="button" className="text-btn" onClick={() => navigate('/reset-password')}>
+                  Forgot password?
+                </button>
+              </>
+            ) : mode === 'signup' ? (
+              <button type="button" className="ghost" onClick={() => navigate('/login')}>
+                Have an account?
               </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="stack">
-        <div className="section-heading compact-heading no-top-gap">
-          <div>
-            <p className="eyebrow">Notifications</p>
-            <h2>Recent signals</h2>
+            ) : (
+              <button type="button" className="ghost" onClick={() => navigate('/login')}>
+                Back to login
+              </button>
+            )}
           </div>
-          <span className="section-meta">{notifications.filter((n) => !n.read).length} unread</span>
         </div>
-
-        <div className="stack-list">
-          {notifications.length ? (
-            notifications.map((item) => (
-              <div className={item.read ? 'notification-card' : 'notification-card unread'} key={item.id}>
-                <div className="notification-copy">
-                  <strong>{item.title}</strong>
-                  <p>{item.body}</p>
-                  <span>{formatTime(item.createdAt)}</span>
-                </div>
-                {!item.read ? (
-                  <button className="ghost compact-btn" onClick={() => onReadNotification(item.id)}>
-                    Mark read
-                  </button>
-                ) : null}
-              </div>
-            ))
-          ) : (
-            <div className="empty-panel">Fresh drops, alerts, and pickup updates will appear here.</div>
-          )}
-        </div>
-      </div>
+      </form>
     </section>
   )
 }
@@ -2323,6 +1305,7 @@ function AppLayout({
         <Routes>
           <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
+          <Route path="/reset-password" element={<AuthShell mode="reset" onAuthSuccess={onAuthSuccess} />} />
 
           <Route
             path="/"
