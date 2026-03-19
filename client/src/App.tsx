@@ -321,20 +321,37 @@ function TrustStrip({ listing }: { listing: Listing }) {
   )
 }
 
-function RatingStars({ value, onChange, interactive = false }: { value: number; onChange?: (value: number) => void; interactive?: boolean }) {
+function RatingStars({
+  value,
+  onChange,
+  interactive = false,
+}: {
+  value: number
+  onChange?: (value: number) => void
+  interactive?: boolean
+}) {
+  const [hoverValue, setHoverValue] = useState<number | null>(null)
+  const displayValue = interactive && hoverValue !== null ? hoverValue : value
+
   return (
     <div className={interactive ? 'rating-stars interactive' : 'rating-stars'}>
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
           type="button"
-          className={star <= value ? 'star active' : 'star'}
+          className={star <= displayValue ? 'star active' : 'star'}
           onClick={() => interactive && onChange?.(star)}
+          onMouseEnter={() => interactive && setHoverValue(star)}
+          onMouseLeave={() => interactive && setHoverValue(null)}
+          onFocus={() => interactive && setHoverValue(star)}
+          onBlur={() => interactive && setHoverValue(null)}
           aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
+          aria-pressed={interactive ? star === value : undefined}
         >
           ★
         </button>
       ))}
+      {interactive ? <span className="rating-score-label">{displayValue}/5</span> : null}
     </div>
   )
 }
@@ -369,7 +386,10 @@ function ReviewsPanel({
           <strong>Rate this pickup</strong>
           <p>Share fruit quality, pickup ease, and communication.</p>
         </div>
-        <RatingStars value={draftRating} onChange={setDraftRating} interactive />
+        <div className="review-rating-row">
+          <RatingStars value={draftRating} onChange={setDraftRating} interactive />
+          <span className="review-help">Tap a star to change your rating.</span>
+        </div>
         <textarea
           value={draftComment}
           onChange={(e) => setDraftComment(e.target.value)}

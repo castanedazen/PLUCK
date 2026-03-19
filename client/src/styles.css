@@ -3506,3 +3506,271 @@ button.ghost:active,
     border-radius: 22px;
   }
 }
+
+
+/* --- Surgical premium cleanup pass --- */
+.pill,
+.metric-chip,
+.trust-pill,
+.cinematic-pill {
+  border: 1px solid rgba(30, 41, 34, 0.10);
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.pill {
+  background: #f2ede2;
+  color: #243423;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.metric-chip {
+  background: #eef3ec;
+  color: #1f3825;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.trust-pill {
+  background: #eef2ea;
+  color: #203225;
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-size: 0.81rem;
+  font-weight: 800;
+}
+
+.trust-pill.verified { background: #e1f1e4; color: #165b28; }
+.trust-pill.harvest { background: #fff0bf; color: #6e5300; }
+.trust-pill.freshness { background: #e8f5ea; color: #1a5f2f; }
+.trust-pill.available { background: #e8eefc; color: #224f9c; }
+
+.cinematic-pill {
+  background: rgba(18, 31, 23, 0.72);
+  border-color: rgba(255,255,255,0.18);
+  color: #fff8ef;
+  font-weight: 700;
+}
+
+.cinematic-fruit-card-copy .trust-strip,
+.hero-live-card__overlay .trust-strip,
+.mini-card-copy .trust-strip {
+  gap: 6px;
+}
+
+.cinematic-fruit-card-copy .trust-pill,
+.hero-live-card__overlay .trust-pill,
+.mini-card-copy .trust-pill {
+  background: rgba(248, 243, 231, 0.94);
+  color: #1f3426;
+  border-color: rgba(31,52,38,0.08);
+}
+
+.listing-card,
+.mini-card,
+.hero-live-card,
+.cinematic-fruit-card,
+.notification-card,
+.thread-card,
+.dashboard-card,
+.activity-card {
+  min-width: 0;
+}
+
+.action-row,
+.pill-row,
+.listing-top-badges,
+.trust-metrics,
+.trust-row {
+  row-gap: 10px;
+}
+
+.rating-stars {
+  align-items: center;
+  gap: 6px;
+}
+
+.rating-stars .star {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #f5f0e4;
+  border: 1px solid rgba(111, 84, 10, 0.12);
+  color: #b08a24;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: default;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rating-stars.interactive .star {
+  cursor: pointer;
+}
+
+.rating-stars.interactive .star:hover,
+.rating-stars.interactive .star:focus-visible {
+  transform: translateY(-1px);
+  background: #fff7db;
+  color: #d39a00;
+  box-shadow: 0 8px 18px rgba(117, 90, 14, 0.12);
+  outline: none;
+}
+
+.rating-stars .star.active {
+  background: #ffefb3;
+  color: #a66a00;
+}
+
+.rating-score-label {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #6d5607;
+  margin-left: 6px;
+}
+
+.review-rating-row {
+  display: grid;
+  gap: 8px;
+}
+
+.review-help {
+  color: #667085;
+  font-size: 0.84rem;
+}
+
+.topbar--slim {
+  gap: 16px;
+}
+
+.topbar-actions {
+  row-gap: 10px;
+}
+
+.bottom-nav {
+  bottom: max(12px, env(safe-area-inset-bottom));
+  padding: 9px;
+}
+
+.nav-item {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-shell {
+  padding-bottom: 130px;
+}
+
+.profile-card,
+.premium-profile,
+.listing-detail-hero,
+.messages-shell,
+.search-wrap,
+.route-intro-card,
+.hero-live-grid,
+.fruit-ribbon,
+.stack {
+  min-width: 0;
+}
+
+.route-intro-card,
+.hero-card,
+.profile-card,
+.listing-detail-hero,
+.search-wrap {
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    padding: 16px 14px 124px;
+  }
+
+  .topbar--slim {
+    padding: 18px 16px;
+  }
+
+  .brand-lockup h1 {
+    font-size: 1.7rem;
+    line-height: 1.02;
+  }
+
+  .subtle-copy {
+    font-size: 0.96rem;
+  }
+
+  .cinematic-hero {
+    gap: 14px;
+  }
+
+  .cinematic-backdrop {
+    min-height: 360px;
+    border-radius: 24px;
+  }
+
+  .cinematic-overlay {
+    padding: 18px;
+    gap: 10px;
+  }
+
+  .cinematic-overlay h2 {
+    font-size: 1.95rem;
+    line-height: 1.02;
+  }
+
+  .hero-live-grid__cards,
+  .fruit-ribbon-grid,
+  .stats-grid,
+  .dashboard-stats,
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-detail-image {
+    height: 280px;
+  }
+
+  .action-grid--2,
+  .action-grid--3,
+  .action-grid--4 {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: calc(100% - 16px);
+    border-radius: 20px;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .nav-item {
+    font-size: 0.75rem;
+    padding: 10px 4px;
+  }
+
+  .trust-metrics,
+  .pill-row,
+  .listing-top-badges {
+    gap: 8px;
+  }
+
+  .trust-pill,
+  .pill,
+  .metric-chip {
+    font-size: 0.78rem;
+    padding: 8px 11px;
+  }
+}
