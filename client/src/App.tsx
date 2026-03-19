@@ -36,8 +36,6 @@ import {
   getSocialPosts,
   login,
   markNotificationRead,
-  requestPasswordReset,
-  resetPassword,
   reservePickup,
   sendMessage,
   signup,
@@ -199,68 +197,68 @@ const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: stri
   {
     match: /^\/$/,
     eyebrow: 'Pluck orchard market',
-    title: 'Find the sweetest local fruit near you.',
-    subtitle: 'Browse harvests, save favorites, and reserve pickup in a few taps.',
+    title: 'Fruit worth leaving home for.',
+    subtitle: 'Fresh nearby. Fast pickup. No friction.',
   },
   {
     match: /^\/map/,
     eyebrow: 'Discovery map',
-    title: 'See harvests on the map, not just in a list.',
-    subtitle: 'Tap pins, compare nearby growers, and jump straight into the real listing.',
+    title: 'See the orchard around you.',
+    subtitle: 'Map first. Decide fast.',
   },
   {
     match: /^\/favorites/,
     eyebrow: 'Saved fruit',
-    title: 'Your favorite finds, all in one place.',
-    subtitle: 'Revisit the fruit and growers you wanted to come back to.',
+    title: 'Your saved fruit, kept close.',
+    subtitle: 'Come back when it is time to pick up.',
   },
   {
     match: /^\/messages/,
     eyebrow: 'Grower inbox',
-    title: 'Talk with growers and lock in pickup quickly.',
-    subtitle: 'Open a thread, confirm details, and keep your fruit plans moving.',
+    title: 'Message once. Pick up fast.',
+    subtitle: 'Clear threads. Faster pickup.',
   },
   {
     match: /^\/alerts/,
     eyebrow: 'Alerts',
-    title: 'Stay ahead of fresh drops and nearby harvests.',
-    subtitle: 'Track new fruit, saved growers, and pickup updates without the noise.',
+    title: 'Stay ahead of the next drop.',
+    subtitle: 'Fresh alerts without the clutter.',
   },
   {
     match: /^\/store/,
     eyebrow: 'My store',
-    title: 'Run your orchard storefront with less friction.',
-    subtitle: 'Manage listings, inventory, and responses from one clean dashboard.',
+    title: 'Your orchard, run clean.',
+    subtitle: 'List, reply, and move fruit fast.',
   },
   {
     match: /^\/profile/,
     eyebrow: 'Profile',
-    title: 'Build trust with a grower profile people remember.',
-    subtitle: 'Show what you grow, where you are, and why buyers come back.',
+    title: 'A profile buyers trust fast.',
+    subtitle: 'Clear signals. Less selling.',
   },
   {
     match: /^\/grower\//,
     eyebrow: 'Grower profile',
-    title: 'Meet the grower behind the fruit.',
-    subtitle: 'Check trust signals, specialties, and active harvests before you reserve.',
+    title: 'Meet the grower.',
+    subtitle: 'Trust first. Reserve second.',
   },
   {
     match: /^\/listing\//,
     eyebrow: 'Listing',
-    title: 'See the fruit first, then decide fast.',
-    subtitle: 'Photos, pickup windows, trust signals, and next steps are all right here.',
+    title: 'See the fruit. Decide in seconds.',
+    subtitle: 'Big photos. Clear next steps.',
   },
   {
     match: /^\/login/,
     eyebrow: 'Welcome back',
-    title: 'Log in and get back to the orchard.',
-    subtitle: 'Pick up where you left off with saved fruit, alerts, and messages.',
+    title: 'Back to the orchard.',
+    subtitle: 'Saved fruit, alerts, and threads waiting.',
   },
   {
     match: /^\/signup/,
     eyebrow: 'Create account',
-    title: 'Join Pluck and start finding fruit nearby.',
-    subtitle: 'Save growers, reserve pickup, and build your own orchard storefront.',
+    title: 'Start finding fruit nearby.',
+    subtitle: 'Save, reserve, and start selling.',
   },
 ]
 
@@ -300,11 +298,11 @@ function pickupConfidenceLabel(listing: Listing) {
 
 function trustSignalsForListing(listing: Listing) {
   const signals = [] as string[]
-  if (listing.sellerVerified) signals.push('Verified grower')
-  if (listing.sellerRating) signals.push(`★ ${listing.sellerRating.toFixed(1)} trusted`)
-  signals.push('Quick reply')
+  if (listing.sellerVerified) signals.push('Verified local')
+  if (listing.sellerRating) signals.push(`★ ${listing.sellerRating.toFixed(1)} rating`)
+  signals.push('Fast reply')
   signals.push(pickupConfidenceLabel(listing))
-  return signals.slice(0, 4)
+  return signals.slice(0, 3)
 }
 
 function formatReviewDate(value: string) {
@@ -350,7 +348,7 @@ function ReviewsPanel({
   reviews: ReviewItem[]
   onAddReview: (input: { listingId: string; sellerId: string; sellerName: string; rating: number; comment: string }) => void
 }) {
-  const [draftRating, setDraftRating] = useState(0)
+  const [draftRating, setDraftRating] = useState(5)
   const [draftComment, setDraftComment] = useState('')
 
   return (
@@ -371,10 +369,7 @@ function ReviewsPanel({
           <strong>Rate this pickup</strong>
           <p>Share fruit quality, pickup ease, and communication.</p>
         </div>
-        <div className="review-rating-row">
-          <RatingStars value={draftRating} onChange={setDraftRating} interactive />
-          <span className="review-rating-value">{draftRating ? `${draftRating} of 5 selected` : 'Tap a star to rate this pickup'}</span>
-        </div>
+        <RatingStars value={draftRating} onChange={setDraftRating} interactive />
         <textarea
           value={draftComment}
           onChange={(e) => setDraftComment(e.target.value)}
@@ -385,7 +380,6 @@ function ReviewsPanel({
           <button
             className="primary"
             onClick={() => {
-              if (!draftRating) return
               onAddReview({
                 listingId: listing.id,
                 sellerId: listing.sellerId,
@@ -614,67 +608,35 @@ function AuthShell({
   mode,
   onAuthSuccess,
 }: {
-  mode: 'login' | 'signup' | 'reset'
+  mode: 'login' | 'signup'
   onAuthSuccess: (user: AuthUser) => void
 }) {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'buyer' | 'grower'>('buyer')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [resetCode, setResetCode] = useState('')
-  const [resetTokenPreview, setResetTokenPreview] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [info, setInfo] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
     setError('')
-    setInfo('')
 
     try {
-      if (mode === 'signup') {
-        if (password.length < 6) {
-          throw new Error('Password must be at least 6 characters.')
-        }
-        if (password !== confirmPassword) {
-          throw new Error('Passwords do not match.')
-        }
-        const user = await signup({
-          name: name.trim() || 'User',
-          email: email.trim(),
-          role,
-          password,
-        })
-        onAuthSuccess(user)
-        navigate('/profile')
-      } else if (mode === 'login') {
-        const user = await login({
-          email: email.trim(),
-          password,
-        })
-        onAuthSuccess(user)
-        navigate('/profile')
-      } else {
-        if (!resetTokenPreview && !resetCode) {
-          const result = await requestPasswordReset({ email: email.trim() })
-          setResetTokenPreview(result.resetToken)
-          setInfo(`Reset code: ${result.resetToken} — enter it below with your new password.`)
-        } else {
-          if (password.length < 6) throw new Error('Password must be at least 6 characters.')
-          if (password !== confirmPassword) throw new Error('Passwords do not match.')
-          await resetPassword({
-            email: email.trim(),
-            resetToken: resetCode.trim(),
-            password,
-          })
-          setInfo('Password updated. You can log in now.')
-          setTimeout(() => navigate('/login'), 700)
-        }
-      }
+      const user =
+        mode === 'signup'
+          ? await signup({
+              name: name.trim() || 'User',
+              email: email.trim(),
+              role,
+            })
+          : await login({
+              email: email.trim(),
+            })
+
+      onAuthSuccess(user)
+      navigate('/')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to continue.'
       setError(message)
@@ -687,19 +649,17 @@ function AuthShell({
     <section className="auth-page">
       <div className="auth-hero">
         <p className="eyebrow">PLUCK account</p>
-        <h1>{mode === 'signup' ? 'Create your account' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}</h1>
+        <h1>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
         <p>
-          {mode === 'reset'
-            ? 'Secure your account with a fresh password and get back into your orchard dashboard.'
-            : 'Join as a buyer or grower. Save favorites, message growers, and manage harvests with one secure account.'}
+          Join as a buyer or grower. This is the foundation for real profiles, saved searches, and nationwide discovery.
         </p>
       </div>
 
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="form-header">
           <div>
-            <p className="eyebrow">{mode === 'signup' ? 'New account' : mode === 'reset' ? 'Recovery' : 'Login'}</p>
-            <h2>{mode === 'signup' ? 'Start using PLUCK' : mode === 'reset' ? 'Reset account password' : 'Sign into your account'}</h2>
+            <p className="eyebrow">{mode === 'signup' ? 'New account' : 'Login'}</p>
+            <h2>{mode === 'signup' ? 'Start using PLUCK' : 'Sign into your account'}</h2>
           </div>
         </div>
 
@@ -744,69 +704,21 @@ function AuthShell({
                 </div>
               </label>
             ) : null}
-
-            <label className="full">
-              Password
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'reset' ? 'Create a new password' : 'Enter your password'}
-                required
-              />
-            </label>
-
-            {(mode === 'signup' || mode === 'reset') ? (
-              <label className="full">
-                Confirm password
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
-                  required
-                />
-              </label>
-            ) : null}
-
-            {mode === 'reset' && resetTokenPreview ? (
-              <label className="full">
-                Reset code
-                <input
-                  value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value.toUpperCase())}
-                  placeholder="Paste the reset code"
-                  required
-                />
-              </label>
-            ) : null}
           </div>
 
-          {info ? <div className="status-banner success">{info}</div> : null}
           {error ? <div className="status-banner error">{error}</div> : null}
 
-          <div className="action-row auth-action-row">
+          <div className="action-row">
             <button className="primary" type="submit" disabled={busy}>
-              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : mode === 'reset' ? (resetTokenPreview ? 'Save new password' : 'Send reset code') : 'Log in'}
+              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Log in'}
             </button>
-            {mode === 'login' ? (
-              <>
-                <button type="button" className="ghost" onClick={() => navigate('/signup')}>
-                  Create account
-                </button>
-                <button type="button" className="text-btn" onClick={() => navigate('/reset-password')}>
-                  Forgot password?
-                </button>
-              </>
-            ) : mode === 'signup' ? (
-              <button type="button" className="ghost" onClick={() => navigate('/login')}>
-                Have an account?
-              </button>
-            ) : (
-              <button type="button" className="ghost" onClick={() => navigate('/login')}>
-                Back to login
-              </button>
-            )}
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => navigate(mode === 'signup' ? '/login' : '/signup')}
+            >
+              {mode === 'signup' ? 'Have an account?' : 'Create account'}
+            </button>
           </div>
         </div>
       </form>
@@ -2298,7 +2210,7 @@ function AppLayout({
               <button className="ghost" onClick={() => goTo('/profile')}>
                 Profile
               </button>
-              <button className="ghost danger-lite" onClick={onLogout}>
+              <button className="ghost" onClick={onLogout}>
                 Log out
               </button>
               <button className="primary" onClick={() => goTo('/store/new')}>
@@ -2316,7 +2228,7 @@ function AppLayout({
             <div className="cinematic-overlay">
               <p className="eyebrow eyebrow--light">Pluck orchard market</p>
               <h2>{leadShowcase.title}</h2>
-              <p>Backyard harvests, orchard trust, and quick pickup plans—all surfaced in one beautiful place.</p>
+              <p>Fresh nearby. Priced clearly. Ready to pick up.</p>
               <div className="cinematic-pill-row">
                 <span className="cinematic-pill">{leadShowcase.fruit}</span>
                 <span className="cinematic-pill">${leadShowcase.price}/{leadShowcase.unit}</span>
@@ -2354,7 +2266,7 @@ function AppLayout({
           <div className="section-heading section-heading--compact">
             <div>
               <p className="eyebrow">Live orchard picks</p>
-              <h2>Tap any fruit to open the real listing.</h2>
+              <h2>Open a listing.</h2>
             </div>
             <span className="section-meta">{fruitRibbon.length} live now</span>
           </div>
@@ -2463,7 +2375,6 @@ function AppLayout({
         <Routes>
           <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
-          <Route path="/reset-password" element={<AuthShell mode="reset" onAuthSuccess={onAuthSuccess} />} />
 
           <Route
             path="/"
@@ -3016,7 +2927,6 @@ function AppLayout({
                 {!authUser ? (
                   <>
                     <p>Create an account or log in to make this profile live across devices.</p>
-
                     <div className="action-row">
                       <button className="primary" onClick={() => goTo('/signup')}>
                         Create account
@@ -3029,7 +2939,6 @@ function AppLayout({
                 ) : (
                   <>
                     <p>{seller.bio}</p>
-                    <div className="signed-in-banner">Signed in as <strong>{authUser ? authUser.email : ''}</strong></div>
 
                     <div className="dashboard-stats profile-stats">
                       <div className="dashboard-card">
