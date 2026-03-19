@@ -194,20 +194,73 @@ const quickFilters: { key: QuickFilter; label: string }[] = [
 ]
 
 const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: string }[] = [
-  { match: /^\/$/, eyebrow: 'PLUCK orchard market', title: 'Grow local. Trade local.', subtitle: 'Real fruit. Real people. Right nearby.' },
-  { match: /^\/map/, eyebrow: 'Field map', title: 'See what is growing around you.', subtitle: 'Nearby first. Big chains later.' },
-  { match: /^\/board/, eyebrow: 'Local board', title: 'Post something. Show up.', subtitle: 'Events, barter, help, and neighborhood signal.' },
-  { match: /^\/favorites/, eyebrow: 'Saved', title: 'Keep what matters close.', subtitle: 'Come back when it is ripe.' },
-  { match: /^\/messages/, eyebrow: 'Direct line', title: 'Talk. Then pick up.', subtitle: 'No middlemen. No noise.' },
-  { match: /^\/alerts/, eyebrow: 'Signals', title: 'Know when fresh drops hit.', subtitle: 'Quiet alerts. Fast action.' },
-  { match: /^\/store/, eyebrow: 'Storefront', title: 'Run your stand your way.', subtitle: 'List, reply, and move fruit fast.' },
-  { match: /^\/profile/, eyebrow: 'Reputation', title: 'Earn trust. Keep it.', subtitle: 'Known grower. Clear signals.' },
-  { match: /^\/grower\//, eyebrow: 'Grower', title: 'Meet the grower.', subtitle: 'Trust first. Reserve second.' },
-  { match: /^\/listing\//, eyebrow: 'Listing', title: 'See it. Decide fast.', subtitle: 'Big photos. Clear next step.' },
-  { match: /^\/login/, eyebrow: 'Welcome back', title: 'Back to the orchard.', subtitle: 'Saved fruit, alerts, and threads waiting.' },
-  { match: /^\/signup/, eyebrow: 'Join local', title: 'Start small. Grow strong.', subtitle: 'Buy, barter, sell, repeat.' },
+  {
+    match: /^\/$/,
+    eyebrow: 'Pluck orchard market',
+    title: 'Find the sweetest local fruit near you.',
+    subtitle: 'Browse harvests, save favorites, and reserve pickup in a few taps.',
+  },
+  {
+    match: /^\/map/,
+    eyebrow: 'Discovery map',
+    title: 'See harvests on the map, not just in a list.',
+    subtitle: 'Tap pins, compare nearby growers, and jump straight into the real listing.',
+  },
+  {
+    match: /^\/favorites/,
+    eyebrow: 'Saved fruit',
+    title: 'Your favorite finds, all in one place.',
+    subtitle: 'Revisit the fruit and growers you wanted to come back to.',
+  },
+  {
+    match: /^\/messages/,
+    eyebrow: 'Grower inbox',
+    title: 'Talk with growers and lock in pickup quickly.',
+    subtitle: 'Open a thread, confirm details, and keep your fruit plans moving.',
+  },
+  {
+    match: /^\/alerts/,
+    eyebrow: 'Alerts',
+    title: 'Stay ahead of fresh drops and nearby harvests.',
+    subtitle: 'Track new fruit, saved growers, and pickup updates without the noise.',
+  },
+  {
+    match: /^\/store/,
+    eyebrow: 'My store',
+    title: 'Run your orchard storefront with less friction.',
+    subtitle: 'Manage listings, inventory, and responses from one clean dashboard.',
+  },
+  {
+    match: /^\/profile/,
+    eyebrow: 'Profile',
+    title: 'Build trust with a grower profile people remember.',
+    subtitle: 'Show what you grow, where you are, and why buyers come back.',
+  },
+  {
+    match: /^\/grower\//,
+    eyebrow: 'Grower profile',
+    title: 'Meet the grower behind the fruit.',
+    subtitle: 'Check trust signals, specialties, and active harvests before you reserve.',
+  },
+  {
+    match: /^\/listing\//,
+    eyebrow: 'Listing',
+    title: 'See the fruit first, then decide fast.',
+    subtitle: 'Photos, pickup windows, trust signals, and next steps are all right here.',
+  },
+  {
+    match: /^\/login/,
+    eyebrow: 'Welcome back',
+    title: 'Log in and get back to the orchard.',
+    subtitle: 'Pick up where you left off with saved fruit, alerts, and messages.',
+  },
+  {
+    match: /^\/signup/,
+    eyebrow: 'Create account',
+    title: 'Join Pluck and start finding fruit nearby.',
+    subtitle: 'Save growers, reserve pickup, and build your own orchard storefront.',
+  },
 ]
-
 
 function getRouteMeta(pathname: string) {
   return routeMeta.find((item) => item.match.test(pathname)) || routeMeta[0]
@@ -1817,104 +1870,6 @@ type AppLayoutProps = {
   onLogout: () => void
 }
 
-
-function CommunityBoard() {
-  const [posts, setPosts] = useState([
-    {
-      id: '1',
-      category: 'Grow & share',
-      location: 'Pasadena',
-      title: 'Need two hands for citrus picking',
-      body: 'Saturday morning. Fruit trade welcome.',
-    },
-    {
-      id: '2',
-      category: 'Trade & help',
-      location: 'Glendale',
-      title: 'Extra figs this week',
-      body: 'Pick up before Sunday. Happy to swap.',
-    },
-    {
-      id: '3',
-      category: 'Local event',
-      location: 'Highland Park',
-      title: 'Street-side harvest table this weekend',
-      body: 'Small community setup. Bring what is ripe.',
-    },
-  ])
-  const [title, setTitle] = useState('')
-  const [details, setDetails] = useState('')
-  const [category, setCategory] = useState('Grow & share')
-
-  function handlePost() {
-    if (!title.trim()) return
-    setPosts([
-      {
-        id: String(Date.now()),
-        category,
-        location: 'Local',
-        title: title.trim(),
-        body: details.trim() || 'Fresh note from the neighborhood.',
-      },
-      ...posts,
-    ])
-    setTitle('')
-    setDetails('')
-    setCategory('Grow & share')
-  }
-
-  return (
-    <section className="stack board-shell">
-      <div className="board-hero">
-        <p className="eyebrow">Community board</p>
-        <h2>Grow a seed. Make a friend.</h2>
-        <p>Post events, barter needs, volunteer asks, and neighborhood signal.</p>
-      </div>
-
-      <div className="board-create">
-        <div className="board-create-row">
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option>Grow & share</option>
-            <option>Trade & help</option>
-            <option>Local event</option>
-            <option>Needs volunteers</option>
-          </select>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="What is happening?"
-          />
-        </div>
-        <textarea
-          value={details}
-          onChange={(e) => setDetails(e.target.value)}
-          placeholder="Keep it short, clear, and local."
-          rows={3}
-        />
-        <div className="action-row board-actions">
-          <button className="primary" onClick={handlePost}>Post it</button>
-          <span className="board-note">For the everyman. For the neighborhood.</span>
-        </div>
-      </div>
-
-      <div className="board-grid">
-        {posts.map((post) => (
-          <article className="board-card" key={post.id}>
-            <div className="board-card-top">
-              <span className="board-chip">{post.category}</span>
-              <span className="board-location">{post.location}</span>
-            </div>
-            <h3>{post.title}</h3>
-            <p>{post.body}</p>
-            <button className="ghost">Reply</button>
-          </article>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-
 function AppLayout({
   listings,
   setListings,
@@ -3019,12 +2974,6 @@ function AppLayout({
                       </div>
                     ) : null}
 
-                    <div className="action-row profile-actions">
-                      <button className="ghost danger-ghost" onClick={onLogout}>
-                        Log out
-                      </button>
-                    </div>
-
                     <div className="action-row">
                       <button className="ghost" onClick={() => navigate('/store/listings')}>
                         Manage listings
@@ -3050,14 +2999,14 @@ function AppLayout({
         <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Home
         </NavLink>
-        <NavLink to="/map" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          Map
-        </NavLink>
-        <NavLink to="/board" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          Board
+        <NavLink to="/favorites" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          Favorites
         </NavLink>
         <NavLink to="/messages" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Messages
+        </NavLink>
+        <NavLink to="/store" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+          My Store
         </NavLink>
         <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Profile
