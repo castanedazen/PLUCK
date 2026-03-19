@@ -32,8 +32,8 @@ export default function CommunityBoard() {
     <section className="stack board-shell" id="board-create">
       <div className="board-hero">
         <p className="eyebrow">Community board</p>
-        <h2>Grow a seed. Make a friend.</h2>
-        <p>Events. Trade. Volunteer asks. Neighborhood motion. Keep it real and keep it moving.</p>
+        <h2>Post the signal. Rally the block.</h2>
+        <p>Swaps, asks, volunteer calls, weekend tables, and whatever your block needs next.</p>
       </div>
       <div className="board-create">
         <div className="board-create-row">

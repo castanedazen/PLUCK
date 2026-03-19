@@ -213,8 +213,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/$/,
     theme: {
       eyebrow: 'Neighborhood fruit exchange',
-      title: 'Grow local. Trade local. Stay impossible to replace.',
-      subtitle: 'A sharper market for backyard harvests, barter energy, same-day pickup, and local power.',
+      title: 'Build the local market they cannot own.',
+      subtitle: 'Fruit, barter, pickup, and neighbor trade with some teeth.',
       kicker: 'For the everyman. For the neighborhood.',
       links: [
         { label: 'See the market', targetId: 'market-listings', primary: true },
@@ -227,8 +227,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/map/,
     theme: {
       eyebrow: 'Ground game map',
-      title: 'See what is actually growing around you.',
-      subtitle: 'Pins, pickup range, and neighborhood signal. Tactical, local, fast.',
+      title: 'Find the block. Find the fruit. Move fast.',
+      subtitle: 'Ground-level supply, not warehouse fiction.',
       kicker: 'Maps for food, not for noise.',
       links: [
         { label: 'Jump to map', targetId: 'map-panel', primary: true },
@@ -241,8 +241,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/board/,
     theme: {
       eyebrow: 'Community signal board',
-      title: 'Grow a seed. Make a friend. Rally the block.',
-      subtitle: 'Events, barter, volunteer asks, weekend tables, and neighborhood motion.',
+      title: 'Post the signal. Rally the block.',
+      subtitle: 'Needs, swaps, tables, volunteers, and real neighborhood motion.',
       kicker: 'Not followers. Neighbors.',
       links: [
         { label: 'Post a signal', targetId: 'board-create', primary: true },
@@ -255,8 +255,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/store/,
     theme: {
       eyebrow: 'Sovereign storefront',
-      title: 'Run your stand like it matters, because it does.',
-      subtitle: 'List what is ripe, move what is ready, and build trust that compounds.',
+      title: 'Make your stand look worth stopping for.',
+      subtitle: 'List it clean. Price it right. Move it local.',
       kicker: 'Small scale. Serious presence.',
       links: [
         { label: 'New listing', route: '/store/new', primary: true },
@@ -269,8 +269,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/messages/,
     theme: {
       eyebrow: 'Direct line',
-      title: 'Talk plain. Pick up fast. Keep it moving.',
-      subtitle: 'Threads with growers and buyers, stripped of fluff and middlemen.',
+      title: 'Talk plain. Lock pickup. Keep moving.',
+      subtitle: 'Direct words. No marketplace theater.',
       kicker: 'Clear words beat complicated systems.',
       links: [
         { label: 'Open threads', targetId: 'messages-shell', primary: true },
@@ -282,8 +282,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/profile/,
     theme: {
       eyebrow: 'Earned reputation',
-      title: 'Trust should look lived-in, not manufactured.',
-      subtitle: 'Show what you grow, where you are, and why people come back.',
+      title: 'Trust should feel earned, not polished to death.',
+      subtitle: 'Show your ground, your fruit, and why people return.',
       kicker: 'Known locally beats polished globally.',
       links: [
         { label: 'View profile', targetId: 'profile-shell', primary: true },
@@ -295,8 +295,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/listing\//,
     theme: {
       eyebrow: 'Real listing',
-      title: 'Big photos. Clear price. One next step.',
-      subtitle: 'See the harvest, check the window, and decide without the performance.',
+      title: 'See the harvest. Know the price. Decide now.',
+      subtitle: 'Real photos. Real pickup. No performance.',
       kicker: 'No mystery. No marketplace theater.',
       links: [
         { label: 'View details', targetId: 'listing-detail-shell', primary: true },
@@ -2003,8 +2003,7 @@ function AppLayout({
       <header className="topbar topbar--route">
         <div className="topbar-copy">
           <p className="eyebrow">{shellTheme.eyebrow}</p>
-          <h1>{shellTheme.title}</h1>
-          <p className="subtle-copy">{shellTheme.subtitle}</p>
+          <p className="topbar-mini">{shellTheme.kicker}</p>
         </div>
         <div className="topbar-actions">
           {!authUser ? (
