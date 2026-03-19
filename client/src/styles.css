@@ -3506,3 +3506,364 @@ button.ghost:active,
     border-radius: 22px;
   }
 }
+
+
+
+/* === SAFE REDESIGN PASS === */
+
+:root {
+  background: #efe7da;
+  color: #1a1a16;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(117, 143, 96, 0.11), transparent 25%),
+    radial-gradient(circle at top right, rgba(211, 171, 93, 0.12), transparent 24%),
+    linear-gradient(180deg, #f6f0e6 0%, #eee4d5 100%);
+  color: #1f221d;
+}
+
+.app-shell {
+  max-width: 1160px;
+  padding: 20px 18px 118px;
+}
+
+.topbar,
+.search-wrap,
+.hero-card,
+.card,
+.map-panel,
+.stack,
+.profile-card,
+.hero-band,
+.stat-card,
+.dashboard-card,
+.activity-card,
+.tool-card,
+.social-card,
+.grower-trust-card,
+.notification-card,
+.alert-card-row,
+.signal-strip,
+.thread-panel,
+.thread-card,
+.messages-sidebar,
+.messages-main,
+.empty-panel,
+.route-intro-card {
+  background: linear-gradient(180deg, rgba(255,250,243,0.95), rgba(255,248,238,0.92));
+  border: 1px solid rgba(71, 61, 36, 0.1);
+  box-shadow: 0 20px 50px rgba(45, 35, 17, 0.08);
+}
+
+.topbar {
+  border-radius: 28px;
+  align-items: center;
+  padding: 20px 22px;
+}
+
+.topbar h1,
+.route-intro-card h2,
+.hero-copy h2,
+.hero-card h2,
+.auth-hero h1,
+.profile-hero h2,
+.board-hero h2,
+.listing-hero h2,
+.grower-hero h2 {
+  max-width: 14ch;
+  overflow-wrap: anywhere;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.topbar h1 {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.subtle-copy,
+.hero-copy p,
+.route-intro-card p,
+.auth-hero p,
+.listing-copy p,
+.profile-hero p {
+  color: #5c564d;
+  max-width: 46ch;
+  line-height: 1.45;
+  font-size: 0.98rem;
+}
+
+.eyebrow {
+  color: #7a6230;
+  letter-spacing: 0.14em;
+  font-size: 0.68rem;
+}
+
+.hero-band,
+.route-intro-card {
+  border-radius: 30px;
+}
+
+.hero-copy h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  max-width: 11ch;
+}
+
+.hero-copy p {
+  max-width: 34ch;
+}
+
+.route-intro-card {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.route-intro-card h2 {
+  font-size: clamp(1.5rem, 2vw, 2.15rem);
+  max-width: 13ch;
+  margin: 6px 0 10px;
+}
+
+.pill,
+.metric-chip,
+.trust-pill,
+.cinematic-pill,
+.listing-chip,
+.filter-chip,
+.badge,
+.board-chip,
+.hero-pill,
+.signal-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 8px 12px;
+  min-height: 32px;
+  font-size: 0.76rem;
+  font-weight: 760;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(31, 61, 43, 0.12);
+  background: linear-gradient(180deg, rgba(48,73,50,0.96), rgba(32,52,34,0.96));
+  color: #f5ead5 !important;
+  box-shadow: 0 8px 18px rgba(32, 52, 34, 0.16);
+}
+
+.pill-row,
+.filter-chip-row,
+.listing-badge-row,
+.trust-row,
+.trust-metrics {
+  gap: 8px;
+}
+
+.metric-chip,
+.trust-pill {
+  background: linear-gradient(180deg, rgba(61,79,52,0.96), rgba(36,51,30,0.96));
+  color: #f7efdf !important;
+}
+
+.cinematic-pill {
+  background: rgba(24, 27, 22, 0.74);
+  border-color: rgba(255, 239, 206, 0.2);
+  color: #f8eedb !important;
+  backdrop-filter: blur(8px);
+}
+
+.card,
+.listing-card,
+.listing-card-v2,
+.cinematic-fruit-card,
+.hero-live-card,
+.fruit-ribbon-card {
+  overflow: hidden;
+}
+
+.listing-card h3,
+.listing-card-v2 h3,
+.cinematic-fruit-card h3,
+.hero-live-card h3,
+.fruit-ribbon-card h3,
+.card h3 {
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+}
+
+.listing-card .card-body,
+.listing-card-v2 .card-body,
+.card-body {
+  gap: 10px;
+}
+
+.listing-card .card-meta,
+.listing-card-v2 .card-meta,
+.card-meta {
+  color: #6a6256;
+  font-size: 0.92rem;
+}
+
+.bottom-nav {
+  bottom: 10px;
+  width: min(1020px, calc(100% - 18px));
+  border-radius: 22px;
+  padding: 10px;
+  background: rgba(255, 248, 238, 0.95);
+  border: 1px solid rgba(77, 64, 34, 0.1);
+  box-shadow: 0 18px 40px rgba(35, 29, 19, 0.18);
+}
+
+.bottom-nav a,
+.bottom-nav button {
+  border-radius: 16px;
+  min-height: 52px;
+  color: #4e483e;
+  font-weight: 700;
+}
+
+.bottom-nav .active,
+.bottom-nav a[aria-current='page'] {
+  background: linear-gradient(180deg, rgba(49,74,51,0.98), rgba(36,56,38,0.98));
+  color: #f9efdc !important;
+  box-shadow: 0 10px 24px rgba(36,56,38,0.18);
+}
+
+button.primary,
+a.primary,
+.primary {
+  background: linear-gradient(180deg, #395d3d, #27452c);
+  color: #f8eed9;
+  border: 1px solid rgba(28, 43, 29, 0.2);
+  box-shadow: 0 12px 22px rgba(38, 58, 39, 0.16);
+}
+
+button.ghost,
+a.ghost,
+.ghost {
+  background: rgba(255, 248, 238, 0.78);
+  color: #2c3628;
+  border: 1px solid rgba(67, 62, 46, 0.12);
+}
+
+button,
+a,
+.card,
+.listing-card,
+.listing-card-v2,
+.hero-live-card,
+.cinematic-fruit-card,
+.fruit-ribbon-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.listing-card:hover,
+.listing-card-v2:hover,
+.hero-live-card:hover,
+.cinematic-fruit-card:hover,
+.fruit-ribbon-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(31, 22, 12, 0.14);
+}
+
+button:active,
+a:active {
+  transform: translateY(1px);
+}
+
+.search-wrap input,
+.search-wrap textarea,
+.auth-card input,
+.auth-card textarea,
+.auth-card select,
+.board-create input,
+.board-create textarea,
+.board-create select {
+  background: #fffaf3;
+  border: 1px solid rgba(92, 74, 39, 0.16);
+  color: #1f221d;
+}
+
+.section-title,
+.section-header h2,
+.stack h2,
+.card h2,
+.profile-card h2 {
+  letter-spacing: -0.03em;
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    align-items: flex-start;
+    padding: 18px;
+  }
+
+  .topbar h1,
+  .route-intro-card h2,
+  .hero-copy h2 {
+    max-width: none;
+  }
+
+  .hero-band,
+  .route-intro-card {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    gap: 14px;
+  }
+
+  .app-shell {
+    padding: 16px 14px 112px;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    border-radius: 24px;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .topbar h1 {
+    font-size: 1.9rem;
+    max-width: 9ch;
+  }
+
+  .subtle-copy,
+  .hero-copy p,
+  .route-intro-card p {
+    font-size: 0.92rem;
+    max-width: 28ch;
+  }
+
+  .pill,
+  .metric-chip,
+  .trust-pill,
+  .cinematic-pill,
+  .listing-chip,
+  .filter-chip,
+  .badge,
+  .board-chip,
+  .hero-pill,
+  .signal-pill {
+    min-height: 28px;
+    padding: 7px 10px;
+    font-size: 0.7rem;
+  }
+
+  .bottom-nav {
+    width: calc(100% - 12px);
+    bottom: 6px;
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .bottom-nav a,
+  .bottom-nav button {
+    min-height: 48px;
+    font-size: 0.72rem;
+  }
+
+  .route-intro-card {
+    margin-bottom: 16px;
+  }
+}

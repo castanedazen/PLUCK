@@ -194,72 +194,17 @@ const quickFilters: { key: QuickFilter; label: string }[] = [
 ]
 
 const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: string }[] = [
-  {
-    match: /^\/$/,
-    eyebrow: 'Pluck orchard market',
-    title: 'Find the sweetest local fruit near you.',
-    subtitle: 'Browse harvests, save favorites, and reserve pickup in a few taps.',
-  },
-  {
-    match: /^\/map/,
-    eyebrow: 'Discovery map',
-    title: 'See harvests on the map, not just in a list.',
-    subtitle: 'Tap pins, compare nearby growers, and jump straight into the real listing.',
-  },
-  {
-    match: /^\/favorites/,
-    eyebrow: 'Saved fruit',
-    title: 'Your favorite finds, all in one place.',
-    subtitle: 'Revisit the fruit and growers you wanted to come back to.',
-  },
-  {
-    match: /^\/messages/,
-    eyebrow: 'Grower inbox',
-    title: 'Talk with growers and lock in pickup quickly.',
-    subtitle: 'Open a thread, confirm details, and keep your fruit plans moving.',
-  },
-  {
-    match: /^\/alerts/,
-    eyebrow: 'Alerts',
-    title: 'Stay ahead of fresh drops and nearby harvests.',
-    subtitle: 'Track new fruit, saved growers, and pickup updates without the noise.',
-  },
-  {
-    match: /^\/store/,
-    eyebrow: 'My store',
-    title: 'Run your orchard storefront with less friction.',
-    subtitle: 'Manage listings, inventory, and responses from one clean dashboard.',
-  },
-  {
-    match: /^\/profile/,
-    eyebrow: 'Profile',
-    title: 'Build trust with a grower profile people remember.',
-    subtitle: 'Show what you grow, where you are, and why buyers come back.',
-  },
-  {
-    match: /^\/grower\//,
-    eyebrow: 'Grower profile',
-    title: 'Meet the grower behind the fruit.',
-    subtitle: 'Check trust signals, specialties, and active harvests before you reserve.',
-  },
-  {
-    match: /^\/listing\//,
-    eyebrow: 'Listing',
-    title: 'See the fruit first, then decide fast.',
-    subtitle: 'Photos, pickup windows, trust signals, and next steps are all right here.',
-  },
-  {
-    match: /^\/login/,
-    eyebrow: 'Welcome back',
-    title: 'Log in and get back to the orchard.',
-    subtitle: 'Pick up where you left off with saved fruit, alerts, and messages.',
-  },
-  {
-    match: /^\/signup/,
-    eyebrow: 'Create account',
-    title: 'Join Pluck and start finding fruit nearby.',
-    subtitle: 'Save growers, reserve pickup, and build your own orchard storefront.',
-  },
+  { match: /^\/$/, eyebrow: 'PLUCK orchard market', title: 'Grow local. Trade local.', subtitle: 'Fresh nearby. No middlemen.' },
+  { match: /^\/map/, eyebrow: 'Field map', title: 'See what is growing around you.', subtitle: 'Near first. Decide fast.' },
+  { match: /^\/favorites/, eyebrow: 'Saved', title: 'Keep what matters close.', subtitle: 'Come back when it is ripe.' },
+  { match: /^\/messages/, eyebrow: 'Direct line', title: 'Talk. Then pick up.', subtitle: 'Clear threads. Fast pickup.' },
+  { match: /^\/alerts/, eyebrow: 'Signals', title: 'Know when fresh drops hit.', subtitle: 'Quiet alerts. Quick action.' },
+  { match: /^\/store/, eyebrow: 'Storefront', title: 'Run your stand your way.', subtitle: 'List, reply, move fruit.' },
+  { match: /^\/profile/, eyebrow: 'Reputation', title: 'Earn trust. Keep it.', subtitle: 'Known grower. Clear signals.' },
+  { match: /^\/grower\//, eyebrow: 'Grower', title: 'Meet the grower.', subtitle: 'Trust first. Reserve second.' },
+  { match: /^\/listing\//, eyebrow: 'Listing', title: 'See it. Decide fast.', subtitle: 'Big photos. Clear next step.' },
+  { match: /^\/login/, eyebrow: 'Welcome back', title: 'Back to the orchard.', subtitle: 'Saved fruit and messages waiting.' },
+  { match: /^\/signup/, eyebrow: 'Join local', title: 'Start small. Grow strong.', subtitle: 'Buy, barter, sell, repeat.' },
 ]
 
 function getRouteMeta(pathname: string) {
