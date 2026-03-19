@@ -192,6 +192,124 @@ const quickFilters: { key: QuickFilter; label: string }[] = [
   { key: 'high-stock', label: 'High stock' },
 ]
 
+
+type ShellLink = {
+  label: string
+  route?: string
+  targetId?: string
+  primary?: boolean
+}
+
+type ShellTheme = {
+  eyebrow: string
+  title: string
+  subtitle: string
+  kicker: string
+  links: ShellLink[]
+}
+
+const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
+  {
+    match: /^\/$/,
+    theme: {
+      eyebrow: 'Neighborhood fruit exchange',
+      title: 'Grow local. Trade local. Stay impossible to replace.',
+      subtitle: 'A sharper market for backyard harvests, barter energy, same-day pickup, and local power.',
+      kicker: 'For the everyman. For the neighborhood.',
+      links: [
+        { label: 'See the market', targetId: 'market-listings', primary: true },
+        { label: 'Open the board', route: '/board' },
+        { label: 'Start your stand', route: '/store/new' },
+      ],
+    },
+  },
+  {
+    match: /^\/map/,
+    theme: {
+      eyebrow: 'Ground game map',
+      title: 'See what is actually growing around you.',
+      subtitle: 'Pins, pickup range, and neighborhood signal. Tactical, local, fast.',
+      kicker: 'Maps for food, not for noise.',
+      links: [
+        { label: 'Jump to map', targetId: 'map-panel', primary: true },
+        { label: 'Open board', route: '/board' },
+        { label: 'List your harvest', route: '/store/new' },
+      ],
+    },
+  },
+  {
+    match: /^\/board/,
+    theme: {
+      eyebrow: 'Community signal board',
+      title: 'Grow a seed. Make a friend. Rally the block.',
+      subtitle: 'Events, barter, volunteer asks, weekend tables, and neighborhood motion.',
+      kicker: 'Not followers. Neighbors.',
+      links: [
+        { label: 'Post a signal', targetId: 'board-create', primary: true },
+        { label: 'See the market', route: '/' },
+        { label: 'Check the map', route: '/map' },
+      ],
+    },
+  },
+  {
+    match: /^\/store/,
+    theme: {
+      eyebrow: 'Sovereign storefront',
+      title: 'Run your stand like it matters, because it does.',
+      subtitle: 'List what is ripe, move what is ready, and build trust that compounds.',
+      kicker: 'Small scale. Serious presence.',
+      links: [
+        { label: 'New listing', route: '/store/new', primary: true },
+        { label: 'Inventory', route: '/store/inventory' },
+        { label: 'Board', route: '/board' },
+      ],
+    },
+  },
+  {
+    match: /^\/messages/,
+    theme: {
+      eyebrow: 'Direct line',
+      title: 'Talk plain. Pick up fast. Keep it moving.',
+      subtitle: 'Threads with growers and buyers, stripped of fluff and middlemen.',
+      kicker: 'Clear words beat complicated systems.',
+      links: [
+        { label: 'Open threads', targetId: 'messages-shell', primary: true },
+        { label: 'See the market', route: '/' },
+      ],
+    },
+  },
+  {
+    match: /^\/profile/,
+    theme: {
+      eyebrow: 'Earned reputation',
+      title: 'Trust should look lived-in, not manufactured.',
+      subtitle: 'Show what you grow, where you are, and why people come back.',
+      kicker: 'Known locally beats polished globally.',
+      links: [
+        { label: 'View profile', targetId: 'profile-shell', primary: true },
+        { label: 'Manage store', route: '/store' },
+      ],
+    },
+  },
+  {
+    match: /^\/listing\//,
+    theme: {
+      eyebrow: 'Real listing',
+      title: 'Big photos. Clear price. One next step.',
+      subtitle: 'See the harvest, check the window, and decide without the performance.',
+      kicker: 'No mystery. No marketplace theater.',
+      links: [
+        { label: 'View details', targetId: 'listing-detail-shell', primary: true },
+        { label: 'Message grower', targetId: 'listing-detail-shell' },
+      ],
+    },
+  },
+]
+
+function getShellTheme(pathname: string): ShellTheme {
+  return shellThemes.find((item) => item.match.test(pathname))?.theme ?? shellThemes[0].theme
+}
+
 function formatTime(value?: string) {
   if (!value) return ''
   return new Date(value).toLocaleString([], {
@@ -1230,7 +1348,7 @@ function MessagesPage({
     conversations.find((item) => item.id === selectedConversationId) || conversations[0] || null
 
   return (
-    <section className="messages-shell">
+    <section className="messages-shell" id="messages-shell">
       <aside className="messages-sidebar">
         <div className="section-heading compact-heading no-top-gap">
           <div>
@@ -1385,7 +1503,7 @@ function GrowerPage({
 
   return (
     <section className="stack">
-      <section className="profile-card premium-profile">
+      <section className="profile-card premium-profile" id="profile-shell">
         <img className="hero-fruit" src={grower.heroFruit} alt="Grower orchard" />
         <div className="profile-row">
           <img className="avatar" src={grower.avatar} alt={grower.name} />
@@ -1862,15 +1980,31 @@ function AppLayout({
     return location.pathname === path
   }
 
+  const shellTheme = getShellTheme(location.pathname)
+
+  function jumpTo(targetId?: string, route?: string) {
+    if (route && route !== location.pathname) {
+      navigate(route)
+      window.setTimeout(() => {
+        if (!targetId) return
+        document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 120)
+      return
+    }
+    if (targetId) {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    if (route) navigate(route)
+  }
+
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Pluck V7D shell</p>
-          <h1>Fresh fruit from neighbors</h1>
-          <p className="subtle-copy">
-            A sharper local marketplace for backyard harvests, same-day pickup, grower trust, and nationwide-ready discovery.
-          </p>
+      <header className="topbar topbar--route">
+        <div className="topbar-copy">
+          <p className="eyebrow">{shellTheme.eyebrow}</p>
+          <h1>{shellTheme.title}</h1>
+          <p className="subtle-copy">{shellTheme.subtitle}</p>
         </div>
         <div className="topbar-actions">
           {!authUser ? (
@@ -1898,47 +2032,52 @@ function AppLayout({
         </div>
       </header>
 
-      <section className="hero-band">
-        <div className="hero-copy">
-          <p className="eyebrow">Sovereign local market</p>
-          <h2>Grow local. Trade local. Keep it human.</h2>
-          <p>
-            Post what is ripe, barter what you can, and build a neighborhood food network that feels real.
-          </p>
+      <section className={`hero-band hero-band--route hero-band--${location.pathname.split('/')[1] || 'home'}`}>
+        <div className="hero-copy hero-copy--route">
+          <p className="eyebrow">{shellTheme.kicker}</p>
+          <h2>{shellTheme.title}</h2>
+          <p>{shellTheme.subtitle}</p>
           <div className="hero-cta-row">
-            <button className="primary" onClick={() => navigate('/store/new')}>
-              Start a stand
-            </button>
-            <button className="ghost" onClick={() => navigate('/map')}>
-              See the map
-            </button>
-            <button className="ghost" onClick={() => navigate('/alerts')}>
-              Open signals
-            </button>
+            {shellTheme.links.map((link) => (
+              <button
+                key={link.label}
+                className={link.primary ? 'primary' : 'ghost'}
+                onClick={() => jumpTo(link.targetId, link.route)}
+              >
+                {link.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="stats-grid">
-          <button className="stat-card stat-link" onClick={() => navigate('/')}>
-            <span>Nearby</span>
-            <strong>{listings.length}</strong>
-          </button>
-          <button className="stat-card stat-link" onClick={() => navigate('/favorites')}>
-            <span>Saved</span>
-            <strong>{favoriteListings.length}</strong>
-          </button>
-          <button className="stat-card stat-link" onClick={() => navigate('/store/inventory')}>
-            <span>In stock</span>
-            <strong>{totalInventory}</strong>
-          </button>
-          <button className="stat-card stat-link" onClick={() => navigate('/messages')}>
-            <span>Threads</span>
-            <strong>{conversations.length}</strong>
-          </button>
+        <div className="hero-aside hero-aside--route">
+          <div className="hero-note-strip">
+            <span className="hero-stamp">Resilient</span>
+            <span className="hero-stamp">Local</span>
+            <span className="hero-stamp">Independent</span>
+          </div>
+          <div className="stats-grid stats-grid--manifesto">
+            <button className="stat-card stat-link" onClick={() => navigate('/')}>
+              <span>Nearby</span>
+              <strong>{listings.length}</strong>
+            </button>
+            <button className="stat-card stat-link" onClick={() => navigate('/favorites')}>
+              <span>Saved</span>
+              <strong>{favoriteListings.length}</strong>
+            </button>
+            <button className="stat-card stat-link" onClick={() => navigate('/store/inventory')}>
+              <span>In stock</span>
+              <strong>{totalInventory}</strong>
+            </button>
+            <button className="stat-card stat-link" onClick={() => navigate('/messages')}>
+              <span>Threads</span>
+              <strong>{conversations.length}</strong>
+            </button>
+          </div>
         </div>
       </section>
 
-      <div className="search-wrap">
+      <div className="search-wrap" id="market-search">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -2008,7 +2147,7 @@ function AppLayout({
                   <span className="section-meta">{filtered.length} listings</span>
                 </section>
 
-                <section className="grid">
+                <section className="grid" id="market-listings">
                   {filtered.map((item) => {
                     const isFavorite = favoriteListingIds.has(item.id)
                     const isFollowing = followingSellerIds.has(item.sellerId)
@@ -2151,7 +2290,7 @@ function AppLayout({
           <Route
             path="/map"
             element={
-              <section className="map-panel">
+              <section className="map-panel" id="map-panel">
                 <div className="map-fallback premium-map">
                   <div className="map-header-row">
                     <div>

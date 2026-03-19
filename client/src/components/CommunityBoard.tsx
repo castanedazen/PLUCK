@@ -29,11 +29,11 @@ export default function CommunityBoard() {
   }
 
   return (
-    <section className="stack board-shell">
+    <section className="stack board-shell" id="board-create">
       <div className="board-hero">
         <p className="eyebrow">Community board</p>
         <h2>Grow a seed. Make a friend.</h2>
-        <p>Post events, barter needs, volunteer asks, and neighborhood signal.</p>
+        <p>Events. Trade. Volunteer asks. Neighborhood motion. Keep it real and keep it moving.</p>
       </div>
       <div className="board-create">
         <div className="board-create-row">
