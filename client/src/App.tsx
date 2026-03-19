@@ -214,7 +214,7 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     theme: {
       eyebrow: 'Neighborhood fruit exchange',
       title: 'Build the local market they cannot own.',
-      subtitle: 'Fruit, barter, pickup, and neighbor trade with some teeth.',
+      subtitle: 'Backyard harvests. Same-day pickup. Direct trade that stays human.',
       kicker: 'For the everyman. For the neighborhood.',
       links: [
         { label: 'See the market', targetId: 'market-listings', primary: true },
@@ -227,12 +227,12 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/map/,
     theme: {
       eyebrow: 'Ground game map',
-      title: 'Find the block. Find the fruit. Move fast.',
-      subtitle: 'Ground-level supply, not warehouse fiction.',
-      kicker: 'Maps for food, not for noise.',
+      title: 'See what is growing close enough to matter.',
+      subtitle: 'Nearby harvests, pickup routes, and growers worth knowing.',
+      kicker: 'Local first. Store shelves second.',
       links: [
-        { label: 'Jump to map', targetId: 'map-panel', primary: true },
-        { label: 'Open board', route: '/board' },
+        { label: 'See nearby fruit', targetId: 'map-panel', primary: true },
+        { label: 'Open the board', route: '/board' },
         { label: 'List your harvest', route: '/store/new' },
       ],
     },
@@ -241,8 +241,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/board/,
     theme: {
       eyebrow: 'Community signal board',
-      title: 'Post the signal. Rally the block.',
-      subtitle: 'Needs, swaps, tables, volunteers, and real neighborhood motion.',
+      title: 'Post what matters. Gather who is needed.',
+      subtitle: 'Events, barter, volunteer asks, and neighborhood signal in one place.',
       kicker: 'Not followers. Neighbors.',
       links: [
         { label: 'Post a signal', targetId: 'board-create', primary: true },
@@ -255,13 +255,13 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/store/,
     theme: {
       eyebrow: 'Sovereign storefront',
-      title: 'Make your stand look worth stopping for.',
-      subtitle: 'List it clean. Price it right. Move it local.',
+      title: 'Make your stand worth stopping for.',
+      subtitle: 'List what is ripe. Set the terms. Build local demand.',
       kicker: 'Small scale. Serious presence.',
       links: [
         { label: 'New listing', route: '/store/new', primary: true },
-        { label: 'Inventory', route: '/store/inventory' },
-        { label: 'Board', route: '/board' },
+        { label: 'See your market', route: '/' },
+        { label: 'Open the board', route: '/board' },
       ],
     },
   },
@@ -269,12 +269,13 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/messages/,
     theme: {
       eyebrow: 'Direct line',
-      title: 'Talk plain. Lock pickup. Keep moving.',
-      subtitle: 'Direct words. No marketplace theater.',
+      title: 'Set the pickup. Keep the thread clear.',
+      subtitle: 'Direct words, clear times, real follow-through.',
       kicker: 'Clear words beat complicated systems.',
       links: [
         { label: 'Open threads', targetId: 'messages-shell', primary: true },
         { label: 'See the market', route: '/' },
+        { label: 'Open the board', route: '/board' },
       ],
     },
   },
@@ -282,12 +283,13 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/profile/,
     theme: {
       eyebrow: 'Earned reputation',
-      title: 'Trust should feel earned, not polished to death.',
-      subtitle: 'Show your ground, your fruit, and why people return.',
+      title: 'Let your reputation travel ahead of you.',
+      subtitle: 'Show your ground, your harvest, and why neighbors come back.',
       kicker: 'Known locally beats polished globally.',
       links: [
         { label: 'View profile', targetId: 'profile-shell', primary: true },
-        { label: 'Manage store', route: '/store' },
+        { label: 'Open your stand', route: '/store' },
+        { label: 'Open messages', route: '/messages' },
       ],
     },
   },
@@ -295,8 +297,8 @@ const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
     match: /^\/listing\//,
     theme: {
       eyebrow: 'Real listing',
-      title: 'See the harvest. Know the price. Decide now.',
-      subtitle: 'Real photos. Real pickup. No performance.',
+      title: 'See the fruit. Know the terms.',
+      subtitle: 'Photos, pickup windows, and the real person behind the harvest.',
       kicker: 'No mystery. No marketplace theater.',
       links: [
         { label: 'View details', targetId: 'listing-detail-shell', primary: true },

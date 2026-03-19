@@ -22,7 +22,7 @@ export default function CommunityBoard() {
 
   function createPost() {
     if (!title.trim()) return
-    setPosts([{ id: String(Date.now()), title: title.trim(), body: body.trim() || 'Fresh signal from the neighborhood.', category, location: 'Local' }, ...posts])
+    setPosts([{ id: String(Date.now()), title: title.trim(), body: body.trim() || 'A live note from the neighborhood.', category, location: 'Local' }, ...posts])
     setTitle('')
     setBody('')
     setCategory('Grow & Share')
@@ -32,8 +32,8 @@ export default function CommunityBoard() {
     <section className="stack board-shell" id="board-create">
       <div className="board-hero">
         <p className="eyebrow">Community board</p>
-        <h2>Post the signal. Rally the block.</h2>
-        <p>Swaps, asks, volunteer calls, weekend tables, and whatever your block needs next.</p>
+        <h2>Post what matters. Gather who is needed.</h2>
+        <p>Events, barter, volunteer asks, and neighborhood signal in one place.</p>
       </div>
       <div className="board-create">
         <div className="board-create-row">
@@ -48,7 +48,7 @@ export default function CommunityBoard() {
         <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Keep it short, clear, and local." rows={3} />
         <div className="action-row board-actions">
           <button className="primary" onClick={createPost}>Post it</button>
-          <span className="board-note">For the neighborhood. For the everyman.</span>
+          <span className="board-note">For the block. For the neighborhood.</span>
         </div>
       </div>
       <div className="board-grid">
