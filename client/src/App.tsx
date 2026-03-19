@@ -36,6 +36,8 @@ import {
   getSocialPosts,
   login,
   markNotificationRead,
+  requestPasswordReset,
+  resetPassword,
   reservePickup,
   sendMessage,
   signup,
@@ -321,37 +323,20 @@ function TrustStrip({ listing }: { listing: Listing }) {
   )
 }
 
-function RatingStars({
-  value,
-  onChange,
-  interactive = false,
-}: {
-  value: number
-  onChange?: (value: number) => void
-  interactive?: boolean
-}) {
-  const [hoverValue, setHoverValue] = useState<number | null>(null)
-  const displayValue = interactive && hoverValue !== null ? hoverValue : value
-
+function RatingStars({ value, onChange, interactive = false }: { value: number; onChange?: (value: number) => void; interactive?: boolean }) {
   return (
     <div className={interactive ? 'rating-stars interactive' : 'rating-stars'}>
       {[1, 2, 3, 4, 5].map((star) => (
         <button
           key={star}
           type="button"
-          className={star <= displayValue ? 'star active' : 'star'}
+          className={star <= value ? 'star active' : 'star'}
           onClick={() => interactive && onChange?.(star)}
-          onMouseEnter={() => interactive && setHoverValue(star)}
-          onMouseLeave={() => interactive && setHoverValue(null)}
-          onFocus={() => interactive && setHoverValue(star)}
-          onBlur={() => interactive && setHoverValue(null)}
           aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
-          aria-pressed={interactive ? star === value : undefined}
         >
           ★
         </button>
       ))}
-      {interactive ? <span className="rating-score-label">{displayValue}/5</span> : null}
     </div>
   )
 }
@@ -365,7 +350,7 @@ function ReviewsPanel({
   reviews: ReviewItem[]
   onAddReview: (input: { listingId: string; sellerId: string; sellerName: string; rating: number; comment: string }) => void
 }) {
-  const [draftRating, setDraftRating] = useState(5)
+  const [draftRating, setDraftRating] = useState(0)
   const [draftComment, setDraftComment] = useState('')
 
   return (
@@ -388,7 +373,7 @@ function ReviewsPanel({
         </div>
         <div className="review-rating-row">
           <RatingStars value={draftRating} onChange={setDraftRating} interactive />
-          <span className="review-help">Tap a star to change your rating.</span>
+          <span className="review-rating-value">{draftRating ? `${draftRating} of 5 selected` : 'Tap a star to rate this pickup'}</span>
         </div>
         <textarea
           value={draftComment}
@@ -400,6 +385,7 @@ function ReviewsPanel({
           <button
             className="primary"
             onClick={() => {
+              if (!draftRating) return
               onAddReview({
                 listingId: listing.id,
                 sellerId: listing.sellerId,
@@ -628,35 +614,67 @@ function AuthShell({
   mode,
   onAuthSuccess,
 }: {
-  mode: 'login' | 'signup'
+  mode: 'login' | 'signup' | 'reset'
   onAuthSuccess: (user: AuthUser) => void
 }) {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [role, setRole] = useState<'buyer' | 'grower'>('buyer')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [resetCode, setResetCode] = useState('')
+  const [resetTokenPreview, setResetTokenPreview] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
     setError('')
+    setInfo('')
 
     try {
-      const user =
-        mode === 'signup'
-          ? await signup({
-              name: name.trim() || 'User',
-              email: email.trim(),
-              role,
-            })
-          : await login({
-              email: email.trim(),
-            })
-
-      onAuthSuccess(user)
-      navigate('/')
+      if (mode === 'signup') {
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters.')
+        }
+        if (password !== confirmPassword) {
+          throw new Error('Passwords do not match.')
+        }
+        const user = await signup({
+          name: name.trim() || 'User',
+          email: email.trim(),
+          role,
+          password,
+        })
+        onAuthSuccess(user)
+        navigate('/profile')
+      } else if (mode === 'login') {
+        const user = await login({
+          email: email.trim(),
+          password,
+        })
+        onAuthSuccess(user)
+        navigate('/profile')
+      } else {
+        if (!resetTokenPreview && !resetCode) {
+          const result = await requestPasswordReset({ email: email.trim() })
+          setResetTokenPreview(result.resetToken)
+          setInfo(`Reset code: ${result.resetToken} — enter it below with your new password.`)
+        } else {
+          if (password.length < 6) throw new Error('Password must be at least 6 characters.')
+          if (password !== confirmPassword) throw new Error('Passwords do not match.')
+          await resetPassword({
+            email: email.trim(),
+            resetToken: resetCode.trim(),
+            password,
+          })
+          setInfo('Password updated. You can log in now.')
+          setTimeout(() => navigate('/login'), 700)
+        }
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to continue.'
       setError(message)
@@ -669,17 +687,19 @@ function AuthShell({
     <section className="auth-page">
       <div className="auth-hero">
         <p className="eyebrow">PLUCK account</p>
-        <h1>{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
+        <h1>{mode === 'signup' ? 'Create your account' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}</h1>
         <p>
-          Join as a buyer or grower. This is the foundation for real profiles, saved searches, and nationwide discovery.
+          {mode === 'reset'
+            ? 'Secure your account with a fresh password and get back into your orchard dashboard.'
+            : 'Join as a buyer or grower. Save favorites, message growers, and manage harvests with one secure account.'}
         </p>
       </div>
 
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="form-header">
           <div>
-            <p className="eyebrow">{mode === 'signup' ? 'New account' : 'Login'}</p>
-            <h2>{mode === 'signup' ? 'Start using PLUCK' : 'Sign into your account'}</h2>
+            <p className="eyebrow">{mode === 'signup' ? 'New account' : mode === 'reset' ? 'Recovery' : 'Login'}</p>
+            <h2>{mode === 'signup' ? 'Start using PLUCK' : mode === 'reset' ? 'Reset account password' : 'Sign into your account'}</h2>
           </div>
         </div>
 
@@ -724,21 +744,69 @@ function AuthShell({
                 </div>
               </label>
             ) : null}
+
+            <label className="full">
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === 'reset' ? 'Create a new password' : 'Enter your password'}
+                required
+              />
+            </label>
+
+            {(mode === 'signup' || mode === 'reset') ? (
+              <label className="full">
+                Confirm password
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password"
+                  required
+                />
+              </label>
+            ) : null}
+
+            {mode === 'reset' && resetTokenPreview ? (
+              <label className="full">
+                Reset code
+                <input
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value.toUpperCase())}
+                  placeholder="Paste the reset code"
+                  required
+                />
+              </label>
+            ) : null}
           </div>
 
+          {info ? <div className="status-banner success">{info}</div> : null}
           {error ? <div className="status-banner error">{error}</div> : null}
 
-          <div className="action-row">
+          <div className="action-row auth-action-row">
             <button className="primary" type="submit" disabled={busy}>
-              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Log in'}
+              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : mode === 'reset' ? (resetTokenPreview ? 'Save new password' : 'Send reset code') : 'Log in'}
             </button>
-            <button
-              type="button"
-              className="ghost"
-              onClick={() => navigate(mode === 'signup' ? '/login' : '/signup')}
-            >
-              {mode === 'signup' ? 'Have an account?' : 'Create account'}
-            </button>
+            {mode === 'login' ? (
+              <>
+                <button type="button" className="ghost" onClick={() => navigate('/signup')}>
+                  Create account
+                </button>
+                <button type="button" className="text-btn" onClick={() => navigate('/reset-password')}>
+                  Forgot password?
+                </button>
+              </>
+            ) : mode === 'signup' ? (
+              <button type="button" className="ghost" onClick={() => navigate('/login')}>
+                Have an account?
+              </button>
+            ) : (
+              <button type="button" className="ghost" onClick={() => navigate('/login')}>
+                Back to login
+              </button>
+            )}
           </div>
         </div>
       </form>
@@ -2230,7 +2298,7 @@ function AppLayout({
               <button className="ghost" onClick={() => goTo('/profile')}>
                 Profile
               </button>
-              <button className="ghost" onClick={onLogout}>
+              <button className="ghost danger-lite" onClick={onLogout}>
                 Log out
               </button>
               <button className="primary" onClick={() => goTo('/store/new')}>
@@ -2395,6 +2463,7 @@ function AppLayout({
         <Routes>
           <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
+          <Route path="/reset-password" element={<AuthShell mode="reset" onAuthSuccess={onAuthSuccess} />} />
 
           <Route
             path="/"
@@ -2947,6 +3016,7 @@ function AppLayout({
                 {!authUser ? (
                   <>
                     <p>Create an account or log in to make this profile live across devices.</p>
+
                     <div className="action-row">
                       <button className="primary" onClick={() => goTo('/signup')}>
                         Create account
@@ -2959,6 +3029,7 @@ function AppLayout({
                 ) : (
                   <>
                     <p>{seller.bio}</p>
+                    <div className="signed-in-banner">Signed in as <strong>{authUser ? authUser.email : ''}</strong></div>
 
                     <div className="dashboard-stats profile-stats">
                       <div className="dashboard-card">

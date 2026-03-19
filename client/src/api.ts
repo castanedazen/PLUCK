@@ -334,6 +334,7 @@ export async function signup(payload: {
   name: string
   email: string
   role: 'buyer' | 'grower'
+  password: string
 }): Promise<AuthUser> {
   const res = await fetch(`${API_BASE}/auth/signup`, {
     method: 'POST',
@@ -346,6 +347,7 @@ export async function signup(payload: {
 
 export async function login(payload: {
   email: string
+  password: string
 }): Promise<AuthUser> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
@@ -354,4 +356,29 @@ export async function login(payload: {
   })
 
   return parseResponse<AuthUser>(res, 'Failed to log in')
+}
+export async function requestPasswordReset(payload: {
+  email: string
+}): Promise<{ ok: boolean; resetToken: string; email: string; expiresAt: string }> {
+  const res = await fetch(`${API_BASE}/auth/request-reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse(res, 'Failed to request password reset')
+}
+
+export async function resetPassword(payload: {
+  email: string
+  resetToken: string
+  password: string
+}): Promise<{ ok: boolean }> {
+  const res = await fetch(`${API_BASE}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  return parseResponse(res, 'Failed to reset password')
 }
