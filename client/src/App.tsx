@@ -57,8 +57,8 @@ import type {
   SellerProfile,
   SocialPost,
 } from './types'
-import CommunityBoard from './components/CommunityBoard'
 import { LeafletMapView } from './components/LeafletMapView'
+import CommunityBoard from './components/CommunityBoard'
 
 type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
 
@@ -195,18 +195,19 @@ const quickFilters: { key: QuickFilter; label: string }[] = [
 ]
 
 const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: string }[] = [
-  { match: /^\/$/, eyebrow: 'PLUCK orchard market', title: 'Grow local. Trade local.', subtitle: 'Fruit, people, pickup.' },
-  { match: /^\/map/, eyebrow: 'Field map', title: 'See what is growing around you.', subtitle: 'Nearby first. Move fast.' },
-  { match: /^\/board/, eyebrow: 'Local board', title: 'Grow a seed. Make a friend.', subtitle: 'Events, barter, help.' },
+  { match: /^\/$/, eyebrow: 'PLUCK orchard market', title: 'Grow local. Trade local.', subtitle: 'Real fruit. Real people. Right nearby.' },
+  { match: /^\/map/, eyebrow: 'Field map', title: 'See what is growing around you.', subtitle: 'Nearby first. Big chains later.' },
+  { match: /^\/board/, eyebrow: 'Local board', title: 'Post something. Show up.', subtitle: 'Events, barter, help, and neighborhood signal.' },
   { match: /^\/favorites/, eyebrow: 'Saved', title: 'Keep what matters close.', subtitle: 'Come back when it is ripe.' },
   { match: /^\/messages/, eyebrow: 'Direct line', title: 'Talk. Then pick up.', subtitle: 'No middlemen. No noise.' },
   { match: /^\/alerts/, eyebrow: 'Signals', title: 'Know when fresh drops hit.', subtitle: 'Quiet alerts. Fast action.' },
-  { match: /^\/store/, eyebrow: 'Storefront', title: 'Run your stand your way.', subtitle: 'List. Reply. Move fruit.' },
+  { match: /^\/store/, eyebrow: 'Storefront', title: 'Run your stand your way.', subtitle: 'List, reply, and move fruit fast.' },
   { match: /^\/profile/, eyebrow: 'Reputation', title: 'Earn trust. Keep it.', subtitle: 'Known grower. Clear signals.' },
   { match: /^\/grower\//, eyebrow: 'Grower', title: 'Meet the grower.', subtitle: 'Trust first. Reserve second.' },
   { match: /^\/listing\//, eyebrow: 'Listing', title: 'See it. Decide fast.', subtitle: 'Big photos. Clear next step.' },
-  { match: /^\/login/, eyebrow: 'Welcome back', title: 'Back to the orchard.', subtitle: 'Saved fruit. Alerts. Threads.' },
+  { match: /^\/login/, eyebrow: 'Welcome back', title: 'Back to the orchard.', subtitle: 'Saved fruit, alerts, and threads waiting.' },
   { match: /^\/signup/, eyebrow: 'Join local', title: 'Start small. Grow strong.', subtitle: 'Buy, barter, sell, repeat.' },
+  { match: /^\/reset-password/, eyebrow: 'Reset', title: 'Take your account back.', subtitle: 'Set a new password and keep moving.' },
 ]
 
 function getRouteMeta(pathname: string) {
@@ -226,7 +227,6 @@ type ReviewItem = {
 function routeTheme(pathname: string) {
   if (/^\/map/.test(pathname)) return 'route-theme-map'
   if (/^\/favorites/.test(pathname)) return 'route-theme-favorites'
-  if (/^\/board/.test(pathname)) return 'route-theme-board'
   if (/^\/messages/.test(pathname)) return 'route-theme-messages'
   if (/^\/store/.test(pathname)) return 'route-theme-store'
   if (/^\/profile/.test(pathname) || /^\/grower\//.test(pathname)) return 'route-theme-profile'
@@ -1815,6 +1815,7 @@ type AppLayoutProps = {
   reviews: ReviewItem[]
   setReviews: Dispatch<SetStateAction<ReviewItem[]>>
   onAuthSuccess: (user: AuthUser) => void
+  onLogout: () => void
 }
 
 function AppLayout({
@@ -1838,6 +1839,7 @@ function AppLayout({
   reviews,
   setReviews,
   onAuthSuccess,
+  onLogout,
 }: AppLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -2147,14 +2149,17 @@ function AppLayout({
             </>
           ) : (
             <>
-              <button className="ghost" onClick={() => goTo('/board')}>
-                Board
-              </button>
               <button className="ghost" onClick={() => goTo('/favorites')}>
                 Saved {favoriteListings.length ? `(${favoriteListings.length})` : ''}
               </button>
               <button className="ghost" onClick={() => goTo('/alerts')}>
                 Alerts {unreadNotifications.length ? `(${unreadNotifications.length})` : ''}
+              </button>
+              <button className="ghost" onClick={() => goTo('/profile')}>
+                Profile
+              </button>
+              <button className="ghost" onClick={onLogout}>
+                Log out
               </button>
               <button className="primary" onClick={() => goTo('/store/new')}>
                 + New listing
@@ -2318,7 +2323,6 @@ function AppLayout({
         <Routes>
           <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
-          <Route path="/board" element={<CommunityBoard />} />
 
           <Route
             path="/"
@@ -2326,9 +2330,9 @@ function AppLayout({
               <>
                 <section className="hero-card hero-card--gallery">
                   <div className="hero-card-copy">
-                    <p className="eyebrow">PLUCK orchard market</p>
-                    <h2>Fruit worth leaving home for.</h2>
-                    <p>Grown nearby. Picked soon. Open fast.</p>
+                    <p className="eyebrow">Curated fruit edit</p>
+                    <h2>Fresh picks worth opening, saving, and reserving.</h2>
+                    <p>Discover local fruit with richer photos, clearer trust, and faster pickup moves.</p>
                   </div>
                   <div className="hero-card-gallery">
                     {(fruitRibbon.length ? fruitRibbon : listings.slice(0, 4)).slice(0, 4).map((item) => (
@@ -2352,10 +2356,10 @@ function AppLayout({
 
                 <section className="section-heading">
                   <div>
-                    <p className="eyebrow">Fresh nearby</p>
-                    <h2>Open what is ripe now</h2>
+                    <p className="eyebrow">Featured near you</p>
+                    <h2>Beautiful fruit worth opening</h2>
                   </div>
-                  <span className="section-meta">{filtered.length} nearby</span>
+                  <span className="section-meta">{filtered.length} listings</span>
                 </section>
 
                 <section className="grid">
@@ -2925,6 +2929,9 @@ function AppLayout({
                       <button className="ghost" onClick={() => navigate('/store/new')}>
                         Add new listing
                       </button>
+                      <button className="ghost" onClick={onLogout}>
+                        Log out
+                      </button>
                     </div>
                   </>
                 )}
@@ -3007,7 +3014,14 @@ function App() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [follows, setFollows] = useState<Follow[]>([])
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
+    try {
+      const raw = window.localStorage.getItem('pluck-auth-user')
+      return raw ? (JSON.parse(raw) as AuthUser) : null
+    } catch {
+      return null
+    }
+  })
   const [reviews, setReviews] = useState<ReviewItem[]>(() => {
     try {
       const raw = window.localStorage.getItem('pluck-reviews')
@@ -3033,9 +3047,13 @@ function App() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem('pluck-reviews', JSON.stringify(reviews))
+      if (authUser) {
+        window.localStorage.setItem('pluck-auth-user', JSON.stringify(authUser))
+      } else {
+        window.localStorage.removeItem('pluck-auth-user')
+      }
     } catch {}
-  }, [reviews])
+  }, [authUser])
 
   return (
     <AppLayout
@@ -3059,6 +3077,7 @@ function App() {
       reviews={reviews}
       setReviews={setReviews}
       onAuthSuccess={setAuthUser}
+      onLogout={() => setAuthUser(null)}
     />
   )
 }

@@ -8,62 +8,36 @@ type Post = {
   location: string
 }
 
-const starterPosts: Post[] = [
-  {
-    id: '1',
-    title: 'Need two hands for citrus picking',
-    body: 'Saturday morning. Fruit trade welcome.',
-    category: 'Grow & share',
-    location: 'Pasadena',
-  },
-  {
-    id: '2',
-    title: 'Extra figs this week',
-    body: 'Pick up before Sunday. Happy to swap.',
-    category: 'Trade & help',
-    location: 'Glendale',
-  },
-  {
-    id: '3',
-    title: 'Street-side harvest table this weekend',
-    body: 'Small neighborhood setup. Bring what is ripe.',
-    category: 'Local event',
-    location: 'Highland Park',
-  },
-]
-
 export default function CommunityBoard() {
-  const [posts, setPosts] = useState<Post[]>(starterPosts)
+  const [posts, setPosts] = useState<Post[]>([
+    { id: '1', title: 'Need help picking oranges', body: 'Saturday morning. Will trade fruit.', category: 'Grow & share', location: 'Pasadena' },
+    { id: '2', title: 'Extra figs this week', body: 'Come by before Sunday. Happy to swap.', category: 'Trade & help', location: 'Glendale' },
+    { id: '3', title: 'Weekend harvest table', body: 'Bring what is ripe. Help set up at 8am.', category: 'Local event', location: 'Highland Park' },
+  ])
   const [title, setTitle] = useState('')
-  const [details, setDetails] = useState('')
+  const [body, setBody] = useState('')
   const [category, setCategory] = useState('Grow & share')
 
-  function handlePost() {
+  function createPost() {
     if (!title.trim()) return
     setPosts([
-      {
-        id: String(Date.now()),
-        category,
-        location: 'Local',
-        title: title.trim(),
-        body: details.trim() || 'Fresh note from the neighborhood.',
-      },
+      { id: Date.now().toString(), title: title.trim(), body: body.trim() || 'Fresh note from the neighborhood.', category, location: 'Local' },
       ...posts,
     ])
     setTitle('')
-    setDetails('')
+    setBody('')
     setCategory('Grow & share')
   }
 
   return (
-    <section className="stack board-shell">
-      <div className="board-hero">
-        <p className="eyebrow">Local board</p>
+    <section className="board-page stack">
+      <div className="board-hero card">
+        <p className="eyebrow">Community board</p>
         <h2>Grow a seed. Make a friend.</h2>
-        <p>Post events, barter needs, volunteer asks, and neighborhood signal.</p>
+        <p>Trade, volunteer, organize, and keep local life moving.</p>
       </div>
 
-      <div className="board-create">
+      <div className="board-create card">
         <div className="board-create-row">
           <select value={category} onChange={(e) => setCategory(e.target.value)}>
             <option>Grow & share</option>
@@ -73,17 +47,10 @@ export default function CommunityBoard() {
           </select>
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What is happening?" />
         </div>
-        <textarea
-          value={details}
-          onChange={(e) => setDetails(e.target.value)}
-          placeholder="Keep it short, clear, and local."
-          rows={3}
-        />
-        <div className="action-row board-actions">
-          <button className="primary" onClick={handlePost}>
-            Post it
-          </button>
-          <span className="board-note">For the everyman. For the neighborhood.</span>
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Keep it short, clear, and local." rows={3} />
+        <div className="board-actions action-row">
+          <button className="primary" onClick={createPost}>Post it</button>
+          <span className="board-note">For the neighborhood. For the everyman.</span>
         </div>
       </div>
 
