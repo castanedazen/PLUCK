@@ -1,309 +1,167 @@
-/* PLUCK V14 LIGHTEN + PILL VISIBILITY HOTFIX */
-/* Replace client/src/styles.css with this file */
+/* ===== PLUCK V15 – LIGHT, PREMIUM, READABLE ===== */
 
 :root {
-  --pluck-bg: #f2eadb;
-  --pluck-bg-2: #efe6d6;
-  --pluck-panel: #fbf6ec;
-  --pluck-panel-2: #f7f0e2;
-  --pluck-ink: #1c201d;
-  --pluck-muted: #5f665d;
-  --pluck-line: rgba(70, 55, 28, 0.18);
-  --pluck-green: #295f3a;
-  --pluck-amber: #d79a3b;
-  --pluck-rust: #a95e37;
-  --pluck-cream-chip: #f7f2e7;
-  --pluck-shadow: 0 16px 40px rgba(39, 29, 14, 0.10);
+  --bg-main: #f5f7fb;
+  --bg-panel: #ffffff;
+  --bg-soft: #eef2f7;
+
+  --ink-main: #0f172a;
+  --ink-soft: #475569;
+  --ink-muted: #64748b;
+
+  --accent: #2563eb;
+  --accent-soft: #dbeafe;
+
+  --border: #e2e8f0;
+
+  --shadow-soft: 0 10px 25px rgba(0,0,0,0.06);
+  --shadow-card: 0 6px 18px rgba(0,0,0,0.08);
 }
 
-html, body {
-  background:
-    radial-gradient(circle at top left, rgba(230, 194, 121, 0.18), transparent 22%),
-    radial-gradient(circle at top right, rgba(79, 114, 89, 0.12), transparent 28%),
-    linear-gradient(180deg, var(--pluck-bg) 0%, var(--pluck-bg-2) 100%) !important;
-  color: var(--pluck-ink) !important;
+/* ===== BASE ===== */
+
+body {
+  background: var(--bg-main);
+  color: var(--ink-main);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-body::before,
-body::after {
-  opacity: .18 !important;
+.app-shell {
+  background: var(--bg-main);
 }
 
-.app-shell,
-.topbar,
-.hero-card,
-.hero-band,
-.card,
-.stack,
-.map-panel,
-.profile-card,
-.stat-card,
-.dashboard-card,
-.thread-card,
-.messages-sidebar,
-.messages-main,
-.grower-trust-card,
-.notification-card,
-.alert-card-row,
-.signal-strip,
-.empty-panel,
-.board-shell,
-.board-card,
-.search-wrap {
-  background: linear-gradient(180deg, rgba(253,250,244,.96), rgba(247,240,227,.94)) !important;
-  color: var(--pluck-ink) !important;
-  border-color: var(--pluck-line) !important;
-  box-shadow: var(--pluck-shadow) !important;
+/* ===== CARDS ===== */
+
+.card {
+  background: var(--bg-panel);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
 }
 
-.hero-card,
-.hero-band,
-.route-hero,
-[class*="hero"] {
+/* ===== PILLS (FIXED PROPERLY) ===== */
+
+.pill,
+.chip,
+.tag {
+  background: var(--bg-soft);
+  color: var(--ink-main);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pill:hover,
+.chip:hover,
+.tag:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ACTIVE STATE (THIS WAS MISSING) */
+.pill.active,
+.chip.active,
+.tag.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* ===== BUTTONS ===== */
+
+button {
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--accent);
+  color: white;
+}
+
+button.primary:hover {
+  opacity: 0.9;
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--ink-soft);
+}
+
+button.ghost:hover {
+  color: var(--accent);
+}
+
+/* ===== NAV (FIX VISIBILITY) ===== */
+
+.bottom-nav {
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+}
+
+.bottom-nav button {
+  color: var(--ink-muted);
+}
+
+.bottom-nav button.active {
+  color: var(--accent);
+}
+
+/* ===== HEADERS ===== */
+
+.route-hero {
+  color: white;
   position: relative;
 }
-.hero-card::before,
-.hero-band::before,
-.route-hero::before,
-[class*="hero"]::before {
+
+.route-hero::after {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(90deg, rgba(16,18,18,.42) 0%, rgba(16,18,18,.18) 42%, rgba(16,18,18,.08) 100%);
-  pointer-events: none;
-  border-radius: inherit;
-}
-.hero-card > *,
-.hero-band > *,
-.route-hero > *,
-[class*="hero"] > * {
-  position: relative;
-  z-index: 1;
+  background: rgba(15,23,42,0.35);
 }
 
-.eyebrow,
-.route-eyebrow,
-.board-sub,
-.auth-page p,
-.hero-card p,
-.hero-band p,
-[class*="subtitle"],
-[class*="subcopy"] {
-  color: rgba(255,248,238,.92) !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.26);
-}
-.topbar .eyebrow,
-.search-wrap .eyebrow,
-.card .eyebrow,
-.stack .eyebrow,
-.board-shell .eyebrow,
-.auth-card .eyebrow,
-.profile-card .eyebrow,
-.grower-trust-card .eyebrow,
-.notification-card .eyebrow,
-.alert-card-row .eyebrow,
-.messages-main .eyebrow,
-.messages-sidebar .eyebrow {
-  color: #7f775f !important;
-  text-shadow: none !important;
+/* ===== MAP FIX ===== */
+
+.leaflet-map-shell {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
 }
 
-.hero-card h1,
-.hero-band h1,
-.route-hero h1,
-[class*="hero"] h1,
-[class*="hero"] h2 {
-  color: #fff8f0 !important;
-  text-shadow: 0 2px 18px rgba(0,0,0,.32), 0 1px 3px rgba(0,0,0,.35);
+/* ===== TEXT READABILITY ===== */
+
+.small-text,
+.subtext {
+  color: var(--ink-soft);
 }
 
+/* ===== COMMUNITY POSTS ===== */
+
+.post-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+/* ===== FIX WHITE ON WHITE ANYWHERE ===== */
+
+* {
+  color: inherit;
+}
+
+/* fallback safety */
 .pill,
-.trust-pill,
-.signal-pill,
-.board-chip,
-.badge,
-.tag,
 .chip,
-.route-chip,
-.listing-chip,
-.filter-pill,
-.filter-chip,
-[class*=" pill"],
-[class*="pill-"],
-[class*="chip"],
-[class*="badge"],
-[class*="tag"] {
-  background: var(--pluck-cream-chip) !important;
-  color: #2b2f2b !important;
-  border: 1px solid rgba(53, 47, 32, 0.16) !important;
-  box-shadow: 0 2px 0 rgba(255,255,255,0.45) inset, 0 4px 12px rgba(38,28,13,0.06) !important;
-  opacity: 1 !important;
-  filter: none !important;
-  text-shadow: none !important;
-}
-
-.hero-card .pill,
-.hero-card .trust-pill,
-.hero-card .badge,
-.hero-card .tag,
-.hero-card .chip,
-.hero-band .pill,
-.hero-band .trust-pill,
-.hero-band .badge,
-.hero-band .tag,
-.hero-band .chip,
-[class*="listing"] .pill,
-[class*="listing"] .trust-pill,
-[class*="listing"] .badge,
-[class*="listing"] .tag,
-[class*="listing"] .chip {
-  background: rgba(248, 241, 228, 0.94) !important;
-  color: #252822 !important;
-  border-color: rgba(73, 61, 34, 0.18) !important;
-}
-
-.board-chip,
-.badge--community,
-.badge-community,
-.tag-community {
-  background: linear-gradient(180deg, #b66945, #a95630) !important;
-  color: #fff4ea !important;
-  border-color: rgba(84, 30, 13, 0.22) !important;
-}
-.badge--verified,
-.tag--verified,
-.chip--verified,
-.verified,
-[data-chip="verified"] {
-  background: linear-gradient(180deg, #2f7146, #245538) !important;
-  color: #f7fffa !important;
-}
-.badge--harvest,
-.tag--harvest,
-.chip--harvest,
-.just-dropped,
-[data-chip="harvest"] {
-  background: linear-gradient(180deg, #d9a047, #c4862b) !important;
-  color: #2a2009 !important;
-}
-.badge--map,
-.tag--map,
-.chip--map,
-.map-ready,
-[data-chip="map"] {
-  background: linear-gradient(180deg, #6f7abf, #505aa0) !important;
-  color: #f6f7ff !important;
-}
-
-button,
-a,
-[role="button"],
-.nav-link,
-.bottom-nav a,
-.bottom-nav button,
-.auth-role,
-.reply-btn,
-.board-card .ghost,
-.board-card button {
-  cursor: pointer !important;
-  pointer-events: auto !important;
-}
-
-button:hover,
-a:hover,
-[role="button"]:hover {
-  transform: translateY(-1px);
-}
-
-.bottom-nav,
-nav.bottom-nav,
-[class*="bottom-nav"] {
-  background: rgba(31, 34, 38, 0.88) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  box-shadow: 0 16px 40px rgba(17, 14, 9, 0.22) !important;
-}
-.bottom-nav a,
-.bottom-nav button,
-[class*="bottom-nav"] a,
-[class*="bottom-nav"] button {
-  background: linear-gradient(180deg, rgba(250,245,235,.98), rgba(241,233,219,.95)) !important;
-  color: #2a2f2a !important;
-  border: 1px solid rgba(64, 55, 36, 0.18) !important;
-}
-.bottom-nav .active,
-.bottom-nav a[aria-current="page"],
-[class*="bottom-nav"] .active,
-[class*="bottom-nav"] a[aria-current="page"] {
-  background: linear-gradient(180deg, #d7a04a, #c28428) !important;
-  color: #231c0e !important;
-}
-
-.search-wrap button,
-.search-wrap .primary,
-.search-wrap .ghost,
-.action-row .primary,
-.action-row .ghost,
-.hero-card .primary,
-.hero-card .ghost,
-.hero-band .primary,
-.hero-band .ghost {
-  border-radius: 999px !important;
-}
-.primary,
-button.primary {
-  background: linear-gradient(180deg, #dca24a, #c58427) !important;
-  color: #221b10 !important;
-  border: 1px solid rgba(103, 64, 13, 0.18) !important;
-}
-.ghost,
-button.ghost {
-  background: rgba(249,244,236,.90) !important;
-  color: #252b25 !important;
-  border: 1px solid rgba(64,55,36,.16) !important;
-}
-
-.auth-card,
-.auth-page {
-  background: linear-gradient(180deg, rgba(252,248,241,.98), rgba(244,236,224,.96)) !important;
-  color: var(--pluck-ink) !important;
-}
-input, textarea, select {
-  background: rgba(255,251,244,.96) !important;
-  color: #202520 !important;
-  border: 1px solid rgba(78,68,48,.16) !important;
-}
-input::placeholder, textarea::placeholder {
-  color: #81755f !important;
-}
-
-.map-panel,
-.leaflet-container,
-[class*="map-shell"],
-[class*="map-panel"] {
-  background: linear-gradient(180deg, #eef0ea, #e7ebdf) !important;
-}
-.leaflet-control-zoom a {
-  color: #223327 !important;
-}
-
-.board-card {
-  background: linear-gradient(180deg, rgba(253,249,241,.98), rgba(245,238,226,.96)) !important;
-}
-.board-card h3 {
-  color: #171b16 !important;
-}
-.board-card p,
-.board-note {
-  color: #5e6258 !important;
-}
-
-.topbar,
-[class*="topbar"] {
-  background: linear-gradient(90deg, rgba(29,43,52,.84), rgba(22,39,58,.82)) !important;
-}
-
-.card h1, .card h2, .card h3,
-.stack h1, .stack h2, .stack h3 {
-  color: #171b16 !important;
+.tag {
+  background-clip: padding-box;
 }
