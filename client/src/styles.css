@@ -1,181 +1,318 @@
-/* ===== PLUCK V16 – ACTUAL WIRED STYLES ===== */
+
+/* ===== PLUCK V17 – FORCE VISIBLE STYLE OVERRIDE ===== */
 
 :root {
-  --bg-main: #f4f6fb;
+  --bg-page: #eef3f7;
   --bg-panel: #ffffff;
-  --bg-soft: #eef1f6;
-
-  --ink-main: #0f172a;
+  --bg-soft: #e8eef5;
+  --bg-chip: #e2e8f0;
+  --bg-chip-active: #1d4ed8;
+  --ink: #0f172a;
   --ink-soft: #475569;
   --ink-muted: #64748b;
-
-  --accent: #2563eb;
-  --accent-soft: #dbeafe;
-
-  --border: #e2e8f0;
-
-  --shadow-soft: 0 10px 25px rgba(0,0,0,0.05);
-  --shadow-card: 0 6px 16px rgba(0,0,0,0.08);
+  --line: #d7e0ea;
+  --gold: #d89b42;
+  --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  --radius: 18px;
 }
 
-body {
+html, body {
   margin: 0;
-  background: var(--bg-main);
-  color: var(--ink-main);
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 0;
+  background: linear-gradient(180deg, #f4f7fb 0%, #eaf0f6 100%);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-* {
+/* Make the change OBVIOUS */
+body * {
   box-sizing: border-box;
 }
 
-.eyebrow {
-  font-size: 12px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--ink-muted);
-  margin-bottom: 4px;
+body {
+  color: var(--ink);
 }
 
-.review-panel,
+/* Top-level shells/panels */
+section,
+article,
+form {
+  color: var(--ink);
+}
+
+/* Common wrappers seen in your app */
 .auth-card,
+.review-panel,
+.review-card,
 .modal-shell,
-.review-card {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
-  padding: 16px;
+.empty-panel,
+.board-card,
+.board-create,
+.board-page,
+.messages-sidebar,
+.messages-main,
+.thread-card,
+.dashboard-card,
+.profile-card,
+.card,
+.signal-strip,
+.activity-card,
+.alert-card-row,
+.notification-card,
+.grower-trust-card,
+.tool-card,
+.social-card,
+.hero-card,
+.hero-band,
+.map-panel,
+.stack {
+  background: var(--bg-panel) !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow) !important;
 }
 
-.empty-panel {
-  background: var(--bg-soft);
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-  color: var(--ink-soft);
+/* Headings and copy */
+h1, h2, h3, h4, h5, h6,
+strong {
+  color: var(--ink) !important;
+  letter-spacing: -0.02em;
 }
 
-.action-row {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
+p,
+span,
+small,
+label,
+.eyebrow,
+.modal-subcopy,
+.review-rating-value,
+.small-text,
+.subtext {
+  color: var(--ink-soft) !important;
 }
 
-button {
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  color: var(--ink-muted) !important;
 }
 
-button.primary {
-  background: var(--accent);
-  color: white;
+/* Inputs */
+input,
+textarea,
+select {
+  background: #ffffff !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
 }
 
-button.primary:hover {
-  opacity: 0.9;
+/* Buttons */
+button,
+a[class],
+.window-pill,
+.trust-mini,
+.pill,
+.chip,
+.tag {
+  border-radius: 999px !important;
 }
 
-button.ghost {
-  background: transparent;
-  color: var(--ink-soft);
+/* Primary buttons */
+button.primary,
+a.primary,
+.popup-btn {
+  background: linear-gradient(135deg, #d89b42 0%, #c47b2d 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 10px 22px rgba(196, 123, 45, 0.25) !important;
 }
 
-button.ghost:hover {
-  color: var(--accent);
+/* Ghost buttons */
+button.ghost,
+a.ghost {
+  background: #ffffff !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
 }
 
+/* THESE are the pills/chips that were invisible */
 .trust-strip {
   display: flex;
-  gap: 6px;
   flex-wrap: wrap;
+  gap: 8px;
 }
 
-.trust-mini {
-  background: var(--bg-soft);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 12px;
+.trust-mini,
+.window-pill,
+.pill,
+.chip,
+.tag {
+  background: var(--bg-chip) !important;
+  color: var(--ink) !important;
+  border: 1px solid #cfd8e3 !important;
+  padding: 7px 12px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
 }
 
+/* Active states */
+.window-pill.active,
+.pill.active,
+.chip.active,
+.tag.active,
+.star.active {
+  background: var(--bg-chip-active) !important;
+  color: #ffffff !important;
+  border-color: var(--bg-chip-active) !important;
+}
+
+/* Rating stars */
 .rating-stars {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .star {
-  font-size: 18px;
-  color: #cbd5f5;
+  font-size: 20px !important;
+  color: #cbd5e1 !important;
   cursor: pointer;
 }
 
 .star.active {
-  color: #fbbf24;
+  color: #f59e0b !important;
 }
 
-.window-pill {
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--bg-soft);
-  cursor: pointer;
-}
-
-.window-pill.active {
-  background: var(--accent);
-  color: white;
-}
-
+/* Modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(15, 23, 42, 0.34) !important;
 }
 
 .modal-shell {
-  max-width: 500px;
-  margin: 100px auto;
+  max-width: 560px;
+  margin: 80px auto !important;
+  padding: 20px !important;
 }
 
+/* Auth */
 .auth-page {
   display: flex;
   justify-content: center;
-  padding: 40px 16px;
+  padding: 42px 16px !important;
 }
 
 .auth-card {
-  width: 100%;
-  max-width: 420px;
+  width: min(100%, 460px);
+  padding: 24px !important;
 }
 
 .form-grid {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 label.full {
   display: flex;
   flex-direction: column;
-  font-size: 14px;
-  gap: 4px;
+  gap: 6px;
 }
 
-.review-card {
-  margin-bottom: 12px;
+/* Board */
+.board-page {
+  padding: 16px !important;
+}
+
+.board-create {
+  padding: 14px !important;
+}
+
+.board-card {
+  padding: 18px !important;
+}
+
+.board-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink-muted) !important;
+  font-size: 12px;
+}
+
+/* Make hero-ish dark blocks less porn/goth */
+.route-hero,
+.hero-card,
+.hero-band {
+  background: linear-gradient(135deg, #1f3145 0%, #2f435b 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+.route-hero *,
+.hero-card *,
+.hero-band * {
+  color: inherit;
+}
+
+/* Images still look rich */
+img {
+  border-radius: 16px;
+}
+
+/* Bottom nav / sticky nav */
+.bottom-nav,
+nav.bottom-nav {
+  background: rgba(255,255,255,0.94) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: var(--shadow) !important;
+  backdrop-filter: blur(10px);
+}
+
+.bottom-nav a,
+.bottom-nav button {
+  color: var(--ink) !important;
+  background: transparent !important;
+}
+
+.bottom-nav .active,
+.bottom-nav a.active,
+.bottom-nav button.active {
+  background: #e7edf6 !important;
+  color: var(--ink) !important;
+}
+
+/* Empty states */
+.empty-panel {
+  padding: 18px !important;
+  text-align: center;
+  color: var(--ink-soft) !important;
+}
+
+/* Give sections breathing room */
+.action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .review-card-head {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 8px;
 }
 
-.review-rating-value {
-  font-size: 13px;
-  color: var(--ink-muted);
+/* Safety against washed-out text */
+[style*="color: white"],
+[style*="color:#fff"] {
+  color: #ffffff !important;
 }
