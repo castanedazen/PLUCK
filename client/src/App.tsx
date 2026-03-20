@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react'
 import {
+  Link,
   NavLink,
   Navigate,
   Route,
@@ -58,6 +59,7 @@ import type {
   SellerProfile,
   SocialPost,
 } from './types'
+import { LeafletMapView } from './components/LeafletMapView'
 import CommunityBoard from './components/CommunityBoard'
 
 type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
@@ -75,7 +77,7 @@ const fallbackListings: Listing[] = [
     city: 'Los Angeles',
     state: 'CA',
     zip: '91345',
-    distance: 'Just dropped',
+    distance: 'Just added',
     inventory: 12,
     sellerId: 'seller-1',
     sellerName: "Maria's Garden",
@@ -103,7 +105,7 @@ const fallbackListings: Listing[] = [
     city: 'Pasadena',
     state: 'CA',
     zip: '91104',
-    distance: 'Just dropped',
+    distance: 'Just added',
     inventory: 20,
     sellerId: 'seller-2',
     sellerName: 'Green Grove',
@@ -188,131 +190,251 @@ const emptyForm: ListingFormState = {
 
 const quickFilters: { key: QuickFilter; label: string }[] = [
   { key: 'all', label: 'All harvests' },
-  { key: 'just-added', label: 'Just dropped' },
+  { key: 'just-added', label: 'Just added' },
   { key: 'under-5', label: 'Under $5' },
   { key: 'citrus', label: 'Citrus' },
   { key: 'high-stock', label: 'High stock' },
 ]
 
-
-type ShellLink = {
-  label: string
-  route?: string
-  targetId?: string
-  primary?: boolean
-}
-
-type ShellTheme = {
-  eyebrow: string
-  title: string
-  subtitle: string
-  kicker: string
-  links: ShellLink[]
-}
-
-const shellThemes: { match: RegExp; theme: ShellTheme }[] = [
+const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: string }[] = [
   {
     match: /^\/$/,
-    theme: {
-      eyebrow: 'Neighborhood fruit exchange',
-      title: 'Build the local market they cannot own.',
-      subtitle: 'Backyard harvests. Same-day pickup. Direct trade that stays human.',
-      kicker: 'For the everyman. For the neighborhood.',
-      links: [
-        { label: 'See the market', targetId: 'market-listings', primary: true },
-        { label: 'Open the board', route: '/board', targetId: 'board-shell' },
-        { label: 'Start your stand', route: '/store/new' },
-      ],
-    },
+    eyebrow: 'PLUCK orchard market',
+    title: 'Build the local market they cannot own.',
+    subtitle: 'Direct harvests. Real pickup. Known growers.',
   },
   {
     match: /^\/map/,
-    theme: {
-      eyebrow: 'Ground game map',
-      title: 'Know what is growing close enough to carry home.',
-      subtitle: 'Fruit, growers, and pickup points worth leaving the house for.',
-      kicker: 'Ground truth for local fruit.',
-      links: [
-        { label: 'See nearby fruit', targetId: 'map-panel', primary: true },
-        { label: 'Open the board', route: '/board', targetId: 'board-shell' },
-        { label: 'List your harvest', route: '/store/new' },
-      ],
-    },
+    eyebrow: 'Field map',
+    title: 'See what is growing close enough to matter.',
+    subtitle: 'Fruit, growers, and pickup points worth leaving the house for.',
   },
   {
     match: /^\/board/,
-    theme: {
-      eyebrow: 'Community signal board',
-      title: 'Post what matters. Bring the block in.',
-      subtitle: 'Barter, help, events, and neighborhood signal in one place.',
-      kicker: 'Not followers. Neighbors.',
-      links: [
-        { label: 'Post a signal', targetId: 'board-create', primary: true },
-        { label: 'See the market', route: '/', targetId: 'market-listings' },
-        { label: 'Check the map', route: '/map', targetId: 'map-panel' },
-      ],
-    },
+    eyebrow: 'The board',
+    title: 'Post what matters. Bring the block in.',
+    subtitle: 'Barter, help, events, and neighborhood signal in one place.',
   },
   {
-    match: /^\/store/,
-    theme: {
-      eyebrow: 'Sovereign storefront',
-      title: 'Make your stand worth stopping for.',
-      subtitle: 'List what is ripe. Set the terms. Build local demand.',
-      kicker: 'Small scale. Serious presence.',
-      links: [
-        { label: 'New listing', route: '/store/new', primary: true },
-        { label: 'See your market', route: '/', targetId: 'market-listings' },
-        { label: 'Open the board', route: '/board', targetId: 'board-shell' },
-      ],
-    },
+    match: /^\/favorites/,
+    eyebrow: 'Saved fruit',
+    title: 'Keep what matters close.',
+    subtitle: 'Come back when it is ripe. Move when it is time.',
   },
   {
     match: /^\/messages/,
-    theme: {
-      eyebrow: 'Direct line',
-      title: 'Lock the details. Make the pickup happen.',
-      subtitle: 'Clear notes, real times, no crossed wires.',
-      kicker: 'Direct beats complicated.',
-      links: [
-        { label: 'Open threads', targetId: 'messages-shell', primary: true },
-        { label: 'See the market', route: '/', targetId: 'market-listings' },
-        { label: 'Open the board', route: '/board', targetId: 'board-shell' },
-      ],
-    },
+    eyebrow: 'Direct line',
+    title: 'Lock the details. Make the pickup happen.',
+    subtitle: 'Clear notes, real times, no crossed wires.',
+  },
+  {
+    match: /^\/alerts/,
+    eyebrow: 'Signals',
+    title: 'Know when the next drop hits.',
+    subtitle: 'Quiet alerts. Fast action. No clutter.',
+  },
+  {
+    match: /^\/store/,
+    eyebrow: 'Your stand',
+    title: 'Make your stand worth stopping for.',
+    subtitle: 'List what is ripe. Set the terms. Build local demand.',
   },
   {
     match: /^\/profile/,
-    theme: {
-      eyebrow: 'Earned reputation',
-      title: 'Let your reputation travel ahead of you.',
-      subtitle: 'Show your ground, your harvest, and why neighbors come back.',
-      kicker: 'Known locally beats polished globally.',
-      links: [
-        { label: 'View profile', targetId: 'profile-shell', primary: true },
-        { label: 'Open your stand', route: '/store' },
-        { label: 'Open messages', route: '/messages', targetId: 'messages-shell' },
-      ],
-    },
+    eyebrow: 'Reputation',
+    title: 'Let your reputation travel ahead of you.',
+    subtitle: 'Clear signals. Known locally. Easy to trust.',
+  },
+  {
+    match: /^\/grower\//,
+    eyebrow: 'Grower',
+    title: 'Meet the grower before you move.',
+    subtitle: 'See the person, the fruit, and the signals that matter.',
   },
   {
     match: /^\/listing\//,
-    theme: {
-      eyebrow: 'Real listing',
-      title: 'See the fruit. Know the terms.',
-      subtitle: 'Photos, pickup windows, and the real person behind the harvest.',
-      kicker: 'No mystery. No marketplace theater.',
-      links: [
-        { label: 'View details', targetId: 'listing-detail-shell', primary: true },
-        { label: 'Message grower', targetId: 'listing-detail-shell' },
-      ],
-    },
+    eyebrow: 'Listing',
+    title: 'See the fruit. Decide in seconds.',
+    subtitle: 'Big photos. Clear pickup windows. No guesswork.',
+  },
+  {
+    match: /^\/login/,
+    eyebrow: 'Welcome back',
+    title: 'Back to the orchard.',
+    subtitle: 'Saved fruit, alerts, and threads waiting.',
+  },
+  {
+    match: /^\/signup/,
+    eyebrow: 'Join local',
+    title: 'Start with what is near.',
+    subtitle: 'Buy, sell, trade, and stay in the loop.',
+  },
+  {
+    match: /^\/reset-password/,
+    eyebrow: 'Reset access',
+    title: 'Get back in without the runaround.',
+    subtitle: 'Set a new password and keep moving.',
   },
 ]
 
-function getShellTheme(pathname: string): ShellTheme {
-  return shellThemes.find((item) => item.match.test(pathname))?.theme ?? shellThemes[0].theme
+function getRouteMeta(pathname: string) {
+  return routeMeta.find((item) => item.match.test(pathname)) || routeMeta[0]
 }
+
+type ReviewItem = {
+  id: string
+  listingId: string
+  sellerId: string
+  sellerName: string
+  rating: number
+  comment: string
+  createdAt: string
+}
+
+function routeTheme(pathname: string) {
+  if (/^\/map/.test(pathname)) return 'route-theme-map'
+  if (/^\/board/.test(pathname)) return 'route-theme-board'
+  if (/^\/favorites/.test(pathname)) return 'route-theme-favorites'
+  if (/^\/messages/.test(pathname)) return 'route-theme-messages'
+  if (/^\/store/.test(pathname)) return 'route-theme-store'
+  if (/^\/profile/.test(pathname) || /^\/grower\//.test(pathname)) return 'route-theme-profile'
+  if (/^\/alerts/.test(pathname)) return 'route-theme-alerts'
+  return 'route-theme-home'
+}
+
+function memberSinceLabel(_seller: SellerProfile) {
+  return 'Member since 2023'
+}
+
+function pickupConfidenceLabel(listing: Listing) {
+  if (listing.inventory >= 10) return 'Pickup confidence high'
+  if (listing.inventory >= 4) return 'Pickup confidence solid'
+  return 'Limited harvest window'
+}
+
+function trustSignalsForListing(listing: Listing) {
+  const signals = [] as string[]
+  if (listing.sellerVerified) signals.push('Verified grower')
+  if (listing.sellerRating) signals.push(`★ ${listing.sellerRating.toFixed(1)} trusted`)
+  signals.push('Quick reply')
+  signals.push(pickupConfidenceLabel(listing))
+  return signals.slice(0, 4)
+}
+
+function formatReviewDate(value: string) {
+  return new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' })
+}
+
+function TrustStrip({ listing }: { listing: Listing }) {
+  return (
+    <div className="trust-strip">
+      {trustSignalsForListing(listing).map((item) => (
+        <span className="trust-mini" key={`${listing.id}-${item}`}>
+          {item}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function RatingStars({ value, onChange, interactive = false }: { value: number; onChange?: (value: number) => void; interactive?: boolean }) {
+  return (
+    <div className={interactive ? 'rating-stars interactive' : 'rating-stars'}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          className={star <= value ? 'star active' : 'star'}
+          onClick={() => interactive && onChange?.(star)}
+          aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ReviewsPanel({
+  listing,
+  reviews,
+  onAddReview,
+}: {
+  listing: Listing
+  reviews: ReviewItem[]
+  onAddReview: (input: { listingId: string; sellerId: string; sellerName: string; rating: number; comment: string }) => void
+}) {
+  const [draftRating, setDraftRating] = useState(5)
+  const [draftComment, setDraftComment] = useState('')
+
+  return (
+    <section className="review-panel">
+      <div className="section-heading compact-heading no-top-gap">
+        <div>
+          <p className="eyebrow">Pickup trust</p>
+          <h2>Reviews & grower confidence</h2>
+        </div>
+        <div className="review-summary">
+          <RatingStars value={listing.sellerRating ? Math.round(listing.sellerRating) : 5} />
+          <span>{listing.sellerRating ? listing.sellerRating.toFixed(1) : 'New'} {reviews.length ? `${reviews.length} reviews` : 'Be the first to review this pickup'}</span>
+        </div>
+      </div>
+
+      <div className="review-compose">
+        <div>
+          <strong>Rate this pickup</strong>
+          <p>Share fruit quality, pickup ease, and communication.</p>
+        </div>
+        <div className="review-rating-row">
+          <RatingStars value={draftRating} onChange={setDraftRating} interactive />
+          <span className="review-rating-value">{draftRating} of 5 selected</span>
+        </div>
+        <textarea
+          value={draftComment}
+          onChange={(e) => setDraftComment(e.target.value)}
+          rows={3}
+          placeholder="How was the pickup?"
+        />
+        <div className="action-row">
+          <button
+            className="primary"
+            onClick={() => {
+              onAddReview({
+                listingId: listing.id,
+                sellerId: listing.sellerId,
+                sellerName: listing.sellerName,
+                rating: draftRating,
+                comment: draftComment.trim() || 'Great pickup and clear communication.',
+              })
+              setDraftComment('')
+              setDraftRating(5)
+            }}
+          >
+            Submit rating
+          </button>
+        </div>
+      </div>
+
+      {reviews.length ? (
+        <div className="review-list">
+          {reviews.map((review) => (
+            <article className="review-card" key={review.id}>
+              <div className="review-card-head">
+                <strong>{review.sellerName}</strong>
+                <span>{formatReviewDate(review.createdAt)}</span>
+              </div>
+              <RatingStars value={review.rating} />
+              <p>{review.comment}</p>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-panel">Be the first to review this pickup and help the next buyer feel confident.</div>
+      )}
+    </section>
+  )
+}
+
 
 function formatTime(value?: string) {
   if (!value) return ''
@@ -370,7 +492,7 @@ function normalizeListing(listing: Listing): Listing {
     city,
     state,
     zip: listing.zip || '',
-    distance: listing.distance || 'Just dropped',
+    distance: listing.distance || 'Just added',
     inventory: Number.isFinite(listing.inventory) ? listing.inventory : 0,
     sellerId: listing.sellerId || 'seller-unknown',
     sellerName: listing.sellerName || 'Local Grower',
@@ -514,7 +636,7 @@ function AuthShell({
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [resetCode, setResetCode] = useState('')
-  const [resetRequested, setResetRequested] = useState(false)
+  const [resetTokenPreview, setResetTokenPreview] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
@@ -527,24 +649,31 @@ function AuthShell({
 
     try {
       if (mode === 'signup') {
-        if (!name.trim() || !email.trim() || !password.trim()) throw new Error('Name, email, and password are required')
-        const user = await signup({ name: name.trim(), email: email.trim(), role: 'buyer', password })
+        if (password.length < 6) throw new Error('Password must be at least 6 characters.')
+        if (password !== confirmPassword) throw new Error('Passwords do not match.')
+        const user = await signup({
+          name: name.trim() || 'User',
+          email: email.trim(),
+          role: 'buyer',
+          password,
+        })
         onAuthSuccess(user)
-        navigate('/')
+        navigate('/profile')
       } else if (mode === 'login') {
         const user = await login({ email: email.trim(), password })
         onAuthSuccess(user)
-        navigate('/')
+        navigate('/profile')
       } else {
-        if (!resetRequested) {
+        if (!resetTokenPreview) {
           const result = await requestPasswordReset({ email: email.trim() })
-          setInfo(`Reset code sent. Use: ${result.resetToken}`)
-          setResetRequested(true)
+          setResetTokenPreview(result.resetToken)
+          setInfo(`Reset code: ${result.resetToken}`)
         } else {
-          if (!resetCode.trim() || !password.trim()) throw new Error('Reset code and new password are required')
+          if (password.length < 6) throw new Error('Password must be at least 6 characters.')
+          if (password !== confirmPassword) throw new Error('Passwords do not match.')
           await resetPassword({ email: email.trim(), resetToken: resetCode.trim(), password })
           setInfo('Password updated. You can log in now.')
-          window.setTimeout(() => navigate('/login'), 800)
+          setTimeout(() => navigate('/login'), 700)
         }
       }
     } catch (err) {
@@ -559,15 +688,15 @@ function AuthShell({
     <section className="auth-page">
       <div className="auth-hero">
         <p className="eyebrow">PLUCK account</p>
-        <h1>{mode === 'signup' ? 'Start using PLUCK' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}</h1>
-        <p>{mode === 'reset' ? 'Reset your password and get back into the market.' : 'Create an account, save fruit, and keep pickup direct.'}</p>
+        <h1>{mode === 'signup' ? 'Join local' : mode === 'reset' ? 'Reset password' : 'Welcome back'}</h1>
+        <p>{mode === 'reset' ? 'Get back in without the runaround.' : 'Build a local loop around what is growing nearby.'}</p>
       </div>
 
       <form className="auth-card" onSubmit={handleSubmit}>
         <div className="form-header">
           <div>
-            <p className="eyebrow">{mode === 'signup' ? 'New account' : mode === 'reset' ? 'Password reset' : 'Login'}</p>
-            <h2>{mode === 'signup' ? 'Create your account' : mode === 'reset' ? 'Forgot your password?' : 'Sign into your account'}</h2>
+            <p className="eyebrow">{mode === 'signup' ? 'New account' : mode === 'reset' ? 'Recovery' : 'Login'}</p>
+            <h2>{mode === 'signup' ? 'Start using PLUCK' : mode === 'reset' ? 'Reset your account' : 'Sign into your account'}</h2>
           </div>
         </div>
 
@@ -576,7 +705,7 @@ function AuthShell({
             {mode === 'signup' ? (
               <label className="full">
                 Full name
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Christian Castaneda" />
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Miller" />
               </label>
             ) : null}
 
@@ -587,20 +716,32 @@ function AuthShell({
 
             <label className="full">
               Password
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === 'reset' ? 'New password' : 'Enter your password'} required={mode !== 'reset' || resetRequested} />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === 'reset' ? 'Create a new password' : 'Enter your password'}
+                required
+              />
             </label>
 
-            {mode === 'signup' ? (
+            {mode === 'signup' || mode === 'reset' ? (
               <label className="full">
                 Confirm password
-                <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm password" />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password"
+                  required
+                />
               </label>
             ) : null}
 
-            {mode === 'reset' && resetRequested ? (
+            {mode === 'reset' && resetTokenPreview ? (
               <label className="full">
                 Reset code
-                <input value={resetCode} onChange={(e) => setResetCode(e.target.value)} placeholder="Paste reset code" required />
+                <input value={resetCode} onChange={(e) => setResetCode(e.target.value.toUpperCase())} placeholder="Paste the reset code" required />
               </label>
             ) : null}
           </div>
@@ -610,12 +751,12 @@ function AuthShell({
 
           <div className="action-row auth-action-row">
             <button className="primary" type="submit" disabled={busy}>
-              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : mode === 'reset' ? (resetRequested ? 'Save new password' : 'Send reset code') : 'Log in'}
+              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : mode === 'reset' ? (resetTokenPreview ? 'Save new password' : 'Send reset code') : 'Log in'}
             </button>
             {mode === 'login' ? (
               <>
                 <button type="button" className="ghost" onClick={() => navigate('/signup')}>Create account</button>
-                <button type="button" className="ghost" onClick={() => navigate('/reset-password')}>Forgot password?</button>
+                <button type="button" className="text-btn" onClick={() => navigate('/reset-password')}>Forgot password?</button>
               </>
             ) : mode === 'signup' ? (
               <button type="button" className="ghost" onClick={() => navigate('/login')}>Have an account?</button>
@@ -759,7 +900,7 @@ function ListingForm({
         city: form.city.trim(),
         state: form.state.trim(),
         zip: form.zip.trim(),
-        distance: initialValues?.distance || 'Just dropped',
+        distance: initialValues?.distance || 'Just added',
         inventory: Number(form.inventory) || 1,
         sellerId: seller.id,
         sellerName: seller.name,
@@ -1038,13 +1179,15 @@ function GrowerTrust({
 
       <p className="desc">{seller.bio}</p>
 
-      <div className="trust-metrics">
+      <div className="trust-metrics trust-metrics--spacious">
         <div className="metric-chip">
           ★ {(seller.rating || 0).toFixed(1)} {seller.ratingCount ? `(${seller.ratingCount})` : ''}
         </div>
         <div className="metric-chip">{seller.followers || 0} followers</div>
         {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
         {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
+        <div className="metric-chip">Pickup confidence high</div>
+        <div className="metric-chip">{memberSinceLabel(seller)}</div>
       </div>
 
       {seller.specialties?.length ? (
@@ -1057,10 +1200,11 @@ function GrowerTrust({
         </div>
       ) : null}
 
-      <div className="action-row">
+      <div className="action-row action-row--grower">
         <button className="primary" onClick={onToggleFollow}>
           {isFollowing ? 'Following' : 'Follow grower'}
         </button>
+        <button className="ghost">Message grower</button>
       </div>
     </div>
   )
@@ -1074,10 +1218,13 @@ function NationwideGeoMap({
   onOpenListing: (listingId: string) => void
 }) {
   const geoListings = listings.filter(hasGeo)
-  const [zoom, setZoom] = useState(1)
-  const [compact, setCompact] = useState(false)
 
-  const bounds = { minLat: 24, maxLat: 49, minLng: -125, maxLng: -66 }
+  const bounds = {
+    minLat: 24,
+    maxLat: 49,
+    minLng: -125,
+    maxLng: -66,
+  }
 
   function xFromLng(lng: number) {
     return ((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)) * 100
@@ -1088,52 +1235,683 @@ function NationwideGeoMap({
   }
 
   return (
-    <div className={`nationwide-map ${compact ? 'compact' : ''}`}>
-      <div className="nationwide-map__top">
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        minHeight: 360,
+        borderRadius: 24,
+        overflow: 'hidden',
+        background:
+          'linear-gradient(180deg, rgba(233,245,250,1) 0%, rgba(241,249,244,1) 55%, rgba(247,250,244,1) 100%)',
+        border: '1px solid rgba(16,24,40,0.06)',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(circle at 18% 68%, rgba(98, 171, 103, 0.16), transparent 20%), radial-gradient(circle at 52% 52%, rgba(98, 171, 103, 0.12), transparent 28%), radial-gradient(circle at 74% 36%, rgba(98, 171, 103, 0.12), transparent 22%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'absolute',
+          inset: '12px 14px auto 14px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 12,
+          zIndex: 2,
+        }}
+      >
         <div>
-          <div className="nationwide-map__eyebrow">Live geo layer</div>
-          <div className="nationwide-map__title">United States listing coverage</div>
+          <div
+            style={{
+              fontSize: 12,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: '#6e7b67',
+              fontWeight: 800,
+            }}
+          >
+            Live geo layer
+          </div>
+          <div style={{ fontWeight: 760, fontSize: 18, color: '#203022' }}>
+            United States listing coverage
+          </div>
         </div>
-        <div className="nationwide-map__actions">
-          <button className="ghost compact-btn" onClick={() => setZoom((z) => Math.max(0.8, +(z - 0.1).toFixed(1)))}>-</button>
-          <button className="ghost compact-btn" onClick={() => setZoom((z) => Math.min(1.5, +(z + 0.1).toFixed(1)))}>+</button>
-          <button className="ghost compact-btn" onClick={() => setCompact((c) => !c)}>{compact ? 'Expand' : 'Compact'}</button>
-          <div className="nationwide-map__count">{geoListings.length} pinned</div>
+        <div
+          style={{
+            padding: '8px 12px',
+            borderRadius: 999,
+            background: 'rgba(255,255,255,0.88)',
+            border: '1px solid rgba(16,24,40,0.06)',
+            fontSize: 13,
+            fontWeight: 700,
+            color: '#234030',
+          }}
+        >
+          {geoListings.length} pinned
         </div>
       </div>
 
-      <div className="nationwide-map__canvas" style={{ transform: `scale(${zoom})` }}>
-        <div className="nationwide-map__usa" />
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          paddingTop: 52,
+        }}
+      >
         {geoListings.map((item) => {
           const left = `${xFromLng(item.geo!.lng)}%`
           const top = `${yFromLat(item.geo!.lat)}%`
+
           return (
             <button
               key={item.id}
-              className="nationwide-map__pin"
               onClick={() => onOpenListing(item.id)}
               title={`${item.title} • ${prettyLocation(item)}`}
-              style={{ left, top }}
+              style={{
+                position: 'absolute',
+                left,
+                top,
+                transform: 'translate(-50%, -50%)',
+                width: 22,
+                height: 22,
+                borderRadius: '999px',
+                border: '2px solid white',
+                background: 'linear-gradient(180deg, #3f9745 0%, #2f7d32 100%)',
+                boxShadow: '0 10px 22px rgba(47,125,50,0.28)',
+                cursor: 'pointer',
+                zIndex: 2,
+              }}
             />
           )
         })}
       </div>
 
-      {!compact ? (
-        <div className="nationwide-map__list">
-          {geoListings.slice(0, 3).map((item) => (
-            <button key={item.id} className="nationwide-map__row" onClick={() => onOpenListing(item.id)}>
-              <div>
-                <div className="nationwide-map__rowTitle">{item.title}</div>
-                <div className="nationwide-map__rowMeta">{prettyLocation(item)} • {item.sellerName}</div>
+      <div
+        style={{
+          position: 'absolute',
+          left: 14,
+          right: 14,
+          bottom: 14,
+          display: 'grid',
+          gap: 10,
+          zIndex: 2,
+        }}
+      >
+        {geoListings.slice(0, 3).map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onOpenListing(item.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              padding: '12px 14px',
+              borderRadius: 18,
+              border: '1px solid rgba(16,24,40,0.06)',
+              background: 'rgba(255,255,255,0.92)',
+              textAlign: 'left',
+              cursor: 'pointer',
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 760, color: '#203022' }}>{item.title}</div>
+              <div style={{ fontSize: 13, color: '#667085' }}>
+                {prettyLocation(item)} • {item.sellerName}
               </div>
-              <div className="nationwide-map__rowPrice">${item.price}/{item.unit}</div>
-            </button>
-          ))}
-        </div>
-      ) : null}
+            </div>
+            <div style={{ fontWeight: 800, color: '#2f7d32' }}>
+              ${item.price}/{item.unit}
+            </div>
+          </button>
+        ))}
+      </div>
     </div>
   )
+}
+
+function ListingDetailRoute({
+  listings,
+  favorites,
+  follows,
+  onEdit,
+  onToggleFavorite,
+  onToggleFollow,
+  onOpenReserve,
+  onStartConversation,
+  reviews,
+  onAddReview,
+}: {
+  listings: Listing[]
+  favorites: Favorite[]
+  follows: Follow[]
+  onEdit: (id: string) => void
+  onToggleFavorite: (listingId: string) => Promise<void>
+  onToggleFollow: (sellerId: string) => Promise<void>
+  onOpenReserve: (listing: Listing) => void
+  onStartConversation: (listing: Listing) => Promise<void>
+  reviews: ReviewItem[]
+  onAddReview: (input: { listingId: string; sellerId: string; sellerName: string; rating: number; comment: string }) => void
+}) {
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const listing = listings.find((item) => item.id === id)
+
+  if (!listing) {
+    return (
+      <section className="stack">
+        <h2>Listing not found</h2>
+      </section>
+    )
+  }
+
+  const isFavorite = favorites.some((fav) => fav.listingId === listing.id)
+  const isFollowing = follows.some((item) => item.sellerId === listing.sellerId)
+
+  return (
+    <section className="stack">
+      <div className="listing-detail-hero">
+        <img className="listing-detail-image" src={listing.image} alt={listing.title} />
+        <div className="listing-detail-copy">
+          <p className="eyebrow">{listing.fruit}</p>
+          <h2>{listing.title}</h2>
+          <p className="listing-detail-price">
+            ${listing.price}/{listing.unit}
+          </p>
+
+          <div className="listing-top-badges">
+            {listing.harvestLabel ? <span className="trust-pill harvest">{listing.harvestLabel}</span> : null}
+            {listing.freshnessLabel ? <span className="trust-pill freshness">{listing.freshnessLabel}</span> : null}
+            {listing.availabilityLabel ? <span className="trust-pill available">{listing.availabilityLabel}</span> : null}
+            {hasGeo(listing) ? <span className="trust-pill verified">Map ready</span> : null}
+          </div>
+
+          <p className="desc">{listing.description}</p>
+          <TrustStrip listing={listing} />
+          <p className="meta">
+            {prettyLocation(listing)} • {listing.inventory} left • {sellerLabel(listing)}
+          </p>
+
+          {listing.harvestNote ? <div className="harvest-note">“{listing.harvestNote}”</div> : null}
+
+          {(listing.tags || []).length ? (
+            <div className="pill-row">
+              {listing.tags?.map((tag) => (
+                <span className="pill" key={tag}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="pill-row">
+            {listing.pickupWindows.map((slot, index) => (
+              <span className="pill" key={`${listing.id}-${slot}-${index}`}>
+                {slot}
+              </span>
+            ))}
+          </div>
+
+          <ActionGrid columns={2}>
+            <button className="primary fill-btn" onClick={() => onOpenReserve(listing)} disabled={listing.inventory <= 0}>
+              {listing.inventory <= 0 ? 'Sold out' : 'Reserve pickup'}
+            </button>
+            <button className="ghost fill-btn" onClick={() => onStartConversation(listing)}>
+              Message seller
+            </button>
+            <button className="ghost fill-btn" onClick={() => onToggleFavorite(listing.id)}>
+              {isFavorite ? 'Saved' : 'Save'}
+            </button>
+            <button className="ghost fill-btn" onClick={() => onToggleFollow(listing.sellerId)}>
+              {isFollowing ? 'Following' : 'Follow grower'}
+            </button>
+            <button className="ghost fill-btn" onClick={() => navigate('/grower/' + listing.sellerId)}>
+              Grower profile
+            </button>
+            <button className="ghost fill-btn" onClick={() => onEdit(listing.id)}>
+              Edit listing
+            </button>
+          </ActionGrid>
+        </div>
+      </div>
+
+      <ReviewsPanel
+        listing={listing}
+        reviews={reviews.filter((item) => item.listingId === listing.id)}
+        onAddReview={onAddReview}
+      />
+    </section>
+  )
+}
+
+function MessagesPage({
+  conversations,
+  selectedConversationId,
+  threadMessages,
+  seller,
+  onSelectConversation,
+  onSendMessage,
+}: {
+  conversations: Conversation[]
+  selectedConversationId: string | null
+  threadMessages: Message[]
+  seller: SellerProfile
+  onSelectConversation: (id: string) => Promise<void>
+  onSendMessage: (conversationId: string, content: string) => Promise<void>
+}) {
+  const [draft, setDraft] = useState('')
+
+  const activeConversation =
+    conversations.find((item) => item.id === selectedConversationId) || conversations[0] || null
+
+  return (
+    <section id="messages-shell" className="messages-shell">
+      <aside className="messages-sidebar">
+        <div className="section-heading compact-heading no-top-gap">
+          <div>
+            <p className="eyebrow">Conversations</p>
+            <h2>Inbox</h2>
+          </div>
+          <span className="section-meta">{conversations.length} threads</span>
+        </div>
+
+        <div className="messages-list">
+          {conversations.length ? (
+            conversations.map((conversation) => {
+              const active = conversation.id === activeConversation?.id
+              return (
+                <button
+                  key={conversation.id}
+                  className={active ? 'thread-card active' : 'thread-card'}
+                  onClick={() => onSelectConversation(conversation.id)}
+                >
+                  <div className="thread-card-top">
+                    <strong>{conversation.sellerName}</strong>
+                    <span>{formatShortDate(conversation.updatedAt)}</span>
+                  </div>
+                  <div className="thread-card-title">{conversation.listingTitle}</div>
+                  <p>{conversation.lastMessage || 'No messages yet'}</p>
+                </button>
+              )
+            })
+          ) : (
+            <div className="empty-panel">Talk with growers about pickup once you start a conversation.</div>
+          )}
+        </div>
+      </aside>
+
+      <section className="messages-main">
+        <div className="section-heading compact-heading no-top-gap">
+          <div>
+            <p className="eyebrow">Thread</p>
+            <h2>{activeConversation ? activeConversation.listingTitle : 'Select a conversation'}</h2>
+          </div>
+        </div>
+
+        <div className="thread-panel">
+          {activeConversation ? (
+            <>
+              <div className="thread-context">
+                <div>
+                  <strong>{activeConversation.sellerName}</strong>
+                  <p>{activeConversation.lastMessage || 'Conversation started'}</p>
+                </div>
+                <span>{formatTime(activeConversation.updatedAt)}</span>
+              </div>
+
+              <div className="message-thread">
+                {threadMessages.length ? (
+                  threadMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={msg.senderId === seller.id ? 'message-bubble mine' : 'message-bubble'}
+                    >
+                      <strong>{msg.senderName}</strong>
+                      <p>{msg.content}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty-panel">No messages in this thread yet. Say hello and lock in pickup details.</div>
+                )}
+              </div>
+
+              <div className="message-compose">
+                <textarea
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="Write a message..."
+                  rows={3}
+                />
+                <button
+                  className="primary fill-btn"
+                  onClick={async () => {
+                    if (!draft.trim()) return
+                    await onSendMessage(activeConversation.id, draft)
+                    setDraft('')
+                  }}
+                >
+                  Send
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="empty-panel">Pick a grower conversation to see pickup details and replies here.</div>
+          )}
+        </div>
+      </section>
+    </section>
+  )
+}
+
+function GrowerPage({
+  listings,
+  currentSeller,
+  follows,
+  onToggleFollow,
+}: {
+  listings: Listing[]
+  currentSeller: SellerProfile
+  follows: Follow[]
+  onToggleFollow: (sellerId: string) => Promise<void>
+}) {
+  const { id } = useParams()
+  const [grower, setGrower] = useState<SellerProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!id) return
+    let cancelled = false
+    setLoading(true)
+
+    getSellerById(id)
+      .then((data) => {
+        if (!cancelled) setGrower(data)
+      })
+      .catch(() => {
+        if (!cancelled) setGrower(null)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  if (loading) {
+    return (
+      <section className="stack">
+        <p>Loading grower...</p>
+      </section>
+    )
+  }
+
+  if (!grower) {
+    return (
+      <section className="stack">
+        <h2>Grower not found</h2>
+      </section>
+    )
+  }
+
+  const growerListings = listings.filter((item) => item.sellerId === grower.id)
+  const isFollowing = follows.some((item) => item.sellerId === grower.id)
+
+  return (
+    <section className="stack">
+      <section className="profile-card premium-profile">
+        <img className="hero-fruit" src={grower.heroFruit} alt="Grower orchard" />
+        <div className="profile-row">
+          <img className="avatar" src={grower.avatar} alt={grower.name} />
+          <div>
+            <h2>{grower.name}</h2>
+            <p>
+              {grower.handle} • {[grower.city, grower.state].filter(Boolean).join(', ')}
+            </p>
+          </div>
+        </div>
+
+        <p>{grower.bio}</p>
+
+        <div className="dashboard-stats profile-stats">
+          <div className="dashboard-card">
+            <span>Listings</span>
+            <strong>{growerListings.length}</strong>
+          </div>
+          <div className="dashboard-card">
+            <span>Followers</span>
+            <strong>{grower.followers || 0}</strong>
+          </div>
+          <div className="dashboard-card">
+            <span>Rating</span>
+            <strong>{(grower.rating || 0).toFixed(1)}</strong>
+          </div>
+        </div>
+
+        <div className="trust-metrics">
+          {grower.verified ? <div className="metric-chip">Verified grower</div> : null}
+          {grower.responseScore ? <div className="metric-chip">{grower.responseScore}</div> : null}
+          {grower.repeatBuyerScore ? <div className="metric-chip">{grower.repeatBuyerScore}</div> : null}
+          {grower.orchardName ? <div className="metric-chip">{grower.orchardName}</div> : null}
+          <div className="metric-chip">Pickup confidence high</div>
+          <div className="metric-chip">{memberSinceLabel(grower)}</div>
+        </div>
+
+        {grower.specialties?.length ? (
+          <div className="pill-row">
+            {grower.specialties.map((item) => (
+              <span className="pill" key={item}>
+                {item}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {grower.id !== currentSeller.id ? (
+          <div className="action-row">
+            <button className="primary" onClick={() => onToggleFollow(grower.id)}>
+              {isFollowing ? 'Following' : 'Follow grower'}
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      <section>
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Grower listings</p>
+            <h2>Current harvests</h2>
+          </div>
+          <span className="section-meta">{growerListings.length} live</span>
+        </div>
+
+        <section className="grid">
+          {growerListings.map((item) => (
+            <article className="card premium-card" key={item.id}>
+              <div className="card-image-wrap">
+                <img src={item.image} alt={item.title} />
+                <span className="card-badge">{item.distance}</span>
+              </div>
+              <div className="card-body">
+                <div className="price-row">
+                  <h3>{item.title}</h3>
+                  <span>
+                    ${item.price}/{item.unit}
+                  </span>
+                </div>
+                <p className="meta">
+                  {prettyLocation(item)} • {item.inventory} left
+                </p>
+                <div className="listing-badge-row">
+                  {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
+                  {item.freshnessLabel ? <span className="trust-pill freshness">{item.freshnessLabel}</span> : null}
+                </div>
+              </div>
+            </article>
+          ))}
+        </section>
+      </section>
+    </section>
+  )
+}
+
+function AlertsPage({
+  seller,
+  alerts,
+  notifications,
+  onCreateAlert,
+  onToggleAlert,
+  onReadNotification,
+}: {
+  seller: SellerProfile
+  alerts: AlertItem[]
+  notifications: NotificationItem[]
+  onCreateAlert: (payload: Omit<AlertItem, 'id'>) => Promise<void>
+  onToggleAlert: (id: string) => Promise<void>
+  onReadNotification: (id: string) => Promise<void>
+}) {
+  const [fruit, setFruit] = useState('')
+  const [location, setLocation] = useState('Anywhere, USA')
+  const [radiusMiles, setRadiusMiles] = useState('25')
+
+  return (
+    <section className="alerts-layout">
+      <div className="stack">
+        <div className="section-heading compact-heading no-top-gap">
+          <div>
+            <p className="eyebrow">Saved alerts</p>
+            <h2>Watchlist</h2>
+          </div>
+          <span className="section-meta">{alerts.length} alerts</span>
+        </div>
+
+        <form
+          className="listing-form"
+          onSubmit={async (e) => {
+            e.preventDefault()
+            await onCreateAlert({
+              userId: seller.id,
+              fruit: fruit || 'Fruit',
+              location: location || 'Anywhere, USA',
+              radiusMiles: Number(radiusMiles) || 25,
+              sellerId: '',
+              active: true,
+            })
+            setFruit('')
+            setLocation('Anywhere, USA')
+            setRadiusMiles('25')
+          }}
+        >
+          <div className="form-grid">
+            <label>
+              Fruit
+              <input value={fruit} onChange={(e) => setFruit(e.target.value)} placeholder="Peaches" />
+            </label>
+            <label>
+              Location
+              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Denver, CO" />
+            </label>
+            <label className="full">
+              Radius miles
+              <input
+                type="number"
+                min="1"
+                max="500"
+                value={radiusMiles}
+                onChange={(e) => setRadiusMiles(e.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="action-row">
+            <button className="primary" type="submit">
+              Create alert
+            </button>
+          </div>
+        </form>
+
+        <div className="stack-list">
+          {alerts.map((alert) => (
+            <div className="alert-card-row" key={alert.id}>
+              <div>
+                <strong>{alert.fruit}</strong>
+                <p>
+                  {alert.location} • {alert.radiusMiles} miles
+                </p>
+              </div>
+              <button className={alert.active ? 'ghost active-soft' : 'ghost'} onClick={() => onToggleAlert(alert.id)}>
+                {alert.active ? 'Active' : 'Paused'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="stack">
+        <div className="section-heading compact-heading no-top-gap">
+          <div>
+            <p className="eyebrow">Notifications</p>
+            <h2>Recent signals</h2>
+          </div>
+          <span className="section-meta">{notifications.filter((n) => !n.read).length} unread</span>
+        </div>
+
+        <div className="stack-list">
+          {notifications.length ? (
+            notifications.map((item) => (
+              <div className={item.read ? 'notification-card' : 'notification-card unread'} key={item.id}>
+                <div className="notification-copy">
+                  <strong>{item.title}</strong>
+                  <p>{item.body}</p>
+                  <span>{formatTime(item.createdAt)}</span>
+                </div>
+                {!item.read ? (
+                  <button className="ghost compact-btn" onClick={() => onReadNotification(item.id)}>
+                    Mark read
+                  </button>
+                ) : null}
+              </div>
+            ))
+          ) : (
+            <div className="empty-panel">Fresh drops, alerts, and pickup updates will appear here.</div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+type AppLayoutProps = {
+  listings: Listing[]
+  setListings: Dispatch<SetStateAction<Listing[]>>
+  seller: SellerProfile
+  favorites: Favorite[]
+  setFavorites: Dispatch<SetStateAction<Favorite[]>>
+  conversations: Conversation[]
+  setConversations: Dispatch<SetStateAction<Conversation[]>>
+  threadMessages: Message[]
+  setThreadMessages: Dispatch<SetStateAction<Message[]>>
+  socialPosts: SocialPost[]
+  notifications: NotificationItem[]
+  setNotifications: Dispatch<SetStateAction<NotificationItem[]>>
+  alerts: AlertItem[]
+  setAlerts: Dispatch<SetStateAction<AlertItem[]>>
+  follows: Follow[]
+  setFollows: Dispatch<SetStateAction<Follow[]>>
+  authUser: AuthUser | null
+  reviews: ReviewItem[]
+  setReviews: Dispatch<SetStateAction<ReviewItem[]>>
+  onAuthSuccess: (user: AuthUser) => void
+  onLogout: () => void
 }
 
 function AppLayout({
@@ -1154,19 +1932,25 @@ function AppLayout({
   follows,
   setFollows,
   authUser,
+  reviews,
+  setReviews,
   onAuthSuccess,
+  onLogout,
 }: AppLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [query, setQuery] = useState('')
+  const [draftQuery, setDraftQuery] = useState('')
+  const [appliedQuery, setAppliedQuery] = useState('')
+  const [searchFeedback, setSearchFeedback] = useState('')
   const [activeFilter, setActiveFilter] = useState<QuickFilter>('all')
   const [reserveTarget, setReserveTarget] = useState<Listing | null>(null)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [mapExpanded, setMapExpanded] = useState(false)
 
   const favoriteListingIds = new Set(favorites.map((fav) => fav.listingId))
   const favoriteListings = listings.filter((item) => favoriteListingIds.has(item.id))
   const myListings = listings.filter((item) => item.sellerName === seller.name)
-  const justAdded = listings.filter((item) => item.distance === 'Just dropped')
+  const justAdded = listings.filter((item) => item.distance === 'Just added')
   const totalInventory = myListings.reduce((sum, item) => sum + item.inventory, 0)
   const averagePrice =
     myListings.length > 0
@@ -1177,7 +1961,7 @@ function AppLayout({
   const followingSellerIds = new Set(follows.map((item) => item.sellerId))
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = appliedQuery.trim().toLowerCase()
 
     let result = listings.filter((item) =>
       [
@@ -1197,7 +1981,7 @@ function AppLayout({
     )
 
     if (activeFilter === 'just-added') {
-      result = result.filter((item) => item.distance === 'Just dropped')
+      result = result.filter((item) => item.distance === 'Just added')
     }
 
     if (activeFilter === 'under-5') {
@@ -1217,7 +2001,12 @@ function AppLayout({
     }
 
     return result
-  }, [listings, query, activeFilter])
+  }, [listings, appliedQuery, activeFilter])
+
+  const showcaseListings = (filtered.length ? filtered : listings).slice(0, 5)
+  const leadShowcase = showcaseListings[0] || listings[0] || null
+  const sideShowcase = showcaseListings.slice(1, 4)
+  const fruitRibbon = showcaseListings.length ? showcaseListings : listings.slice(0, 5)
 
   useEffect(() => {
     if (!selectedConversationId && conversations.length > 0) {
@@ -1368,54 +2157,117 @@ function AppLayout({
     setNotifications((current) => current.map((item) => (item.id === id ? updated : item)))
   }
 
+  function handleAddReview(input: { listingId: string; sellerId: string; sellerName: string; rating: number; comment: string }) {
+    const review: ReviewItem = {
+      id: crypto.randomUUID(),
+      listingId: input.listingId,
+      sellerId: input.sellerId,
+      sellerName: input.sellerName,
+      rating: input.rating,
+      comment: input.comment,
+      createdAt: new Date().toISOString(),
+    }
+    setReviews((current) => [review, ...current])
+  }
+
   function isActivePath(path: string) {
     return location.pathname === path
   }
 
-  const shellTheme = getShellTheme(location.pathname)
-
-  function jumpTo(targetId?: string, route?: string) {
-    if (route && route !== location.pathname) {
-      navigate(route)
-      window.setTimeout(() => {
-        if (!targetId) return
-        document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 120)
-      return
-    }
-    if (targetId) {
-      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      return
-    }
-    if (route) navigate(route)
+  function describeSearchTarget(raw: string) {
+    if (!raw.trim()) return ''
+    return /^\d{5}$/.test(raw.trim()) ? `Showing fruit near ${raw.trim()}` : `Showing results for “${raw.trim()}”`
   }
+
+  function submitSearch(targetId = 'listing-feed') {
+    const normalized = draftQuery.trim()
+    setAppliedQuery(normalized)
+    setSearchFeedback(describeSearchTarget(normalized))
+    scrollToId(targetId)
+  }
+
+  function clearSearch() {
+    setDraftQuery('')
+    setAppliedQuery('')
+    setSearchFeedback('')
+  }
+
+  function useNearMe() {
+    const fallback = seller.zip || seller.city || seller.locationLabel || ''
+    setDraftQuery(fallback)
+    setAppliedQuery(fallback)
+    setSearchFeedback(describeSearchTarget(fallback))
+    goTo('/map', 'map-panel')
+  }
+
+  function goTo(path: string, targetId = 'route-start') {
+    navigate(path)
+    window.requestAnimationFrame(() => {
+      setTimeout(() => {
+        document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 40)
+    })
+  }
+
+  function scrollToId(targetId: string) {
+    document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const currentMeta = getRouteMeta(location.pathname)
+  const currentRouteTheme = routeTheme(location.pathname)
+
+  const routeAction = (() => {
+    if (/^\/map/.test(location.pathname)) return { primary: ['Jump to map', () => scrollToId('map-panel')], secondary: ['Open board', () => goTo('/board', 'board-shell')] } as const
+    if (/^\/board/.test(location.pathname)) return { primary: ['Post to the board', () => scrollToId('board-shell')], secondary: ['See the map', () => goTo('/map', 'map-panel')] } as const
+    if (/^\/messages/.test(location.pathname)) return { primary: ['Open threads', () => scrollToId('messages-shell')], secondary: ['Browse listings', () => goTo('/', 'listing-feed')] } as const
+    if (/^\/store/.test(location.pathname)) return { primary: ['Manage listings', () => scrollToId('store-shell')], secondary: ['Add fruit', () => goTo('/store/new', 'route-start')] } as const
+    if (/^\/profile/.test(location.pathname)) return { primary: ['View profile', () => scrollToId('profile-shell')], secondary: ['Saved fruit', () => goTo('/favorites', 'favorites-shell')] } as const
+    return { primary: ['Browse fruit', () => scrollToId('listing-feed')], secondary: ['Open map', () => goTo('/map', 'map-panel')] } as const
+  })()
+
+  useEffect(() => {
+    window.requestAnimationFrame(() => {
+      setTimeout(() => {
+        document.getElementById('route-start')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 20)
+    })
+  }, [location.pathname])
 
   return (
     <div className="app-shell">
-      <header className="topbar topbar--route">
-        <div className="topbar-copy">
-          <p className="eyebrow">{shellTheme.eyebrow}</p>
-          <p className="topbar-mini">{shellTheme.kicker}</p>
+      <header className={`topbar topbar--slim ${currentRouteTheme}`}>
+        <div className="brand-lockup">
+          <p className="eyebrow">Pluck orchard market</p>
+          <h1>{currentMeta.title}</h1>
+          <p className="subtle-copy">
+            {currentMeta.subtitle}
+          </p>
         </div>
         <div className="topbar-actions">
           {!authUser ? (
             <>
-              <button className="ghost" onClick={() => navigate('/login')}>
+              <button className="ghost" onClick={() => goTo('/login')}>
                 Log in
               </button>
-              <button className="primary" onClick={() => navigate('/signup')}>
+              <button className="primary" onClick={() => goTo('/signup')}>
                 Create account
               </button>
             </>
           ) : (
             <>
-              <button className="ghost" onClick={() => navigate('/alerts')}>
+              <button className="ghost" onClick={() => goTo('/favorites')}>
+                Saved {favoriteListings.length ? `(${favoriteListings.length})` : ''}
+              </button>
+              <button className="ghost" onClick={() => goTo('/alerts')}>
                 Alerts {unreadNotifications.length ? `(${unreadNotifications.length})` : ''}
               </button>
-              <button className="ghost" onClick={() => navigate('/profile')}>
-                {[seller.city, seller.state].filter(Boolean).join(', ') || 'Profile'}
+              <button className="ghost" onClick={() => goTo('/profile')}>
+                Profile
               </button>
-              <button className="primary" onClick={() => navigate('/store/new')}>
+              <button className="ghost" onClick={onLogout}>
+                Log out
+              </button>
+              <button className="primary" onClick={() => goTo('/store/new')}>
                 + New listing
               </button>
             </>
@@ -1423,64 +2275,126 @@ function AppLayout({
         </div>
       </header>
 
-      <section className={`hero-band hero-band--route hero-band--${location.pathname.split('/')[1] || 'home'}`}>
-        <div className="hero-copy hero-copy--route">
-          <p className="eyebrow">{shellTheme.kicker}</p>
-          <h2>{shellTheme.title}</h2>
-          <p>{shellTheme.subtitle}</p>
-          <div className="hero-cta-row">
-            {shellTheme.links.map((link) => (
-              <button
-                key={link.label}
-                className={link.primary ? 'primary' : 'ghost'}
-                onClick={() => jumpTo(link.targetId, link.route)}
-              >
-                {link.label}
+      {leadShowcase ? (
+        <section className="cinematic-hero">
+          <div className="cinematic-backdrop">
+            <img src={leadShowcase.image} alt={leadShowcase.title} />
+            <div className="cinematic-overlay">
+              <p className="eyebrow eyebrow--light">Pluck orchard market</p>
+              <h2>{leadShowcase.title}</h2>
+              <p>Backyard harvests, orchard trust, and quick pickup plans—all surfaced in one beautiful place.</p>
+              <div className="cinematic-pill-row">
+                <span className="cinematic-pill">{leadShowcase.fruit}</span>
+                <span className="cinematic-pill">${leadShowcase.price}/{leadShowcase.unit}</span>
+                <span className="cinematic-pill">{prettyLocation(leadShowcase)}</span>
+                {leadShowcase.sellerRating ? <span className="cinematic-pill">★ {leadShowcase.sellerRating.toFixed(1)}</span> : null}
+              </div>
+              <div className="hero-cta-row">
+                <button className="primary" onClick={() => scrollToId('live-picks')}>
+                  Shop featured fruit
+                </button>
+                <button className="ghost ghost--light" onClick={() => goTo('/map', 'map-panel')}>
+                  Explore nearby map
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="cinematic-side-rail">
+            {(sideShowcase.length ? sideShowcase : listings.slice(1, 4)).slice(0, 3).map((item) => (
+              <button className="cinematic-fruit-card cinematic-link-card" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
+                <img src={item.image} alt={item.title} />
+                <div className="cinematic-fruit-card-copy">
+                  <strong>{item.title}</strong>
+                  <span>${item.price}/{item.unit}</span>
+                  <TrustStrip listing={item} />
+                </div>
               </button>
             ))}
           </div>
-        </div>
+        </section>
+      ) : null}
 
-        <div className="hero-aside hero-aside--route">
-          <div className="hero-note-strip">
-            <span className="hero-stamp">Resilient</span>
-            <span className="hero-stamp">Local</span>
-            <span className="hero-stamp">Independent</span>
+      {leadShowcase ? (
+        <section id="live-picks" className="hero-live-grid">
+          <div className="section-heading section-heading--compact">
+            <div>
+              <p className="eyebrow">Live orchard picks</p>
+              <h2>Tap any fruit to open the real listing.</h2>
+            </div>
+            <span className="section-meta">{fruitRibbon.length} live now</span>
           </div>
-          <div className="stats-grid stats-grid--manifesto">
-            <button className="stat-card stat-link" onClick={() => navigate('/')}>
-              <span>Nearby</span>
-              <strong>{listings.length}</strong>
+
+          <div className="hero-live-grid__cards">
+            {fruitRibbon.slice(0, 6).map((item) => (
+              <button className="hero-live-card cinematic-link-card" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
+                <img src={item.image} alt={item.title} />
+                <div className="hero-live-card__overlay">
+                  <span className="hero-live-card__kicker">{item.harvestLabel || item.distance || 'Fresh nearby'}</span>
+                  <strong>{item.title}</strong>
+                  <span>
+                    ${item.price}/{item.unit} • {item.city || item.location}
+                  </span>
+                  <TrustStrip listing={item} />
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {fruitRibbon.length ? (
+        <section className="fruit-ribbon">
+          {fruitRibbon.map((item) => (
+            <button className="fruit-ribbon-card cinematic-link-card" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
+              <img src={item.image} alt={item.title} />
+              <div>
+                <strong>{item.title}</strong>
+                <span>
+                  ${item.price}/{item.unit} • {item.city || item.location}
+                </span>
+                <TrustStrip listing={item} />
+              </div>
             </button>
-            <button className="stat-card stat-link" onClick={() => navigate('/favorites')}>
-              <span>Saved</span>
-              <strong>{favoriteListings.length}</strong>
+          ))}
+        </section>
+      ) : null}
+
+      <div className="search-wrap search-wrap--floating">
+        <div className="search-form-row search-form-row--premium">
+          <input
+            value={draftQuery}
+            onChange={(e) => setDraftQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                submitSearch(isActivePath('/map') ? 'map-panel' : 'listing-feed')
+              }
+            }}
+            placeholder="Search fruit, growers, city, state, or ZIP... Press Enter to search."
+          />
+          <div className="search-action-stack">
+            <button className="search-submit" onClick={() => submitSearch(isActivePath('/map') ? 'map-panel' : 'listing-feed')}>
+              Search
             </button>
-            <button className="stat-card stat-link" onClick={() => navigate('/store/inventory')}>
-              <span>In stock</span>
-              <strong>{totalInventory}</strong>
-            </button>
-            <button className="stat-card stat-link" onClick={() => navigate('/messages')}>
-              <span>Threads</span>
-              <strong>{conversations.length}</strong>
+            <button className="ghost compact-btn" onClick={clearSearch}>
+              Clear
             </button>
           </div>
         </div>
-      </section>
-
-      <div className="search-wrap" id="market-search">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search fruit, growers, city, state, or ZIP..."
-        />
+        <div className="search-meta-row">
+          <p className="search-hint">Type what you want, then press Enter or tap Search to jump to the matching fruit below.</p>
+          <button className="ghost compact-btn" onClick={useNearMe}>Near me</button>
+        </div>
+        {searchFeedback ? <div className="search-feedback-pill">{searchFeedback}</div> : null}
+        {appliedQuery ? <div className="search-applied-copy">Live search locked in for <strong>{appliedQuery}</strong></div> : null}
 
         <div className="search-bottom-row">
           <div className="toggle-row">
-            <button className={isActivePath('/') ? 'toggle active' : 'toggle'} onClick={() => navigate('/')}>
+            <button className={isActivePath('/') ? 'toggle active' : 'toggle'} onClick={() => goTo('/', 'listing-feed')}>
               List
             </button>
-            <button className={isActivePath('/map') ? 'toggle active' : 'toggle'} onClick={() => navigate('/map')}>
+            <button className={isActivePath('/map') ? 'toggle active' : 'toggle'} onClick={() => goTo('/map', 'map-panel')}>
               Map
             </button>
           </div>
@@ -1490,7 +2404,7 @@ function AppLayout({
               <button
                 key={filter.key}
                 className={activeFilter === filter.key ? 'filter-chip active' : 'filter-chip'}
-                onClick={() => setActiveFilter(filter.key)}
+                onClick={() => { setActiveFilter(filter.key); setTimeout(() => scrollToId('listing-feed'), 30) }}
               >
                 {filter.label}
               </button>
@@ -1499,32 +2413,49 @@ function AppLayout({
         </div>
       </div>
 
-      <main className="content">
+      <section id="route-start" className={`route-intro-card route-billboard ${currentRouteTheme}`}>
+        <div className="route-billboard-overlay" />
+        <div className="route-billboard-copy">
+          <p className="eyebrow eyebrow--light">{currentMeta.eyebrow}</p>
+          <h2>{currentMeta.title}</h2>
+          <p className="route-billboard-sub">{currentMeta.subtitle}</p>
+        </div>
+        <div className="route-intro-actions route-intro-actions--hero">
+          <button className="primary" onClick={routeAction.primary[1]}>{routeAction.primary[0]}</button>
+          <button className="ghost ghost--light" onClick={routeAction.secondary[1]}>{routeAction.secondary[0]}</button>
+        </div>
+      </section>
+
+      <main id="listing-feed" className="content">
         <Routes>
           <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
           <Route path="/reset-password" element={<AuthShell mode="reset" onAuthSuccess={onAuthSuccess} />} />
-          <Route path="/board" element={<CommunityBoard />} />
 
           <Route
             path="/"
             element={
               <>
-                <section className="hero-card">
-                  <div>
-                    <p className="eyebrow">Today nearby</p>
-                    <h2>Backyard harvests, same-day pickup</h2>
-                    <p>Browse fruit from local growers, reserve by message, and coordinate a clear pickup window.</p>
+                <section className="hero-card hero-card--gallery">
+                  <div className="hero-card-copy">
+                    <p className="eyebrow">Curated fruit edit</p>
+                    <h2>Fresh picks worth opening, saving, and reserving.</h2>
+                    <p>Discover local fruit with richer photos, clearer trust, and faster pickup moves.</p>
                   </div>
-                  <button className="primary" onClick={() => navigate('/store/new')}>
-                    Create listing
-                  </button>
+                  <div className="hero-card-gallery">
+                    {(fruitRibbon.length ? fruitRibbon : listings.slice(0, 4)).slice(0, 4).map((item) => (
+                      <button className="hero-fruit-tile" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
+                        <img src={item.image} alt={item.title} />
+                        <span>{item.fruit}</span>
+                      </button>
+                    ))}
+                  </div>
                 </section>
 
                 {unreadNotifications.length ? (
                   <section className="signal-strip">
                     {unreadNotifications.slice(0, 2).map((item) => (
-                      <button className="signal-pill" key={item.id} onClick={() => navigate('/alerts')}>
+                      <button className="signal-pill" key={item.id} onClick={() => goTo('/alerts')}>
                         {item.title}
                       </button>
                     ))}
@@ -1533,26 +2464,26 @@ function AppLayout({
 
                 <section className="section-heading">
                   <div>
-                    <p className="eyebrow">Picked nearby</p>
-                    <h2>Fruit worth leaving home for</h2>
+                    <p className="eyebrow">Featured near you</p>
+                    <h2>Beautiful fruit worth opening</h2>
                   </div>
                   <span className="section-meta">{filtered.length} listings</span>
                 </section>
 
-                <section className="grid" id="market-listings">
+                <section className="grid">
                   {filtered.map((item) => {
                     const isFavorite = favoriteListingIds.has(item.id)
                     const isFollowing = followingSellerIds.has(item.sellerId)
 
                     return (
                       <article className="card premium-card listing-card-v2" key={item.id}>
-                        <div className="card-image-wrap">
+                        <button className="card-image-wrap card-image-button" onClick={() => goTo('/listing/' + item.id)}>
                           <img src={item.image} alt={item.title} />
                           <span className="card-badge">{item.distance}</span>
-                        </div>
+                        </button>
                         <div className="card-body">
                           <div className="price-row">
-                            <h3>{item.title}</h3>
+                            <button className="listing-title-link" onClick={() => goTo('/listing/' + item.id)}>{item.title}</button>
                             <span>
                               ${item.price}/{item.unit}
                             </span>
@@ -1572,6 +2503,8 @@ function AppLayout({
                             {item.sellerVerified ? '✓ ' : ''}
                             {sellerLabel(item)}
                           </button>
+
+                          <TrustStrip listing={item} />
 
                           <p className="desc">{item.description}</p>
 
@@ -1599,7 +2532,7 @@ function AppLayout({
                             <button className="primary fill-btn" onClick={() => handleStartConversation(item)}>
                               Message
                             </button>
-                            <button className="ghost fill-btn" onClick={() => navigate('/listing/' + item.id)}>
+                            <button className="ghost fill-btn" onClick={() => goTo('/listing/' + item.id)}>
                               View
                             </button>
                             <button className="ghost fill-btn" onClick={() => handleToggleFavorite(item.id)}>
@@ -1619,8 +2552,8 @@ function AppLayout({
                   <>
                     <section className="section-heading section-gap-top">
                       <div>
-                        <p className="eyebrow">Local signal</p>
-                        <h2>From the neighborhood</h2>
+                        <p className="eyebrow">Harvest feed</p>
+                        <h2>Grower signals</h2>
                       </div>
                     </section>
 
@@ -1655,16 +2588,16 @@ function AppLayout({
                   </>
                 ) : null}
 
-                <section className="section-heading section-gap-top">
+                <section id="just-added" className="section-heading section-gap-top">
                   <div>
                     <p className="eyebrow">Fresh activity</p>
-                    <h2>Just dropped</h2>
+                    <h2>Just added</h2>
                   </div>
                 </section>
 
                 <section className="mini-grid">
                   {(justAdded.length ? justAdded : listings.slice(0, 2)).map((item) => (
-                    <div className="activity-card" key={item.id}>
+                    <button className="activity-card activity-card--live" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
                       <img src={item.image} alt={item.title} />
                       <div>
                         <strong>{item.title}</strong>
@@ -1672,7 +2605,7 @@ function AppLayout({
                           {prettyLocation(item)} • ${item.price}/{item.unit}
                         </p>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </section>
               </>
@@ -1682,30 +2615,44 @@ function AppLayout({
           <Route
             path="/map"
             element={
-              <section className="map-panel" id="map-panel">
+              <section id="map-panel" className="map-panel map-panel--route">
                 <div className="map-fallback premium-map">
                   <div className="map-header-row">
                     <div>
                       <p className="eyebrow">Discovery map</p>
                       <h3>Location-first neighborhood browsing</h3>
                     </div>
-                    <button className="ghost" onClick={() => navigate('/store/new')}>
-                      Add your harvest
-                    </button>
+                    <div className="map-header-actions">
+                      <button className="ghost" onClick={() => setMapExpanded((current) => !current)}>{mapExpanded ? 'Minimize map' : 'Expand map'}</button>
+                      <button className="ghost" onClick={() => goTo('/store/new')}>Add your harvest</button>
+                    </div>
                   </div>
 
                   <p>
-                    This map view is now geo-aware and nationwide-ready. Listings with coordinates render as live pins on a U.S. board.
+                    Zoom into any neighborhood, type a ZIP to recenter the map, and open live fruit listings directly from the pins or the list below.
                   </p>
 
-                  <NationwideGeoMap
-                    listings={filtered}
-                    onOpenListing={(listingId) => navigate('/listing/' + listingId)}
-                  />
+                  <div className={mapExpanded ? 'leaflet-map-panel is-expanded' : 'leaflet-map-panel'}>
+                    <LeafletMapView
+                      listings={filtered}
+                      searchQuery={appliedQuery}
+                      onOpenListing={(listingId) => navigate('/listing/' + listingId)}
+                    />
+                  </div>
 
-                  <div className="pin-list">
+                  <div className="map-support-row">
+                    <div className="map-support-copy">
+                      <strong>Search any ZIP, city, or neighborhood</strong>
+                      <span>The map now recenters to the place you typed, then keeps the nearby fruit cards underneath in sync.</span>
+                    </div>
+                    <button className="ghost" onClick={() => scrollToId('listing-feed')}>
+                      Jump to matching fruit
+                    </button>
+                  </div>
+
+                  <div className="pin-list premium-pin-list">
                     {filtered.map((item) => (
-                      <div className="pin-row premium-pin-row" key={item.id}>
+                      <button className="pin-row premium-pin-row premium-pin-button" key={item.id} onClick={() => navigate('/listing/' + item.id)}>
                         <div>
                           <strong>{item.fruit}</strong>
                           <p>
@@ -1713,19 +2660,24 @@ function AppLayout({
                           </p>
                           <div className="listing-badge-row">
                             {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
-                            {item.sellerVerified ? <span className="trust-pill verified">Verified</span> : null}
-                            {hasGeo(item) ? <span className="trust-pill available">Geo-ready</span> : null}
+                            {item.sellerVerified ? <span className="trust-pill verified">Verified grower</span> : null}
+                            {hasGeo(item) ? <span className="trust-pill available">Map ready</span> : null}
                           </div>
                         </div>
                         <span>
                           ${item.price}/{item.unit}
                         </span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
               </section>
             }
+          />
+
+          <Route
+            path="/board"
+            element={<section id="board-shell" className="content-shell"><CommunityBoard /></section>}
           />
 
           <Route
@@ -1740,6 +2692,8 @@ function AppLayout({
                 onToggleFollow={handleToggleFollow}
                 onOpenReserve={setReserveTarget}
                 onStartConversation={handleStartConversation}
+                reviews={reviews}
+                onAddReview={handleAddReview}
               />
             }
           />
@@ -1759,7 +2713,7 @@ function AppLayout({
           <Route
             path="/favorites"
             element={
-              <section className="stack" id="store-shell">
+              <section className="stack">
                 <div className="section-heading compact-heading no-top-gap">
                   <div>
                     <p className="eyebrow">Saved for later</p>
@@ -1779,15 +2733,16 @@ function AppLayout({
                             {prettyLocation(item)} • ${item.price}/{item.unit}
                           </p>
                           <span>{item.pickupWindows[0]}</span>
+                          <TrustStrip listing={item} />
                         </div>
-                        <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
+                        <button className="ghost" onClick={() => goTo('/listing/' + item.id)}>
                           View
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="empty-panel">No saved listings yet.</div>
+                  <div className="empty-panel">Save fruit you want to revisit and it will land here.</div>
                 )}
               </section>
             }
@@ -1907,9 +2862,10 @@ function AppLayout({
                             {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
                             {item.availabilityLabel ? <span className="trust-pill available">{item.availabilityLabel}</span> : null}
                           </div>
+                          <TrustStrip listing={item} />
                         </div>
                         <div className="listing-row-actions">
-                          <button className="ghost" onClick={() => navigate('/listing/' + item.id)}>
+                          <button className="ghost" onClick={() => goTo('/listing/' + item.id)}>
                             View
                           </button>
                           <button className="ghost" onClick={() => navigate('/store/edit/' + item.id)}>
@@ -1923,7 +2879,7 @@ function AppLayout({
                     ))}
                   </div>
                 ) : (
-                  <div className="empty-panel">You do not have any listings yet.</div>
+                  <div className="empty-panel">Add your first harvest and your storefront listings will appear here.</div>
                 )}
               </section>
             }
@@ -1952,7 +2908,7 @@ function AppLayout({
                       </div>
                     ))
                   ) : (
-                    <div className="empty-panel">You do not have inventory yet.</div>
+                    <div className="empty-panel">Your active inventory will show up here once you publish a harvest.</div>
                   )}
                 </div>
               </section>
@@ -2034,10 +2990,10 @@ function AppLayout({
                   <>
                     <p>Create an account or log in to make this profile live across devices.</p>
                     <div className="action-row">
-                      <button className="primary" onClick={() => navigate('/signup')}>
+                      <button className="primary" onClick={() => goTo('/signup')}>
                         Create account
                       </button>
-                      <button className="ghost" onClick={() => navigate('/login')}>
+                      <button className="ghost" onClick={() => goTo('/login')}>
                         Log in
                       </button>
                     </div>
@@ -2067,6 +3023,7 @@ function AppLayout({
                       {seller.followers ? <div className="metric-chip">{seller.followers} followers</div> : null}
                       {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
                       {seller.repeatBuyerScore ? <div className="metric-chip">{seller.repeatBuyerScore}</div> : null}
+                      <div className="metric-chip">{memberSinceLabel(seller)}</div>
                     </div>
 
                     {seller.specialties?.length ? (
@@ -2085,6 +3042,9 @@ function AppLayout({
                       </button>
                       <button className="ghost" onClick={() => navigate('/store/new')}>
                         Add new listing
+                      </button>
+                      <button className="ghost" onClick={onLogout}>
+                        Log out
                       </button>
                     </div>
                   </>
@@ -2111,7 +3071,7 @@ function AppLayout({
           Messages
         </NavLink>
         <NavLink to="/store" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-          Store
+          My Store
         </NavLink>
         <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
           Profile
@@ -2171,7 +3131,22 @@ function App() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [follows, setFollows] = useState<Follow[]>([])
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
+    try {
+      const raw = window.localStorage.getItem('pluck-auth-user')
+      return raw ? (JSON.parse(raw) as AuthUser) : null
+    } catch {
+      return null
+    }
+  })
+  const [reviews, setReviews] = useState<ReviewItem[]>(() => {
+    try {
+      const raw = window.localStorage.getItem('pluck-reviews')
+      return raw ? (JSON.parse(raw) as ReviewItem[]) : []
+    } catch {
+      return []
+    }
+  })
 
   useEffect(() => {
     getListings()
@@ -2186,6 +3161,16 @@ function App() {
     getAlerts().then(setAlerts).catch(() => setAlerts([]))
     getFollows('me').then(setFollows).catch(() => setFollows([]))
   }, [])
+
+  useEffect(() => {
+    try {
+      if (authUser) {
+        window.localStorage.setItem('pluck-auth-user', JSON.stringify(authUser))
+      } else {
+        window.localStorage.removeItem('pluck-auth-user')
+      }
+    } catch {}
+  }, [authUser])
 
   return (
     <AppLayout
@@ -2206,7 +3191,10 @@ function App() {
       follows={follows}
       setFollows={setFollows}
       authUser={authUser}
+      reviews={reviews}
+      setReviews={setReviews}
       onAuthSuccess={setAuthUser}
+      onLogout={() => setAuthUser(null)}
     />
   )
 }

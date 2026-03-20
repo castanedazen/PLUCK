@@ -188,9 +188,10 @@ addColumnIfMissing("listings", "pickup_completed_at", "TEXT")
 addColumnIfMissing("listings", "reserved_by_user_id", "TEXT")
 addColumnIfMissing("listings", "reserved_by_name", "TEXT")
 addColumnIfMissing("listings", "reserved_pickup_window", "TEXT")
-addColumnIfMissing("users", "password_hash", "TEXT")
-addColumnIfMissing("users", "reset_token", "TEXT")
-addColumnIfMissing("users", "reset_expires_at", "TEXT")
+
+addColumnIfMissing("users", "password_hash", "TEXT NOT NULL DEFAULT ''")
+addColumnIfMissing("users", "reset_token", "TEXT NOT NULL DEFAULT ''")
+addColumnIfMissing("users", "reset_token_expires", "TEXT NOT NULL DEFAULT ''")
 
 function safeJsonParse(value, fallback) {
   try {

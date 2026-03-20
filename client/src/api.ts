@@ -9,11 +9,12 @@ import type {
   Message,
   NotificationItem,
   PickupReservation,
+  Review,
   SellerProfile,
   SocialPost,
 } from './types'
 
-const API_BASE = '/api'
+const API_BASE = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '') + '/api'
 
 async function parseResponse<T>(res: Response, fallbackMessage: string): Promise<T> {
   if (res.ok) {
@@ -307,18 +308,7 @@ export async function toggleFollow(payload: {
   return parseResponse<{ active: boolean }>(res, 'Failed to update follow')
 }
 
-export async function getReviewsForListing(listingId: string): Promise<
-  Array<{
-    id: string
-    listingId: string
-    sellerId: string
-    buyerId: string
-    buyerName: string
-    rating: number
-    comment: string
-    createdAt: string
-  }>
-> {
+export async function getReviewsForListing(listingId: string): Promise<Review[]> {
   const res = await fetch(`${API_BASE}/reviews/listing/${listingId}`)
   return parseResponse(res, 'Failed to load reviews')
 }
@@ -330,16 +320,7 @@ export async function createReview(payload: {
   buyerName: string
   rating: number
   comment: string
-}): Promise<{
-  id: string
-  listingId: string
-  sellerId: string
-  buyerId: string
-  buyerName: string
-  rating: number
-  comment: string
-  createdAt: string
-}> {
+}): Promise<Review> {
   const res = await fetch(`${API_BASE}/reviews`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -352,8 +333,8 @@ export async function createReview(payload: {
 export async function signup(payload: {
   name: string
   email: string
-  role: 'buyer' | 'grower'
-  password: string
+  role?: 'buyer' | 'grower'
+  password?: string
 }): Promise<AuthUser> {
   const res = await fetch(`${API_BASE}/auth/signup`, {
     method: 'POST',
@@ -366,7 +347,7 @@ export async function signup(payload: {
 
 export async function login(payload: {
   email: string
-  password: string
+  password?: string
 }): Promise<AuthUser> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
@@ -377,28 +358,20 @@ export async function login(payload: {
   return parseResponse<AuthUser>(res, 'Failed to log in')
 }
 
-export async function requestPasswordReset(payload: {
-  email: string
-}): Promise<{ resetToken: string }> {
+export async function requestPasswordReset(payload: { email: string }): Promise<{ ok: boolean; resetToken: string }> {
   const res = await fetch(`${API_BASE}/auth/request-reset`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
-
-  return parseResponse<{ resetToken: string }>(res, 'Failed to request password reset')
+  return parseResponse(res, 'Failed to request password reset')
 }
 
-export async function resetPassword(payload: {
-  email: string
-  resetToken: string
-  password: string
-}): Promise<{ success: boolean }> {
+export async function resetPassword(payload: { email: string; resetToken: string; password: string }): Promise<{ ok: boolean }> {
   const res = await fetch(`${API_BASE}/auth/reset-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
-
-  return parseResponse<{ success: boolean }>(res, 'Failed to reset password')
+  return parseResponse(res, 'Failed to reset password')
 }
