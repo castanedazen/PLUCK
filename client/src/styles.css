@@ -1,9 +1,9 @@
-/* ===== PLUCK V15 – REAL FIX ===== */
+/* ===== PLUCK V16 – ACTUAL WIRED STYLES ===== */
 
 :root {
-  --bg-main: #f5f7fb;
+  --bg-main: #f4f6fb;
   --bg-panel: #ffffff;
-  --bg-soft: #eef2e8;
+  --bg-soft: #eef1f6;
 
   --ink-main: #0f172a;
   --ink-soft: #475569;
@@ -14,11 +14,10 @@
 
   --border: #e2e8f0;
 
-  --shadow-soft: 0 10px 25px rgba(0,0,0,0.06);
-  --shadow-card: 0 6px 18px rgba(0,0,0,0.08);
+  --shadow-soft: 0 10px 25px rgba(0,0,0,0.05);
+  --shadow-card: 0 6px 16px rgba(0,0,0,0.08);
 }
 
-/* BASE RESET */
 body {
   margin: 0;
   background: var(--bg-main);
@@ -26,22 +25,43 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* GLOBAL FIXES */
 * {
   box-sizing: border-box;
 }
 
-/* HEADERS */
-h1, h2, h3 {
-  color: var(--ink-main);
-  margin-bottom: 8px;
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 4px;
 }
 
-p {
+.review-panel,
+.auth-card,
+.modal-shell,
+.review-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+
+.empty-panel {
+  background: var(--bg-soft);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
   color: var(--ink-soft);
 }
 
-/* BUTTONS */
+.action-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 button {
   border-radius: 10px;
   padding: 10px 14px;
@@ -55,53 +75,107 @@ button.primary {
   color: white;
 }
 
+button.primary:hover {
+  opacity: 0.9;
+}
+
 button.ghost {
   background: transparent;
   color: var(--ink-soft);
 }
 
-/* CARDS */
-.card {
-  background: var(--bg-panel);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--border);
+button.ghost:hover {
+  color: var(--accent);
 }
 
-/* PILLS */
-.pill,
-.chip,
-.tag {
+.trust-strip {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.trust-mini {
   background: var(--bg-soft);
-  color: var(--ink-main);
   border: 1px solid var(--border);
-  padding: 6px 12px;
   border-radius: 999px;
-  font-size: 13px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.rating-stars {
+  display: flex;
+  gap: 6px;
+}
+
+.star {
+  font-size: 18px;
+  color: #cbd5f5;
   cursor: pointer;
 }
 
-.pill.active,
-.chip.active,
-.tag.active {
+.star.active {
+  color: #fbbf24;
+}
+
+.window-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  cursor: pointer;
+}
+
+.window-pill.active {
   background: var(--accent);
   color: white;
 }
 
-/* HERO IMAGE FIX */
-img {
-  max-width: 100%;
-  border-radius: 12px;
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
 }
 
-/* NAV */
-.bottom-nav {
-  background: var(--bg-panel);
-  border-top: 1px solid var(--border);
+.modal-shell {
+  max-width: 500px;
+  margin: 100px auto;
 }
 
-/* TEXT */
-.small-text {
+.auth-page {
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+label.full {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  gap: 4px;
+}
+
+.review-card {
+  margin-bottom: 12px;
+}
+
+.review-card-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.review-rating-value {
+  font-size: 13px;
   color: var(--ink-muted);
 }
