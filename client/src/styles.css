@@ -1,9 +1,9 @@
-/* ===== PLUCK V15 – LIGHT, PREMIUM, READABLE ===== */
+/* ===== PLUCK V15 – REAL FIX ===== */
 
 :root {
   --bg-main: #f5f7fb;
   --bg-panel: #ffffff;
-  --bg-soft: #eef2f7;
+  --bg-soft: #eef2e8;
 
   --ink-main: #0f172a;
   --ink-soft: #475569;
@@ -18,63 +18,30 @@
   --shadow-card: 0 6px 18px rgba(0,0,0,0.08);
 }
 
-/* ===== BASE ===== */
-
+/* BASE RESET */
 body {
+  margin: 0;
   background: var(--bg-main);
   color: var(--ink-main);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-.app-shell {
-  background: var(--bg-main);
+/* GLOBAL FIXES */
+* {
+  box-sizing: border-box;
 }
 
-/* ===== CARDS ===== */
-
-.card {
-  background: var(--bg-panel);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--border);
-}
-
-/* ===== PILLS (FIXED PROPERLY) ===== */
-
-.pill,
-.chip,
-.tag {
-  background: var(--bg-soft);
+/* HEADERS */
+h1, h2, h3 {
   color: var(--ink-main);
-  border: 1px solid var(--border);
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  margin-bottom: 8px;
 }
 
-.pill:hover,
-.chip:hover,
-.tag:hover {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
+p {
+  color: var(--ink-soft);
 }
 
-/* ACTIVE STATE (THIS WAS MISSING) */
-.pill.active,
-.chip.active,
-.tag.active {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-}
-
-/* ===== BUTTONS ===== */
-
+/* BUTTONS */
 button {
   border-radius: 10px;
   padding: 10px 14px;
@@ -88,80 +55,53 @@ button.primary {
   color: white;
 }
 
-button.primary:hover {
-  opacity: 0.9;
-}
-
 button.ghost {
   background: transparent;
   color: var(--ink-soft);
 }
 
-button.ghost:hover {
-  color: var(--accent);
+/* CARDS */
+.card {
+  background: var(--bg-panel);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
 }
 
-/* ===== NAV (FIX VISIBILITY) ===== */
+/* PILLS */
+.pill,
+.chip,
+.tag {
+  background: var(--bg-soft);
+  color: var(--ink-main);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+}
 
+.pill.active,
+.chip.active,
+.tag.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* HERO IMAGE FIX */
+img {
+  max-width: 100%;
+  border-radius: 12px;
+}
+
+/* NAV */
 .bottom-nav {
   background: var(--bg-panel);
   border-top: 1px solid var(--border);
 }
 
-.bottom-nav button {
+/* TEXT */
+.small-text {
   color: var(--ink-muted);
-}
-
-.bottom-nav button.active {
-  color: var(--accent);
-}
-
-/* ===== HEADERS ===== */
-
-.route-hero {
-  color: white;
-  position: relative;
-}
-
-.route-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(15,23,42,0.35);
-}
-
-/* ===== MAP FIX ===== */
-
-.leaflet-map-shell {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow-soft);
-}
-
-/* ===== TEXT READABILITY ===== */
-
-.small-text,
-.subtext {
-  color: var(--ink-soft);
-}
-
-/* ===== COMMUNITY POSTS ===== */
-
-.post-card {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-card);
-}
-
-/* ===== FIX WHITE ON WHITE ANYWHERE ===== */
-
-* {
-  color: inherit;
-}
-
-/* fallback safety */
-.pill,
-.chip,
-.tag {
-  background-clip: padding-box;
 }
