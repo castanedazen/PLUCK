@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import type { Listing } from './types'
+import type { Listing } from '../types'
 
 type Props = { listings: Listing[] }
 
