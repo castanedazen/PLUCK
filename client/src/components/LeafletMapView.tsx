@@ -1,191 +1,168 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { MapContainer, Marker, Popup, TileLayer, ZoomControl, useMap } from 'react-leaflet'
-import L from 'leaflet'
-import type { Listing } from '../types'
+import React, { useEffect, useMemo, useRef } from "react";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-const defaultCenter: [number, number] = [37.0902, -95.7129]
+type Listing = {
+  id: string;
+  title: string;
+  fruit: string;
+  price: number;
+  unit?: string;
+  city?: string;
+  state?: string;
+  location?: string;
+  geo?: { lat: number; lng: number } | null;
+};
 
-const pluckIcon = L.divIcon({
-  className: 'pluck-marker-shell',
-  html: '<div class="pluck-marker-dot"></div>',
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-})
+const icon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
 
-function hasGeo(listing: Listing) {
-  return (
-    typeof listing.geo?.lat === 'number' &&
-    Number.isFinite(listing.geo.lat) &&
-    typeof listing.geo?.lng === 'number' &&
-    Number.isFinite(listing.geo.lng)
-  )
-}
-
-function prettyLocation(listing: Listing) {
-  const parts = [listing.city || '', listing.state || ''].filter(Boolean)
-  if (parts.length) return parts.join(', ')
-  return listing.location
-}
-
-function RecenterMap({
-  center,
-  zoom,
-}: {
-  center: [number, number]
-  zoom: number
-}) {
-  const map = useMap()
+function FitToListings({ listings, searchQuery }: { listings: Listing[]; searchQuery?: string }) {
+  const map = useMap();
 
   useEffect(() => {
-    map.setView(center, zoom, {
-      animate: true,
-    })
-  }, [map, center, zoom])
+    const valid = listings.filter((l) => l.geo && Number.isFinite(l.geo.lat) && Number.isFinite(l.geo.lng));
+    if (!valid.length) {
+      map.setView([39.5, -98.35], 4);
+      return;
+    }
+    if (valid.length === 1) {
+      map.setView([valid[0].geo!.lat, valid[0].geo!.lng], 9);
+      return;
+    }
+    const bounds = L.latLngBounds(valid.map((l) => [l.geo!.lat, l.geo!.lng] as [number, number]));
+    map.fitBounds(bounds.pad(0.22));
+  }, [listings, searchQuery, map]);
 
-  return null
+  useEffect(() => {
+    const t = setTimeout(() => map.invalidateSize(), 250);
+    return () => clearTimeout(t);
+  }, [map]);
+
+  return null;
 }
 
-type SearchTarget = {
-  center: [number, number]
-  label: string
-  zoom: number
-} | null
+function Controls({ listings }: { listings: Listing[] }) {
+  const map = useMap();
+
+  const locate = () => {
+    map.locate({ setView: true, maxZoom: 10 });
+  };
+
+  const reset = () => {
+    const valid = listings.filter((l) => l.geo && Number.isFinite(l.geo.lat) && Number.isFinite(l.geo.lng));
+    if (!valid.length) {
+      map.setView([39.5, -98.35], 4);
+      return;
+    }
+    if (valid.length === 1) {
+      map.setView([valid[0].geo!.lat, valid[0].geo!.lng], 9);
+      return;
+    }
+    const bounds = L.latLngBounds(valid.map((l) => [l.geo!.lat, l.geo!.lng] as [number, number]));
+    map.fitBounds(bounds.pad(0.22));
+  };
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        right: 12,
+        top: 12,
+        zIndex: 1000,
+        display: "grid",
+        gap: 8,
+      }}
+    >
+      {[
+        { label: "+", onClick: () => map.zoomIn() },
+        { label: "−", onClick: () => map.zoomOut() },
+        { label: "Locate", onClick: locate },
+        { label: "Reset", onClick: reset },
+      ].map((btn) => (
+        <button
+          key={btn.label}
+          onClick={btn.onClick}
+          style={{
+            border: "1px solid rgba(16,32,51,0.12)",
+            background: "rgba(255,255,255,0.96)",
+            borderRadius: 14,
+            padding: btn.label.length === 1 ? "8px 12px" : "10px 12px",
+            fontWeight: 800,
+            cursor: "pointer",
+            boxShadow: "0 8px 18px rgba(16,32,51,0.12)",
+          }}
+        >
+          {btn.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function LeafletMapView({
   listings,
   searchQuery,
   onOpenListing,
 }: {
-  listings: Listing[]
-  searchQuery?: string
-  onOpenListing: (listingId: string) => void
+  listings: Listing[];
+  searchQuery?: string;
+  onOpenListing?: (listingId: string) => void;
 }) {
-  const geoListings = useMemo(() => listings.filter(hasGeo), [listings])
-  const [searchTarget, setSearchTarget] = useState<SearchTarget>(null)
-  const requestId = useRef(0)
-
-  const averageCenter = useMemo<[number, number]>(() => {
-    if (!geoListings.length) return defaultCenter
-    const lat = geoListings.reduce((sum, item) => sum + (item.geo?.lat || 0), 0) / geoListings.length
-    const lng = geoListings.reduce((sum, item) => sum + (item.geo?.lng || 0), 0) / geoListings.length
-    return [lat, lng]
-  }, [geoListings])
-
-  useEffect(() => {
-    const raw = (searchQuery || '').trim()
-    if (!raw) {
-      setSearchTarget(null)
-      return
-    }
-
-    const matchingListing = listings.find((item) =>
-      [item.zip, item.city, item.state, item.location]
-        .filter(Boolean)
-        .some((value) => value!.toLowerCase() === raw.toLowerCase()) && hasGeo(item)
-    )
-    if (matchingListing?.geo) {
-      setSearchTarget({
-        center: [matchingListing.geo.lat, matchingListing.geo.lng],
-        label: prettyLocation(matchingListing),
-        zoom: 11,
-      })
-      return
-    }
-
-    const currentRequest = ++requestId.current
-    const controller = new AbortController()
-    const isZip = /^\d{5}$/.test(raw)
-    const q = isZip ? `${raw}, USA` : raw
-
-    const timer = window.setTimeout(async () => {
-      try {
-        const url = new URL('https://nominatim.openstreetmap.org/search')
-        url.searchParams.set('format', 'jsonv2')
-        url.searchParams.set('countrycodes', 'us')
-        url.searchParams.set('limit', '1')
-        url.searchParams.set('q', q)
-
-        const res = await fetch(url.toString(), {
-          signal: controller.signal,
-          headers: {
-            Accept: 'application/json',
-          },
-        })
-
-        if (!res.ok) return
-
-        const data = (await res.json()) as Array<{ lat: string; lon: string; display_name: string }>
-        if (!data.length || currentRequest !== requestId.current) return
-
-        const first = data[0]
-        setSearchTarget({
-          center: [Number(first.lat), Number(first.lon)],
-          label: isZip ? raw : first.display_name.split(',').slice(0, 2).join(', '),
-          zoom: isZip ? 11 : 10,
-        })
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.warn('Map recenter lookup failed', error)
-        }
-      }
-    }, 350)
-
-    return () => {
-      controller.abort()
-      window.clearTimeout(timer)
-    }
-  }, [listings, searchQuery])
-
-  const activeCenter = searchTarget?.center || averageCenter
-  const activeZoom = searchTarget?.zoom || (geoListings.length > 1 ? 5 : 9)
-
-  if (!geoListings.length) {
-    return (
-      <div className="leaflet-map-shell premium-leaflet-shell empty-map-shell">
-        <div className="empty-panel">Try another ZIP, city, or neighborhood to see fruit land on the map.</div>
-      </div>
-    )
-  }
+  const valid = useMemo(
+    () => listings.filter((l) => l.geo && Number.isFinite(l.geo.lat) && Number.isFinite(l.geo.lng)),
+    [listings]
+  );
 
   return (
-    <div className="leaflet-map-shell premium-leaflet-shell">
-      <div className="map-floating-head">
-        <div>
-          <span className="map-floating-kicker">Live orchard map</span>
-          <strong>{searchTarget ? `Viewing near ${searchTarget.label}` : 'Fruit-ready neighborhoods'}</strong>
-        </div>
-        <span className="map-floating-count">{geoListings.length} live listings</span>
-      </div>
-
-      <MapContainer center={activeCenter} zoom={activeZoom} scrollWheelZoom className="leaflet-map" zoomControl={false}>
-        <RecenterMap center={activeCenter} zoom={activeZoom} />
-        <ZoomControl position="bottomright" />
+    <div style={{ position: "relative", height: "100%", minHeight: 420, borderRadius: 22, overflow: "hidden" }}>
+      <MapContainer center={[39.5, -98.35]} zoom={4} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
         <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="© OpenStreetMap contributors © CARTO"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
-
-        {geoListings.map((listing) => (
-          <Marker key={listing.id} position={[listing.geo!.lat, listing.geo!.lng]} icon={pluckIcon}>
+        <FitToListings listings={valid} searchQuery={searchQuery} />
+        <Controls listings={valid} />
+        {valid.map((item) => (
+          <Marker key={item.id} position={[item.geo!.lat, item.geo!.lng]} icon={icon}>
             <Popup>
-              <div className="map-popup">
-                <img src={listing.image} alt={listing.title} />
-                <strong>{listing.title}</strong>
-                <span>
-                  {prettyLocation(listing)} • ${listing.price}/{listing.unit}
-                </span>
-                <div className="map-popup-trust">
-                  {listing.sellerVerified ? <em>Verified grower</em> : null}
-                  {listing.sellerRating ? <em>★ {listing.sellerRating.toFixed(1)}</em> : null}
+              <div style={{ minWidth: 180 }}>
+                <div style={{ fontWeight: 900 }}>{item.title}</div>
+                <div style={{ marginTop: 4 }}>{item.fruit}</div>
+                <div style={{ marginTop: 4 }}>
+                  ${item.price}/{item.unit || "unit"}
                 </div>
-                <button type="button" className="primary popup-btn" onClick={() => onOpenListing(listing.id)}>
-                  View listing
-                </button>
+                <div style={{ marginTop: 4, color: "#556579" }}>
+                  {[item.city, item.state].filter(Boolean).join(", ") || item.location || "Listing"}
+                </div>
+                {onOpenListing ? (
+                  <button
+                    onClick={() => onOpenListing(item.id)}
+                    style={{
+                      marginTop: 10,
+                      border: 0,
+                      borderRadius: 12,
+                      padding: "8px 10px",
+                      background: "#102033",
+                      color: "#fff",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Open listing
+                  </button>
+                ) : null}
               </div>
             </Popup>
           </Marker>
         ))}
       </MapContainer>
     </div>
-  )
+  );
 }

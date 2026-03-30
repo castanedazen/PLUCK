@@ -1,0 +1,361 @@
+/* ===== PLUCK V19 – BYPASS CSS PIPELINE ===== */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+:root{
+  --bg: #f6f8fc;
+  --bg-soft: #eef3f8;
+  --panel: rgba(255,255,255,0.92);
+  --line: #d8e0ea;
+  --ink: #102033;
+  --ink-soft: #556579;
+  --muted: #728195;
+  --gold: #d5923a;
+  --gold-dark: #b97829;
+  --blue: #274b72;
+  --blue-soft: #dce8f6;
+  --pill: #edf3f8;
+  --pill-active: #274b72;
+  --shadow: 0 14px 34px rgba(16,32,51,0.10);
+  --radius: 20px;
+}
+
+html, body, #root{
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100% !important;
+}
+
+body{
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  background:
+    radial-gradient(circle at top left, rgba(213,146,58,0.14), transparent 24%),
+    radial-gradient(circle at top right, rgba(39,75,114,0.12), transparent 24%),
+    linear-gradient(180deg, #fbfdff 0%, #edf4fb 100%) !important;
+  color: var(--ink) !important;
+  line-height: 1.45 !important;
+}
+
+img{
+  max-width: 100% !important;
+  display: block !important;
+  border-radius: 18px !important;
+}
+
+/* unmistakable signal that new skin is live */
+body::before{
+  content: "" !important;
+  position: fixed !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  box-shadow: inset 0 0 0 14px rgba(39,75,114,0.10) !important;
+  z-index: 2147483647 !important;
+}
+
+/* likely layout wrappers in PLUCK */
+.app-shell,
+.topbar,
+.search-wrap,
+.hero-card,
+.hero-band,
+.card,
+.map-panel,
+.stack,
+.profile-card,
+.stat-card,
+.dashboard-card,
+.activity-card,
+.tool-card,
+.social-card,
+.grower-trust-card,
+.notification-card,
+.alert-card-row,
+.signal-strip,
+.thread-panel,
+.thread-card,
+.messages-sidebar,
+.messages-main,
+.empty-panel,
+.review-panel,
+.review-card,
+.modal-shell,
+.auth-card,
+.board-card,
+.board-create,
+.leaflet-map-shell,
+.modal-header,
+.listing-form,
+.section-heading,
+.form-header,
+.route-hero,
+.profile-banner,
+.listing-card,
+.listing-shell,
+.store-shell,
+.messages-shell,
+.board-shell{
+  background: var(--panel) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 22px !important;
+  box-shadow: var(--shadow) !important;
+  color: var(--ink) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* typography */
+h1,h2,h3,h4,h5,h6,strong{
+  color: var(--ink) !important;
+  letter-spacing: -0.035em !important;
+  line-height: 0.96 !important;
+  margin: 0 0 10px !important;
+}
+
+p, span, small, label, .small-text, .subtext, .modal-subcopy, .review-rating-value{
+  color: var(--ink-soft) !important;
+}
+
+.eyebrow{
+  display: inline-block !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.16em !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: var(--muted) !important;
+  margin-bottom: 10px !important;
+}
+
+/* forms */
+input,
+textarea,
+select{
+  width: 100% !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 16px !important;
+  padding: 12px 14px !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus{
+  border-color: #9eb9d6 !important;
+  box-shadow: 0 0 0 4px rgba(39,75,114,0.10) !important;
+}
+
+/* buttons */
+button,
+a.button,
+.action-row > a,
+.action-row > button{
+  appearance: none !important;
+  border-radius: 999px !important;
+  border: 1px solid transparent !important;
+  padding: 10px 16px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  transition: transform .15s ease, opacity .15s ease, background .15s ease !important;
+}
+
+button:hover,
+a.button:hover{ transform: translateY(-1px) !important; }
+
+button.primary,
+.popup-btn,
+.board-create button,
+.auth-card button[type="submit"],
+a.primary{
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 10px 18px rgba(213,146,58,0.24) !important;
+}
+
+button.ghost,
+.compact-btn,
+a.ghost{
+  background: #fff !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line) !important;
+}
+
+/* pills / chips */
+.trust-strip,
+.modal-window-list,
+.review-rating-row,
+.action-grid,
+.board-meta{
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+.trust-mini,
+.window-pill,
+.pill,
+.chip,
+.tag,
+.signal-strip span,
+.map-popup-trust em{
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--pill) !important;
+  color: var(--ink) !important;
+  border: 1px solid #cdd8e6 !important;
+  border-radius: 999px !important;
+  padding: 6px 11px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
+}
+
+.window-pill.active,
+.pill.active,
+.chip.active,
+.tag.active{
+  background: var(--pill-active) !important;
+  color: #fff !important;
+  border-color: var(--pill-active) !important;
+}
+
+/* stars */
+.rating-stars{
+  display:flex !important;
+  gap:8px !important;
+  align-items:center !important;
+}
+
+.star{
+  font-size: 20px !important;
+  color: #c4cfdb !important;
+  cursor: pointer !important;
+}
+
+.star.active{
+  color: #f5b940 !important;
+}
+
+/* auth */
+.auth-page{
+  display:flex !important;
+  justify-content:center !important;
+  align-items:flex-start !important;
+  padding: 42px 16px !important;
+}
+
+.auth-card{
+  width:min(100%, 500px) !important;
+  padding: 24px !important;
+}
+
+.form-grid{
+  display:flex !important;
+  flex-direction:column !important;
+  gap: 14px !important;
+}
+
+label.full{
+  display:flex !important;
+  flex-direction:column !important;
+  gap: 6px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--ink) !important;
+}
+
+/* board / review / thread */
+.review-card,
+.board-card,
+.thread-card{
+  padding: 18px !important;
+}
+
+.review-card-head,
+.board-meta{
+  display:flex !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+  margin-bottom:10px !important;
+}
+
+.board-page{
+  padding: 16px !important;
+}
+
+.board-create{
+  padding: 14px !important;
+}
+
+/* modal */
+.modal-backdrop{
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(16,32,51,0.34) !important;
+}
+
+.modal-shell{
+  max-width: 560px !important;
+  margin: 72px auto !important;
+  padding: 22px !important;
+}
+
+/* nav */
+.bottom-nav,
+nav.bottom-nav{
+  background: rgba(255,255,255,0.88) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 28px !important;
+  box-shadow: var(--shadow) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.bottom-nav a,
+.bottom-nav button{
+  color: var(--ink) !important;
+  background: transparent !important;
+}
+
+.bottom-nav .active,
+.bottom-nav a.active,
+.bottom-nav button.active{
+  background: #dfe9f4 !important;
+  color: var(--ink) !important;
+  border-radius: 999px !important;
+}
+
+/* heroes – keep image vibe but lose goth */
+.route-hero,
+.hero-card,
+.hero-band{
+  background:
+    linear-gradient(135deg, rgba(39,75,114,0.84) 0%, rgba(80,116,150,0.74) 44%, rgba(213,146,58,0.28) 100%) !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+.route-hero *,
+.hero-card *,
+.hero-band *{
+  color: inherit !important;
+}
+
+/* empty states */
+.empty-panel{
+  text-align:center !important;
+  padding: 18px !important;
+  background: #f5f8fc !important;
+}
+
+/* spacing helper */
+.action-row{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:10px !important;
+  margin-top: 14px !important;
+}

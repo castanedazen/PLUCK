@@ -1,0 +1,341 @@
+import React, { useMemo, useState } from 'react'
+
+type TabKey = 'thesis' | 'moat' | 'opportunities' | 'acquisition'
+
+const regions = ['Greater Los Angeles', 'San Fernando Valley', 'South Bay', 'Pasadena', 'Orange County']
+const windows = ['This week', '30 days', 'Quarter']
+const categories = ['All produce', 'Citrus', 'Avocados', 'Stone fruit', 'Figs', 'Guavas']
+
+const investorContext = {
+  title: 'Strategic platform review',
+  audience: 'Investor / acquisition mode',
+  meeting: 'Board and strategic partner narrative',
+  thesis: 'Pluck is evolving from marketplace into the visibility layer for decentralized food economies.',
+}
+
+const platformMetrics = [
+  { value: '03', label: 'Enterprise narratives live' },
+  { value: '148', label: 'Visible local growers' },
+  { value: '29', label: 'Neighborhood signal zones' },
+  { value: '12', label: 'Retail opportunity surfaces' },
+]
+
+const thesisPoints = [
+  'Pluck is not only a marketplace. It is becoming infrastructure for hyperlocal food visibility.',
+  'The long-term asset is not individual transactions. It is the signal layer created by local supply, trust, and demand behavior.',
+  'Retail, ESG, sourcing, and community food strategy can all sit on top of the same local intelligence surface.',
+]
+
+const moatCards = [
+  {
+    title: 'Decentralized supply visibility',
+    body: 'Traditional retail systems rarely see backyard and micro-grower activity early enough to matter. Pluck surfaces it first.',
+  },
+  {
+    title: 'Trust and neighborhood density',
+    body: 'Repeated local exchange builds a trust layer that is hard to replicate through generic marketplace mechanics alone.',
+  },
+  {
+    title: 'Demand + supply convergence',
+    body: 'Pluck can evolve into the place where local supply and local shopper intent become one strategic intelligence stream.',
+  },
+]
+
+const whyNow = [
+  'Consumers increasingly care about local, seasonal, and trust-based food stories.',
+  'Retailers need new ESG narratives and differentiated sourcing visibility.',
+  'Small-scale food activity is growing, but signal infrastructure around it is still underbuilt.',
+]
+
+const opportunityRows = [
+  { lane: 'Retail intelligence', value: 'High', note: 'Neighborhood-level supply and demand readout for regional pilots' },
+  { lane: 'Local sourcing narrative', value: 'High', note: 'Hyperlocal produce stories with measurable community signal' },
+  { lane: 'ESG / impact layer', value: 'Medium', note: 'Food miles, local activation, and community participation framing' },
+  { lane: 'Strategic acquisition fit', value: 'High', note: 'Visibility layer complements larger grocery, delivery, or marketplace systems' },
+]
+
+const acquisitionPoints = [
+  {
+    title: 'Why a retailer could care',
+    body: 'Pluck can become a front-end signal surface for local sourcing, customer acquisition, and regional food storytelling.',
+  },
+  {
+    title: 'Why a marketplace could care',
+    body: 'The trust graph and neighborhood produce activity could strengthen broader local commerce ecosystems.',
+  },
+  {
+    title: 'Why an acquirer could care',
+    body: 'Pluck is building a category-defining dataset around decentralized food activity before the category fully forms.',
+  },
+]
+
+export default function Enterprise() {
+  const [tab, setTab] = useState<TabKey>('thesis')
+  const [region, setRegion] = useState(regions[0])
+  const [windowRange, setWindowRange] = useState(windows[0])
+  const [category, setCategory] = useState(categories[0])
+
+  const headline = useMemo(() => {
+    if (tab === 'thesis') return 'Platform thesis'
+    if (tab === 'moat') return 'Strategic moat'
+    if (tab === 'opportunities') return 'Expansion opportunities'
+    return 'Acquisition rationale'
+  }, [tab])
+
+  const downloadMemo = () => {
+    const memo = [
+      'PLUCK INVESTOR / ACQUISITION MEMO',
+      '',
+      `Audience: ${investorContext.audience}`,
+      `Context: ${investorContext.meeting}`,
+      `Region: ${region}`,
+      `Window: ${windowRange}`,
+      `Category: ${category}`,
+      '',
+      'Platform thesis:',
+      ...thesisPoints.map((x) => `- ${x}`),
+      '',
+      'Why now:',
+      ...whyNow.map((x) => `- ${x}`),
+      '',
+      'Conclusion:',
+      investorContext.thesis,
+    ].join('\n')
+
+    const blob = new Blob([memo], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pluck-investor-acquisition-memo.txt'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <section id="enterprise-shell" className="enterprise-dashboard v8">
+      <section className="enterprise-investor-topbar section-card">
+        <div>
+          <p className="eyebrow">Investor / acquisition mode</p>
+          <strong>{investorContext.title}</strong>
+          <p className="subtle-copy">{investorContext.meeting}</p>
+        </div>
+
+        <div className="enterprise-investor-actions">
+          <button className="ghost" type="button" onClick={downloadMemo}>
+            Download memo
+          </button>
+          <button className="ghost" type="button" onClick={() => window.location.assign('/')}>
+            Back to marketplace
+          </button>
+        </div>
+      </section>
+
+      <section className="enterprise-investor-hero section-card">
+        <div className="enterprise-investor-copy">
+          <p className="eyebrow">Strategic thesis</p>
+          <h1>Pluck can become the visibility layer for decentralized food economies.</h1>
+          <p className="enterprise-subcopy dark">
+            In investor mode, Pluck is framed not as a fruit marketplace alone, but as a platform
+            where hyperlocal supply, shopper demand, trust formation, and regional food intelligence converge.
+          </p>
+
+          <div className="enterprise-cta-row">
+            <button className="primary" type="button" onClick={() => document.getElementById('investor-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              Open thesis
+            </button>
+            <button className="ghost" type="button" onClick={downloadMemo}>
+              Download acquisition memo
+            </button>
+          </div>
+        </div>
+
+        <div className="enterprise-investor-thesis-card">
+          <span>Core thesis</span>
+          <strong>{investorContext.thesis}</strong>
+        </div>
+      </section>
+
+      <section className="enterprise-kpi-grid">
+        {platformMetrics.map((item) => (
+          <article key={item.label} className="enterprise-kpi-card section-card">
+            <p className="enterprise-kpi-value">{item.value}</p>
+            <p className="enterprise-kpi-label">{item.label}</p>
+          </article>
+        ))}
+      </section>
+
+      <section id="investor-workspace" className="section-card enterprise-workspace-shell">
+        <div className="enterprise-control-row">
+          <div className="enterprise-select-group">
+            <label>Region</label>
+            <select value={region} onChange={(e) => setRegion(e.target.value)}>
+              {regions.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Window</label>
+            <select value={windowRange} onChange={(e) => setWindowRange(e.target.value)}>
+              {windows.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Category</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {categories.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="enterprise-tab-row">
+          <button className={tab === 'thesis' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('thesis')}>Platform Thesis</button>
+          <button className={tab === 'moat' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('moat')}>Strategic Moat</button>
+          <button className={tab === 'opportunities' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('opportunities')}>Expansion</button>
+          <button className={tab === 'acquisition' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('acquisition')}>Acquisition Logic</button>
+        </div>
+
+        <div className="enterprise-tab-head">
+          <div>
+            <p className="eyebrow">Investor view</p>
+            <h2>{headline}</h2>
+          </div>
+          <p className="subtle-copy">
+            Context: <strong>{region}</strong> · <strong>{windowRange}</strong> · <strong>{category}</strong>
+          </p>
+        </div>
+
+        {tab === 'thesis' && (
+          <div className="enterprise-panel-stack">
+            <section className="section-card enterprise-panel investor-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Platform thesis</p>
+                <h3>What Pluck becomes if fully realized</h3>
+              </div>
+
+              <div className="enterprise-takeaway-list">
+                {thesisPoints.map((item) => (
+                  <article key={item} className="enterprise-takeaway-card">
+                    <span>•</span>
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="enterprise-two-col">
+              <article className="section-card enterprise-panel investor-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Why now</p>
+                  <h3>Market timing</h3>
+                </div>
+
+                <div className="enterprise-takeaway-list compact">
+                  {whyNow.map((item) => (
+                    <article key={item} className="enterprise-takeaway-card">
+                      <span>•</span>
+                      <p>{item}</p>
+                    </article>
+                  ))}
+                </div>
+              </article>
+
+              <article className="section-card enterprise-panel investor-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Platform framing</p>
+                  <h3>Strategic summary</h3>
+                </div>
+
+                <div className="enterprise-decision-card">
+                  <strong>Positioning:</strong>
+                  <p>
+                    Pluck can be framed as a new category surface where local supply visibility,
+                    neighborhood trust, and food demand intelligence create long-term strategic value.
+                  </p>
+                </div>
+              </article>
+            </section>
+          </div>
+        )}
+
+        {tab === 'moat' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-three-col">
+              {moatCards.map((item) => (
+                <article key={item.title} className="section-card enterprise-panel investor-panel">
+                  <p className="eyebrow">Moat</p>
+                  <h3>{item.title}</h3>
+                  <p className="subtle-copy">{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'opportunities' && (
+          <div className="enterprise-panel-stack">
+            <article className="section-card enterprise-panel investor-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Expansion opportunities</p>
+                <h3>Strategic lanes</h3>
+              </div>
+
+              <div className="enterprise-table-wrap">
+                <table className="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Lane</th>
+                      <th>Strategic value</th>
+                      <th>Why it matters</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {opportunityRows.map((row) => (
+                      <tr key={row.lane}>
+                        <td>{row.lane}</td>
+                        <td>{row.value}</td>
+                        <td>{row.note}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        )}
+
+        {tab === 'acquisition' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-three-col">
+              {acquisitionPoints.map((item) => (
+                <article key={item.title} className="section-card enterprise-panel investor-panel">
+                  <p className="eyebrow">Acquisition rationale</p>
+                  <h3>{item.title}</h3>
+                  <p className="subtle-copy">{item.body}</p>
+                </article>
+              ))}
+            </div>
+
+            <section className="section-card enterprise-cta-card investor-cta">
+              <div>
+                <p className="eyebrow">Investor conclusion</p>
+                <h2>Pluck’s highest-value future may be as infrastructure, not only as marketplace.</h2>
+                <p className="subtle-copy">
+                  The strategic asset is the emerging visibility layer around decentralized food activity —
+                  one that could strengthen retail, sourcing, ESG, local commerce, or acquisition narratives.
+                </p>
+              </div>
+
+              <div className="enterprise-cta-actions">
+                <button className="primary" type="button" onClick={downloadMemo}>Download memo</button>
+                <button className="ghost" type="button">Open strategic brief</button>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
+    </section>
+  )
+}

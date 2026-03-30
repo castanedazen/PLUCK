@@ -1,0 +1,485 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { MapContainer, Marker, Polyline, Popup, TileLayer } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+type Listing = {
+  id: string;
+  title: string;
+  fruit: string;
+  price: number;
+  unit?: string;
+  city?: string;
+  state?: string;
+  location?: string;
+  inventory?: number;
+  sellerName?: string;
+  status?: string;
+  geo?: { lat: number; lng: number } | null;
+};
+
+type StoreNeed = {
+  id: string;
+  name: string;
+  city: string;
+  region: string;
+  district: string;
+  lat: number;
+  lng: number;
+  produce: string;
+  needed: number;
+};
+
+const shell: React.CSSProperties = {
+  minHeight: "100vh",
+  fontFamily: "Inter, Arial, sans-serif",
+  background: "linear-gradient(180deg, #f7fbff 0%, #edf3f8 100%)",
+  color: "#102033",
+  padding: 28,
+};
+
+const container: React.CSSProperties = {
+  maxWidth: 1440,
+  margin: "0 auto",
+};
+
+const panel: React.CSSProperties = {
+  background: "rgba(255,255,255,0.94)",
+  border: "1px solid rgba(16,32,51,0.08)",
+  borderRadius: 24,
+  boxShadow: "0 18px 44px rgba(16,32,51,0.10)",
+};
+
+const pillBase: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "8px 14px",
+  borderRadius: 999,
+  fontSize: 13,
+  fontWeight: 800,
+  border: "1px solid rgba(16,32,51,0.08)",
+};
+
+const growerIcon = new L.DivIcon({
+  html: `<div style="width:18px;height:18px;border-radius:999px;background:#2f8c63;box-shadow:0 0 0 10px rgba(47,140,99,.16)"></div>`,
+  className: "",
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
+const storeIcon = new L.DivIcon({
+  html: `<div style="width:18px;height:18px;border-radius:999px;background:#d34a37;box-shadow:0 0 0 10px rgba(211,74,55,.18)"></div>`,
+  className: "",
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+});
+
+function n(v: number) {
+  return new Intl.NumberFormat("en-US").format(Math.round(v));
+}
+
+function money(v: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+}
+
+function regionForState(state?: string) {
+  const s = (state || "").toUpperCase();
+  if (["CA", "OR", "WA", "NV", "AZ"].includes(s)) return "West";
+  if (["TX", "OK", "NM", "CO", "UT"].includes(s)) return "Southwest";
+  if (["FL", "GA", "NC", "SC", "TN"].includes(s)) return "Southeast";
+  if (["IL", "OH", "MI", "MN", "WI", "MO"].includes(s)) return "Midwest";
+  if (["NY", "NJ", "PA", "MA", "CT", "MD", "VA"].includes(s)) return "Northeast";
+  if (s) return s;
+  return "Unassigned";
+}
+
+function districtForListing(item: Listing) {
+  const city = (item.city || "").toLowerCase();
+  const state = (item.state || "").toUpperCase();
+  if (state === "CA" && (city.includes("los angeles") || city.includes("pasadena") || city.includes("mission"))) {
+    return "SoCal Metro";
+  }
+  if (state === "TX") return "Texas Central";
+  if (state === "IL") return "Chicago District";
+  if (state === "GA") return "Atlanta District";
+  if (state === "NJ" || state === "NY") return "Northeast Corridor";
+  return "General District";
+}
+
+function distanceMiles(aLat: number, aLng: number, bLat: number, bLng: number) {
+  const rad = Math.PI / 180;
+  const dLat = (bLat - aLat) * rad;
+  const dLng = (bLng - aLng) * rad;
+  const lat1 = aLat * rad;
+  const lat2 = bLat * rad;
+  const sin1 = Math.sin(dLat / 2);
+  const sin2 = Math.sin(dLng / 2);
+  const aa = sin1 * sin1 + Math.cos(lat1) * Math.cos(lat2) * sin2 * sin2;
+  const c = 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
+  return 3959 * c;
+}
+
+function produceName(item: Listing) {
+  return (item.fruit || "Produce").trim();
+}
+
+function buildStoreNeeds(): StoreNeed[] {
+  return [
+    { id: "s1", name: "Store 1423", city: "Los Angeles", region: "West", district: "SoCal Metro", lat: 34.05, lng: -118.25, produce: "Avocados", needed: 180 },
+    { id: "s2", name: "Store 2204", city: "Phoenix", region: "Southwest", district: "Desert Valley", lat: 33.45, lng: -112.07, produce: "Tomatoes", needed: 150 },
+    { id: "s3", name: "Store 3310", city: "Chicago", region: "Midwest", district: "Chicago District", lat: 41.88, lng: -87.63, produce: "Lemons", needed: 120 },
+    { id: "s4", name: "Store 4418", city: "Atlanta", region: "Southeast", district: "Atlanta District", lat: 33.75, lng: -84.39, produce: "Peaches", needed: 130 },
+    { id: "s5", name: "Store 5526", city: "Newark", region: "Northeast", district: "Northeast Corridor", lat: 40.73, lng: -74.17, produce: "Apples", needed: 160 },
+  ];
+}
+
+function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div style={{ ...panel, padding: 22 }}>
+      <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "#728195", fontWeight: 800 }}>{label}</div>
+      <div style={{ fontSize: 34, fontWeight: 900, marginTop: 10, lineHeight: 1.05 }}>{value}</div>
+      <div style={{ fontSize: 14, color: "#556579", marginTop: 8 }}>{sub}</div>
+    </div>
+  );
+}
+
+function TogglePill({ active, children, onClick }: { active?: boolean; children: React.ReactNode; onClick?: ()=>void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        ...pillBase,
+        background: active ? "#102033" : "rgba(255,255,255,0.92)",
+        color: active ? "#fff" : "#102033",
+        cursor: "pointer",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function PluckDistrictManagerMode() {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [level, setLevel] = useState<"national" | "region" | "district">("national");
+  const [activeRegion, setActiveRegion] = useState("West");
+  const [activeDistrict, setActiveDistrict] = useState("SoCal Metro");
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("s1");
+
+  useEffect(() => {
+    fetch("/api/listings")
+      .then((r) => r.json())
+      .then((data) => setListings(Array.isArray(data) ? data : []))
+      .catch(() => setListings([]));
+  }, []);
+
+  const liveListings = useMemo(
+    () => listings.filter((l) => l && l.status !== "sold" && Number(l.inventory || 0) > 0),
+    [listings]
+  );
+
+  const geoListings = useMemo(
+    () => liveListings.filter((l) => l.geo && Number.isFinite(l.geo.lat) && Number.isFinite(l.geo.lng)),
+    [liveListings]
+  );
+
+  const withHierarchy = useMemo(() => {
+    return geoListings.map((l) => ({
+      ...l,
+      region: regionForState(l.state),
+      district: districtForListing(l),
+    }));
+  }, [geoListings]);
+
+  const regions = useMemo(() => {
+    const m = new Map<string, number>();
+    withHierarchy.forEach((l) => m.set(l.region, (m.get(l.region) || 0) + 1));
+    return Array.from(m.entries()).sort((a,b)=>b[1]-a[1]);
+  }, [withHierarchy]);
+
+  const districts = useMemo(() => {
+    const m = new Map<string, number>();
+    withHierarchy.filter(l => l.region === activeRegion).forEach((l) => m.set(l.district, (m.get(l.district) || 0) + 1));
+    return Array.from(m.entries()).sort((a,b)=>b[1]-a[1]);
+  }, [withHierarchy, activeRegion]);
+
+  useEffect(() => {
+    if (regions.length && !regions.some(([r]) => r === activeRegion)) setActiveRegion(regions[0][0]);
+  }, [regions, activeRegion]);
+
+  useEffect(() => {
+    if (districts.length && !districts.some(([d]) => d === activeDistrict)) setActiveDistrict(districts[0][0]);
+  }, [districts, activeDistrict]);
+
+  const storeNeeds = useMemo(() => buildStoreNeeds(), []);
+  const filteredStores = useMemo(() => {
+    if (level === "national") return storeNeeds;
+    if (level === "region") return storeNeeds.filter(s => s.region === activeRegion);
+    return storeNeeds.filter(s => s.district === activeDistrict);
+  }, [storeNeeds, level, activeRegion, activeDistrict]);
+
+  useEffect(() => {
+    if (filteredStores.length && !filteredStores.some(s => s.id === selectedStoreId)) setSelectedStoreId(filteredStores[0].id);
+  }, [filteredStores, selectedStoreId]);
+
+  const filteredListings = useMemo(() => {
+    if (level === "national") return withHierarchy;
+    if (level === "region") return withHierarchy.filter(l => l.region === activeRegion);
+    return withHierarchy.filter(l => l.district === activeDistrict);
+  }, [withHierarchy, level, activeRegion, activeDistrict]);
+
+  const fillPlans = useMemo(() => {
+    return filteredStores.map((store) => {
+      const candidates = filteredListings
+        .filter((l) => produceName(l).toLowerCase() === store.produce.toLowerCase())
+        .map((l) => ({
+          listing: l,
+          distance: distanceMiles(store.lat, store.lng, l.geo!.lat, l.geo!.lng),
+          qty: Number(l.inventory || 0),
+        }))
+        .sort((a, b) => a.distance - b.distance);
+
+      let remaining = store.needed;
+      const picks: { id: string; name: string; qty: number; distance: number; lat: number; lng: number }[] = [];
+      for (const c of candidates) {
+        if (remaining <= 0) break;
+        const take = Math.min(c.qty, remaining);
+        if (take > 0) {
+          picks.push({
+            id: c.listing.id,
+            name: c.listing.sellerName || c.listing.title || "Grower",
+            qty: take,
+            distance: c.distance,
+            lat: c.listing.geo!.lat,
+            lng: c.listing.geo!.lng,
+          });
+          remaining -= take;
+        }
+      }
+
+      const matched = picks.reduce((s, p) => s + p.qty, 0);
+      const coverage = store.needed ? Math.round((matched / store.needed) * 100) : 0;
+      const avgDistance = picks.length ? picks.reduce((s,p)=>s+p.distance,0)/picks.length : 0;
+      return { store, picks, matched, coverage, avgDistance };
+    });
+  }, [filteredStores, filteredListings]);
+
+  const selectedPlan = useMemo(() => fillPlans.find(p => p.store.id === selectedStoreId) || fillPlans[0] || null, [fillPlans, selectedStoreId]);
+  const bestPlan = useMemo(() => {
+    if (!fillPlans.length) return null;
+    return [...fillPlans].sort((a,b) => b.coverage - a.coverage || a.avgDistance - b.avgDistance)[0];
+  }, [fillPlans]);
+
+  const totalSupply = filteredListings.reduce((s,l)=>s+Number(l.inventory||0),0);
+  const fillableStores = fillPlans.filter(p=>p.coverage>0).length;
+  const savings = totalSupply * 1.8;
+
+  const mapCenter = useMemo<[number, number]>(() => {
+    if (selectedPlan) return [selectedPlan.store.lat, selectedPlan.store.lng];
+    return [39.5, -98.35];
+  }, [selectedPlan]);
+
+  return (
+    <div style={shell}>
+      <div style={container}>
+        <section
+          style={{
+            borderRadius: 34,
+            overflow: "hidden",
+            padding: 38,
+            display: "grid",
+            gridTemplateColumns: "1.18fr 0.82fr",
+            gap: 24,
+            background: "linear-gradient(135deg, #1f6d5b 0%, #2e7d6b 18%, #497fa6 48%, #c16b2f 82%, #d5923a 100%)",
+            boxShadow: "0 24px 60px rgba(16,32,51,0.18)",
+          }}
+        >
+          <div>
+            <div style={{ ...pillBase, background: "rgba(255,255,255,0.18)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.22)" }}>
+              PLUCK · NATIONAL SUPPLY MODE
+            </div>
+
+            <div style={{ marginTop: 18, color: "#ffffff", fontSize: 62, lineHeight: 0.94, fontWeight: 900, letterSpacing: "-0.05em", maxWidth: 840 }}>
+              National hierarchy, real map, and full fill-engine logic.
+            </div>
+
+            <div style={{ marginTop: 18, color: "rgba(255,255,255,0.95)", fontSize: 21, lineHeight: 1.35, maxWidth: 760 }}>
+              Move between national, region, and district views. Use live listing supply, real geo points, and route math that proves local fill coverage store by store.
+            </div>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 20 }}>
+              <TogglePill active={level==="national"} onClick={()=>setLevel("national")}>National</TogglePill>
+              <TogglePill active={level==="region"} onClick={()=>setLevel("region")}>Region</TogglePill>
+              <TogglePill active={level==="district"} onClick={()=>setLevel("district")}>District</TogglePill>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+              {regions.map(([region, count]) => (
+                <TogglePill key={region} active={activeRegion===region} onClick={()=>{setActiveRegion(region); setLevel("region");}}>
+                  {region} · {count}
+                </TogglePill>
+              ))}
+            </div>
+
+            {districts.length ? (
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
+                {districts.map(([district, count]) => (
+                  <TogglePill key={district} active={activeDistrict===district} onClick={()=>{setActiveDistrict(district); setLevel("district");}}>
+                    {district} · {count}
+                  </TogglePill>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div style={{ ...panel, padding: 24, alignSelf: "end" }}>
+            <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "#728195", fontWeight: 800 }}>Best local fill opportunity</div>
+            {bestPlan ? (
+              <>
+                <div style={{ marginTop: 10, fontSize: 30, fontWeight: 900, lineHeight: 1.04 }}>
+                  {bestPlan.store.name} → {bestPlan.store.produce}
+                </div>
+                <div style={{ marginTop: 10, color: "#556579", fontSize: 16, lineHeight: 1.45 }}>
+                  Needed: {n(bestPlan.store.needed)} units. Matched: {n(bestPlan.matched)}. Coverage: {bestPlan.coverage}%. Avg distance: {bestPlan.avgDistance.toFixed(1)} miles.
+                </div>
+                <button style={{ marginTop: 18, border: 0, borderRadius: 16, padding: "14px 18px", background: "#102033", color: "#fff", fontWeight: 800, fontSize: 16 }}>
+                  Request Local Fill
+                </button>
+              </>
+            ) : (
+              <div style={{ marginTop: 12, color: "#556579" }}>No fill opportunities yet.</div>
+            )}
+          </div>
+        </section>
+
+        <section style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: 18, marginTop: 22 }}>
+          <StatCard label="Regions Active" value={n(regions.length)} sub="U.S. regions with live supply" />
+          <StatCard label="Filtered Listings" value={n(filteredListings.length)} sub="Geo-valid active listings" />
+          <StatCard label="Supply Units" value={n(totalSupply)} sub="Live inventory in current scope" />
+          <StatCard label="Fillable Stores" value={n(fillableStores)} sub="Store needs with matched supply" />
+          <StatCard label="Waste Offset" value={money(savings)} sub="Illustrative savings in current scope" />
+        </section>
+
+        <section style={{ display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 22, marginTop: 22 }}>
+          <div style={{ ...panel, padding: 24 }}>
+            <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "#728195", fontWeight: 800 }}>
+              Real map
+            </div>
+            <div style={{ fontSize: 34, fontWeight: 900, marginTop: 10, lineHeight: 1.04 }}>
+              {level === "national" ? "United States supply network" : level === "region" ? `${activeRegion} region` : `${activeDistrict} district`}
+            </div>
+            <div style={{ color: "#556579", marginTop: 8, fontSize: 16 }}>
+              Real grower markers, store markers, and fill lines based on live listing geo and computed matches.
+            </div>
+
+            <div style={{ marginTop: 18, height: 520, borderRadius: 24, overflow: "hidden", border: "1px solid rgba(16,32,51,0.08)" }}>
+              <MapContainer center={mapCenter} zoom={level==="national" ? 4 : level==="region" ? 5 : 8} style={{ height: "100%", width: "100%" }}>
+                <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                {filteredListings.map((item) => (
+                  <Marker key={item.id} position={[item.geo!.lat, item.geo!.lng]} icon={growerIcon}>
+                    <Popup>
+                      <div style={{ minWidth: 180 }}>
+                        <div style={{ fontWeight: 900 }}>{item.sellerName || item.title}</div>
+                        <div style={{ marginTop: 4 }}>{item.fruit}</div>
+                        <div style={{ marginTop: 4 }}>{n(Number(item.inventory || 0))} units</div>
+                        <div style={{ marginTop: 4, color: "#556579" }}>{[item.city, item.state].filter(Boolean).join(", ") || item.location || "Listing"}</div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+                {filteredStores.map((store) => (
+                  <Marker key={store.id} position={[store.lat, store.lng]} icon={storeIcon}>
+                    <Popup>
+                      <div style={{ minWidth: 180 }}>
+                        <div style={{ fontWeight: 900 }}>{store.name}</div>
+                        <div style={{ marginTop: 4 }}>{store.city}</div>
+                        <div style={{ marginTop: 4 }}>{store.produce} · needs {n(store.needed)} units</div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+                {selectedPlan?.picks.map((p) => (
+                  <Polyline
+                    key={p.id}
+                    positions={[[selectedPlan.store.lat, selectedPlan.store.lng], [p.lat, p.lng]]}
+                    pathOptions={{ color: "#497fa6", weight: 4, dashArray: "8 8" }}
+                  />
+                ))}
+              </MapContainer>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gap: 18 }}>
+            <div style={{ ...panel, padding: 22 }}>
+              <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "#728195", fontWeight: 800 }}>Stores in scope</div>
+              <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
+                {filteredStores.map((store) => (
+                  <button
+                    key={store.id}
+                    onClick={() => setSelectedStoreId(store.id)}
+                    style={{
+                      textAlign: "left",
+                      borderRadius: 18,
+                      padding: 16,
+                      background: selectedStoreId === store.id ? "#f3f9ff" : "#f8fbff",
+                      border: "1px solid rgba(16,32,51,0.06)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: 16 }}>{store.name}</div>
+                        <div style={{ color: "#556579", marginTop: 4, fontSize: 14 }}>{store.city} · {store.produce}</div>
+                      </div>
+                      <div style={{ fontWeight: 900 }}>{n(store.needed)}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ ...panel, padding: 22 }}>
+              <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "#728195", fontWeight: 800 }}>Full fill engine</div>
+              {selectedPlan ? (
+                <>
+                  <div style={{ fontSize: 30, fontWeight: 900, marginTop: 10, lineHeight: 1.04 }}>
+                    {selectedPlan.store.name}
+                  </div>
+                  <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>Needed</span><strong>{n(selectedPlan.store.needed)} units</strong></div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>Matched</span><strong>{n(selectedPlan.matched)} units</strong></div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>Coverage</span><strong>{selectedPlan.coverage}%</strong></div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>Avg distance</span><strong>{selectedPlan.avgDistance.toFixed(1)} mi</strong></div>
+                  </div>
+
+                  <div style={{ marginTop: 16, fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "#728195", fontWeight: 800 }}>Matched sources</div>
+                  <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+                    {selectedPlan.picks.length ? selectedPlan.picks.map((p) => (
+                      <div key={p.id} style={{ borderRadius: 18, padding: 16, background: "#f8fbff", border: "1px solid rgba(16,32,51,0.06)", display: "flex", justifyContent: "space-between", gap: 12 }}>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: 16 }}>{p.name}</div>
+                          <div style={{ color: "#556579", marginTop: 4, fontSize: 14 }}>{p.distance.toFixed(1)} miles away</div>
+                        </div>
+                        <div style={{ fontWeight: 900 }}>{n(p.qty)} units</div>
+                      </div>
+                    )) : <div style={{ color: "#556579" }}>No live matched supply yet.</div>}
+                  </div>
+                </>
+              ) : (
+                <div style={{ marginTop: 10, color: "#556579" }}>No fill data yet.</div>
+              )}
+            </div>
+
+            <div style={{ ...panel, padding: 22 }}>
+              <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "#728195", fontWeight: 800 }}>National hierarchy</div>
+              <div style={{ fontSize: 30, fontWeight: 900, marginTop: 10, lineHeight: 1.04 }}>USA → Region → District → Store</div>
+              <div style={{ color: "#556579", marginTop: 8, fontSize: 16, lineHeight: 1.5 }}>
+                This is now framed as a national operating product. Local grower listings feed district supply, districts roll up into regions, and regions ladder into a national retail picture.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

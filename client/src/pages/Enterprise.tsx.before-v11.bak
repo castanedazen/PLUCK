@@ -1,0 +1,347 @@
+import React, { useMemo, useState } from 'react'
+
+type TabKey = 'index' | 'evidence' | 'risks' | 'artifacts'
+
+const regions = ['Greater Los Angeles', 'San Fernando Valley', 'South Bay', 'Pasadena', 'Orange County']
+const windows = ['This week', '30 days', 'Quarter']
+const categories = ['All produce', 'Citrus', 'Avocados', 'Stone fruit', 'Figs', 'Guavas']
+
+const room = {
+  title: 'Pluck data room',
+  audience: 'Strategic diligence / acquirer review',
+  status: 'Confidential review environment',
+  memo: 'Artifacts below are illustrative product, pilot, and strategic diligence materials.',
+}
+
+const roomMetrics = [
+  { value: '12', label: 'Evidence artifacts' },
+  { value: '04', label: 'Review tabs' },
+  { value: '05', label: 'Risk items' },
+  { value: '03', label: 'Pilot narratives' },
+]
+
+const documentIndex = [
+  { code: '01', title: 'Platform thesis memo', desc: 'How Pluck evolves from marketplace into food intelligence infrastructure.' },
+  { code: '02', title: 'Pilot readiness brief', desc: 'Regional pilot framing around Pasadena citrus and South Bay avocados.' },
+  { code: '03', title: 'Retail partnership summary', desc: 'Where sourcing, customer demand, and ESG narratives converge.' },
+  { code: '04', title: 'Strategic moat review', desc: 'Signal asymmetry, trust formation, and supply-demand convergence.' },
+]
+
+const evidenceShelf = [
+  { label: 'Visible local growers', value: '148', note: 'Illustrative signal density across active zones' },
+  { label: 'Neighborhood signal zones', value: '29', note: 'Regional visibility layer now has geographic shape' },
+  { label: 'Pilot-ready narratives', value: '2', note: 'Pasadena citrus and South Bay avocado opportunity lanes' },
+  { label: 'Retail opportunity surfaces', value: '12', note: 'Initial strategic surfaces for pilots and storytelling' },
+]
+
+const riskRegister = [
+  { risk: 'Category still forming', level: 'Medium', owner: 'Strategy', mitigation: 'Position around signal infrastructure, not only transactions.' },
+  { risk: 'Operational variability', level: 'Medium', owner: 'Ops', mitigation: 'Use pilot framing before scaling operational claims.' },
+  { risk: 'Monetization sequencing', level: 'Low', owner: 'Leadership', mitigation: 'Prioritize strategic platform value before narrow revenue framing.' },
+  { risk: 'Retail integration ambiguity', level: 'Medium', owner: 'Partnerships', mitigation: 'Define pilot use cases clearly by region and category.' },
+  { risk: 'Narrative dilution', level: 'Low', owner: 'Product', mitigation: 'Separate consumer, partner, and investor modes cleanly.' },
+]
+
+const artifactLog = [
+  { type: 'Memo', name: 'Hyperlocal Supply Thesis', state: 'Ready', note: 'Core platform positioning' },
+  { type: 'Pilot Brief', name: 'Pasadena Citrus Pilot', state: 'Ready', note: 'Regional retail narrative' },
+  { type: 'Pilot Brief', name: 'South Bay Avocado Pilot', state: 'Ready', note: 'Trust + same-day story' },
+  { type: 'Review', name: 'Strategic Moat Analysis', state: 'Draft', note: 'Acquirer-facing framing' },
+  { type: 'Summary', name: 'ESG / Impact Narrative', state: 'Ready', note: 'Community and food-mile angle' },
+]
+
+const pilotEvidence = [
+  'Regional demand clusters can be narrated clearly by category and zone.',
+  'Small-scale supply is already visible enough to support pilot storytelling.',
+  'Pluck’s strongest enterprise angle is signal visibility, not just raw marketplace throughput.',
+]
+
+export default function Enterprise() {
+  const [tab, setTab] = useState<TabKey>('index')
+  const [region, setRegion] = useState(regions[0])
+  const [windowRange, setWindowRange] = useState(windows[0])
+  const [category, setCategory] = useState(categories[0])
+
+  const headline = useMemo(() => {
+    if (tab === 'index') return 'Document index'
+    if (tab === 'evidence') return 'Evidence shelf'
+    if (tab === 'risks') return 'Risk register'
+    return 'Artifact log'
+  }, [tab])
+
+  const downloadRoomMemo = () => {
+    const memo = [
+      'PLUCK DATA ROOM SUMMARY',
+      '',
+      `Audience: ${room.audience}`,
+      `Status: ${room.status}`,
+      `Region: ${region}`,
+      `Window: ${windowRange}`,
+      `Category: ${category}`,
+      '',
+      'Indexed documents:',
+      ...documentIndex.map((d) => `- ${d.code} ${d.title}: ${d.desc}`),
+      '',
+      'Pilot evidence:',
+      ...pilotEvidence.map((x) => `- ${x}`),
+    ].join('\n')
+
+    const blob = new Blob([memo], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pluck-data-room-summary.txt'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <section id="enterprise-shell" className="enterprise-dashboard v10">
+      <section className="enterprise-dataroom-topbar section-card">
+        <div>
+          <p className="eyebrow">Data room mode</p>
+          <strong>{room.title}</strong>
+          <p className="subtle-copy">{room.status}</p>
+        </div>
+
+        <div className="enterprise-investor-actions">
+          <button className="ghost" type="button" onClick={downloadRoomMemo}>
+            Download room summary
+          </button>
+          <button className="ghost" type="button" onClick={() => window.location.assign('/')}>
+            Back to marketplace
+          </button>
+        </div>
+      </section>
+
+      <section className="enterprise-dataroom-hero section-card">
+        <div className="enterprise-investor-copy">
+          <p className="eyebrow">Structured diligence</p>
+          <h1>Pluck can now be reviewed like a strategic platform, not only a product concept.</h1>
+          <p className="enterprise-subcopy dark">
+            Data room mode organizes the thesis, evidence, risk posture, and pilot artifacts
+            into a cleaner diligence environment for acquirer, investor, or partner review.
+          </p>
+
+          <div className="enterprise-cta-row">
+            <button className="primary" type="button" onClick={() => document.getElementById('dataroom-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              Open data room
+            </button>
+            <button className="ghost" type="button" onClick={downloadRoomMemo}>
+              Download summary
+            </button>
+          </div>
+        </div>
+
+        <div className="enterprise-dataroom-card">
+          <span>Room note</span>
+          <strong>{room.memo}</strong>
+        </div>
+      </section>
+
+      <section className="enterprise-kpi-grid">
+        {roomMetrics.map((item) => (
+          <article key={item.label} className="enterprise-kpi-card section-card">
+            <p className="enterprise-kpi-value">{item.value}</p>
+            <p className="enterprise-kpi-label">{item.label}</p>
+          </article>
+        ))}
+      </section>
+
+      <section id="dataroom-workspace" className="section-card enterprise-workspace-shell">
+        <div className="enterprise-control-row">
+          <div className="enterprise-select-group">
+            <label>Region</label>
+            <select value={region} onChange={(e) => setRegion(e.target.value)}>
+              {regions.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Window</label>
+            <select value={windowRange} onChange={(e) => setWindowRange(e.target.value)}>
+              {windows.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Category</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {categories.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="enterprise-tab-row">
+          <button className={tab === 'index' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('index')}>Index</button>
+          <button className={tab === 'evidence' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('evidence')}>Evidence</button>
+          <button className={tab === 'risks' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('risks')}>Risks</button>
+          <button className={tab === 'artifacts' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('artifacts')}>Artifacts</button>
+        </div>
+
+        <div className="enterprise-tab-head">
+          <div>
+            <p className="eyebrow">Data room</p>
+            <h2>{headline}</h2>
+          </div>
+          <p className="subtle-copy">
+            Review context: <strong>{region}</strong> · <strong>{windowRange}</strong> · <strong>{category}</strong>
+          </p>
+        </div>
+
+        {tab === 'index' && (
+          <div className="enterprise-panel-stack">
+            <section className="section-card enterprise-panel dataroom-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Indexed materials</p>
+                <h3>Core diligence documents</h3>
+              </div>
+
+              <div className="enterprise-doc-index">
+                {documentIndex.map((doc) => (
+                  <article key={doc.code} className="enterprise-doc-card">
+                    <div className="enterprise-doc-code">{doc.code}</div>
+                    <div>
+                      <strong>{doc.title}</strong>
+                      <p>{doc.desc}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="section-card enterprise-panel dataroom-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Pilot evidence</p>
+                <h3>What is already becoming clear</h3>
+              </div>
+
+              <div className="enterprise-takeaway-list">
+                {pilotEvidence.map((item) => (
+                  <article key={item} className="enterprise-takeaway-card">
+                    <span>•</span>
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {tab === 'evidence' && (
+          <div className="enterprise-panel-stack">
+            <section className="enterprise-two-col">
+              <article className="section-card enterprise-panel dataroom-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Evidence shelf</p>
+                  <h3>Illustrative KPI evidence</h3>
+                </div>
+
+                <div className="enterprise-evidence-grid">
+                  {evidenceShelf.map((item) => (
+                    <div key={item.label} className="enterprise-evidence-card">
+                      <span>{item.label}</span>
+                      <strong>{item.value}</strong>
+                      <p>{item.note}</p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="section-card enterprise-panel dataroom-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Evidence note</p>
+                  <h3>How to read this room</h3>
+                </div>
+
+                <div className="enterprise-decision-card">
+                  <strong>Important:</strong>
+                  <p>
+                    The evidence shelf is meant to frame platform direction, category fit, and pilot narrative strength —
+                    not to overstate institutional scale before broader rollout.
+                  </p>
+                </div>
+              </article>
+            </section>
+          </div>
+        )}
+
+        {tab === 'risks' && (
+          <div className="enterprise-panel-stack">
+            <article className="section-card enterprise-panel dataroom-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Risk register</p>
+                <h3>Principal diligence items</h3>
+              </div>
+
+              <div className="enterprise-risk-register">
+                {riskRegister.map((row) => (
+                  <div key={row.risk} className="enterprise-register-row">
+                    <div>
+                      <strong>{row.risk}</strong>
+                      <p>{row.note}</p>
+                    </div>
+                    <div><span>Level</span><strong>{row.level}</strong></div>
+                    <div><span>Owner</span><strong>{row.owner}</strong></div>
+                    <div><span>Mitigation</span><strong>{row.mitigation}</strong></div>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </div>
+        )}
+
+        {tab === 'artifacts' && (
+          <div className="enterprise-panel-stack">
+            <article className="section-card enterprise-panel dataroom-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Artifact log</p>
+                <h3>Current review materials</h3>
+              </div>
+
+              <div className="enterprise-table-wrap">
+                <table className="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Name</th>
+                      <th>Status</th>
+                      <th>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {artifactLog.map((row) => (
+                      <tr key={row.name}>
+                        <td>{row.type}</td>
+                        <td>{row.name}</td>
+                        <td>{row.state}</td>
+                        <td>{row.note}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <section className="section-card enterprise-cta-card investor-cta">
+              <div>
+                <p className="eyebrow">Data room conclusion</p>
+                <h2>Pluck now reads like a strategic diligence target, not only a concept product.</h2>
+                <p className="subtle-copy">
+                  The platform thesis, evidence shelf, risk register, and pilot artifacts together create a much stronger acquisition or investment review environment.
+                </p>
+              </div>
+
+              <div className="enterprise-cta-actions">
+                <button className="primary" type="button" onClick={downloadRoomMemo}>Download summary</button>
+                <button className="ghost" type="button">Open strategic memo</button>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
+    </section>
+  )
+}

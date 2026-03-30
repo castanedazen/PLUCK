@@ -1,0 +1,432 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import type { Listing } from './types'
+
+type BuyerRole = 'district-manager' | 'regional-vp' | 'national-retail'
+type Stage = 'idle' | 'market-scan' | 'supplier-match' | 'store-execution' | 'completed'
+
+type DistrictPreset = {
+  id: string
+  name: string
+  store: {
+    id: string
+    name: string
+    city: string
+    shortageFruit: string
+    shortageQty: number
+    x: number
+    y: number
+  }
+  growers: {
+    id: string
+    name: string
+    fruit: string
+    units: number
+    x: number
+    y: number
+  }[]
+}
+
+const districts: DistrictPreset[] = [
+  {
+    id: 'sfv',
+    name: 'San Fernando Valley',
+    store: { id: '1423', name: 'Store 1423', city: 'North Hills', shortageFruit: 'Avocados', shortageQty: 180, x: 26, y: 50 },
+    growers: [
+      { id: 'g1', name: 'Cesar Grove', fruit: 'Avocados', units: 72, x: 12, y: 34 },
+      { id: 'g2', name: 'Maria Orchard', fruit: 'Avocados', units: 48, x: 18, y: 72 },
+      { id: 'g3', name: 'Valley Harvest', fruit: 'Avocados', units: 36, x: 40, y: 24 },
+    ],
+  },
+  {
+    id: 'la-core',
+    name: 'Los Angeles Core',
+    store: { id: '1049', name: 'Store 1049', city: 'Reseda', shortageFruit: 'Tomatoes', shortageQty: 95, x: 52, y: 62 },
+    growers: [
+      { id: 'g4', name: 'South Central Growers', fruit: 'Tomatoes', units: 38, x: 28, y: 70 },
+      { id: 'g5', name: 'Eastside Plot', fruit: 'Tomatoes', units: 29, x: 74, y: 38 },
+      { id: 'g6', name: 'Mid City Harvest', fruit: 'Tomatoes', units: 24, x: 60, y: 22 },
+    ],
+  },
+  {
+    id: 'pasadena',
+    name: 'Pasadena District',
+    store: { id: '1182', name: 'Store 1182', city: 'Pasadena', shortageFruit: 'Lemons', shortageQty: 70, x: 72, y: 48 },
+    growers: [
+      { id: 'g7', name: 'Foothill Citrus', fruit: 'Lemons', units: 28, x: 58, y: 24 },
+      { id: 'g8', name: 'Arroyo Co-op', fruit: 'Lemons', units: 18, x: 84, y: 28 },
+      { id: 'g9', name: 'San Marino Trees', fruit: 'Lemons', units: 16, x: 86, y: 68 },
+    ],
+  },
+]
+
+function colorForFruit(fruit: string) {
+  const key = fruit.toLowerCase()
+  if (key.includes('avocado')) return '#2f8c63'
+  if (key.includes('lemon') || key.includes('citrus')) return '#d5923a'
+  if (key.includes('tomato')) return '#d34a37'
+  return '#497fa6'
+}
+
+function Pill({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '8px 14px',
+        borderRadius: 999,
+        background: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.94)',
+        border: dark ? '1px solid rgba(255,255,255,0.20)' : '1px solid rgba(16,32,51,0.08)',
+        color: dark ? '#ffffff' : '#102033',
+        fontSize: 13,
+        fontWeight: 800,
+      }}
+    >
+      {children}
+    </span>
+  )
+}
+
+function ToggleButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        border: active ? '1px solid #102033' : '1px solid rgba(16,32,51,0.12)',
+        background: active ? '#102033' : 'rgba(255,255,255,0.92)',
+        color: active ? '#ffffff' : '#102033',
+        borderRadius: 999,
+        padding: '10px 14px',
+        fontWeight: 800,
+        fontSize: 13,
+        cursor: 'pointer',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function DistrictButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        border: active ? '1px solid #2f8c63' : '1px solid rgba(16,32,51,0.12)',
+        background: active ? 'rgba(47,140,99,0.12)' : '#ffffff',
+        color: '#102033',
+        borderRadius: 14,
+        padding: '12px 14px',
+        fontWeight: 800,
+        fontSize: 13,
+        cursor: 'pointer',
+        textAlign: 'left',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function StatCard({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div
+      style={{
+        background: 'rgba(255,255,255,0.92)',
+        border: '1px solid rgba(16,32,51,0.08)',
+        borderRadius: 22,
+        boxShadow: '0 18px 44px rgba(16,32,51,0.08)',
+        padding: 22,
+      }}
+    >
+      <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: '#728195', fontWeight: 800 }}>{label}</div>
+      <div style={{ fontSize: 34, fontWeight: 900, marginTop: 10, lineHeight: 1.05 }}>{value}</div>
+      <div style={{ fontSize: 14, color: '#556579', marginTop: 8 }}>{sub}</div>
+    </div>
+  )
+}
+
+function MapDemo({ district, stage }: { district: DistrictPreset; stage: Stage }) {
+  const routesVisible = stage === 'supplier-match' || stage === 'store-execution' || stage === 'completed'
+  const routesStrong = stage === 'store-execution' || stage === 'completed'
+
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        height: 380,
+        borderRadius: 24,
+        position: 'relative',
+        overflow: 'hidden',
+        background: 'linear-gradient(180deg, #eff6ff 0%, #f0fdf4 46%, #fef3c7 100%)',
+        border: '1px solid rgba(16,32,51,0.08)',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage:
+            'linear-gradient(rgba(16,32,51,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(16,32,51,0.04) 1px, transparent 1px)',
+          backgroundSize: '52px 52px',
+        }}
+      />
+
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        {district.growers.map((grower, idx) => (
+          <line
+            key={grower.id}
+            x1={`${grower.x}%`}
+            y1={`${grower.y}%`}
+            x2={`${district.store.x}%`}
+            y2={`${district.store.y}%`}
+            stroke={routesStrong ? '#2f8c63' : '#7aa5c7'}
+            strokeWidth={routesStrong ? 4 : 3}
+            strokeDasharray="10 8"
+            opacity={routesVisible ? 1 : 0.1}
+            style={{ transition: `opacity 400ms ease ${idx * 180}ms, stroke 400ms ease, stroke-width 400ms ease` }}
+          />
+        ))}
+      </svg>
+
+      {district.growers.map((grower) => (
+        <div key={grower.id} style={{ position: 'absolute', left: `${grower.x}%`, top: `${grower.y}%`, transform: 'translate(-50%, -50%)' }}>
+          <div
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: 999,
+              background: colorForFruit(grower.fruit),
+              boxShadow: stage === 'completed' ? `0 0 0 10px ${colorForFruit(grower.fruit)}33` : `0 0 0 8px ${colorForFruit(grower.fruit)}22`,
+            }}
+          />
+          <div
+            style={{
+              marginTop: 8,
+              padding: '6px 10px',
+              borderRadius: 999,
+              background: 'rgba(255,255,255,0.95)',
+              fontSize: 11,
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+              boxShadow: '0 8px 18px rgba(16,32,51,0.08)',
+            }}
+          >
+            {grower.name}
+          </div>
+        </div>
+      ))}
+
+      <div style={{ position: 'absolute', left: `${district.store.x}%`, top: `${district.store.y}%`, transform: 'translate(-50%, -50%)' }}>
+        <div
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 999,
+            background: '#102033',
+            boxShadow: stage === 'store-execution' || stage === 'completed' ? '0 0 0 14px rgba(16,32,51,0.18)' : '0 0 0 8px rgba(16,32,51,0.10)',
+          }}
+        />
+        <div
+          style={{
+            marginTop: 8,
+            padding: '6px 10px',
+            borderRadius: 999,
+            background: 'rgba(255,255,255,0.95)',
+            fontSize: 11,
+            fontWeight: 900,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 8px 18px rgba(16,32,51,0.08)',
+          }}
+        >
+          {district.store.name}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function DistrictManagerMode({ listings }: { listings: Listing[] }) {
+  const [role, setRole] = useState<BuyerRole>('district-manager')
+  const [districtId, setDistrictId] = useState<string>('sfv')
+  const [stage, setStage] = useState<Stage>('idle')
+  const [isRunning, setIsRunning] = useState(false)
+  const [coverage, setCoverage] = useState(12)
+  const [matched, setMatched] = useState(0)
+  const [eta, setEta] = useState('—')
+  const [suppliersNotified, setSuppliersNotified] = useState(0)
+  const [unitsSecured, setUnitsSecured] = useState(0)
+  const [summary, setSummary] = useState('District idle. Ready to execute local fill.')
+
+  const district = useMemo(() => districts.find((d) => d.id === districtId) || districts[0], [districtId])
+
+  const stats = useMemo(() => {
+    const growers = new Set(listings.map((item) => item.sellerId)).size || 0
+    const supply = listings.reduce((sum, item) => sum + (Number(item.inventory) || 0), 0)
+    return { stores: '12', growers: growers.toString(), supply: `${supply.toLocaleString()} units` }
+  }, [listings])
+
+  useEffect(() => {
+    setStage('idle')
+    setIsRunning(false)
+    setCoverage(12)
+    setMatched(0)
+    setEta('—')
+    setSuppliersNotified(0)
+    setUnitsSecured(0)
+    setSummary(`Ready to execute local fill in ${district.name}.`)
+  }, [districtId, role])
+
+  async function runExecution() {
+    if (isRunning) return
+    setIsRunning(true)
+    setStage('market-scan')
+    setCoverage(46)
+    setSuppliersNotified(1)
+    setSummary(`Scanning ${district.name} for shortage pressure and nearby local inventory.`)
+    await new Promise((r) => setTimeout(r, 900))
+
+    setStage('supplier-match')
+    setCoverage(74)
+    setMatched(district.growers.length)
+    setSuppliersNotified(district.growers.length)
+    setEta('22 min')
+    setSummary(`Matching ${district.growers.length} growers to ${district.store.name} for ${district.store.shortageFruit}.`)
+    await new Promise((r) => setTimeout(r, 1100))
+
+    const secured = district.growers.reduce((sum, g) => sum + g.units, 0)
+    setStage('store-execution')
+    setCoverage(93)
+    setUnitsSecured(secured)
+    setEta('14 min')
+    setSummary('Executing routes and notifying suppliers for store-level replenishment.')
+    await new Promise((r) => setTimeout(r, 1200))
+
+    setStage('completed')
+    setCoverage(100)
+    setSummary(`Local fill executed. ${secured} units secured for ${district.store.name}.`)
+    setIsRunning(false)
+  }
+
+  const buttonLabel =
+    stage === 'idle'
+      ? 'Execute Local Fill'
+      : stage === 'market-scan'
+        ? 'Scanning Market...'
+        : stage === 'supplier-match'
+          ? 'Matching Suppliers...'
+          : stage === 'store-execution'
+            ? 'Executing Routes...'
+            : 'Fill Executed'
+
+  const roleSubtitle =
+    role === 'district-manager'
+      ? 'Store-by-store fill visibility for district execution.'
+      : role === 'regional-vp'
+        ? 'Regional operating signal across stores, growers, and timing.'
+        : 'National retail framing for scalable hyperlocal supply deployment.'
+
+  return (
+    <div style={{ minHeight: '100vh', fontFamily: 'Inter, Arial, sans-serif', background: 'linear-gradient(180deg, #f8fbff 0%, #edf3f8 100%)', color: '#102033', padding: 28 }}>
+      <div style={{ maxWidth: 1360, margin: '0 auto' }}>
+        <section
+          style={{
+            borderRadius: 34,
+            overflow: 'hidden',
+            padding: 38,
+            display: 'grid',
+            gridTemplateColumns: '1.2fr 0.8fr',
+            gap: 24,
+            background: 'linear-gradient(135deg, #1f6d5b 0%, #2e7d6b 18%, #497fa6 48%, #c16b2f 82%, #d5923a 100%)',
+            boxShadow: '0 24px 60px rgba(16,32,51,0.18)',
+          }}
+        >
+          <div>
+            <Pill dark>PLUCK · DISTRICT EXECUTION</Pill>
+            <div style={{ marginTop: 18, color: '#ffffff', fontSize: 62, lineHeight: 0.94, fontWeight: 900, letterSpacing: '-0.05em', maxWidth: 780 }}>
+              Hyperlocal supply intelligence for food retail.
+            </div>
+            <div style={{ marginTop: 18, color: 'rgba(255,255,255,0.95)', fontSize: 21, lineHeight: 1.35, maxWidth: 760 }}>
+              See shortages, match nearby grower supply, and execute district-level fill opportunities across a national operating model.
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 22 }}>
+              <Pill>{stats.stores} stores</Pill>
+              <Pill>{stats.growers} growers</Pill>
+              <Pill>{stats.supply} live supply</Pill>
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 18 }}>
+              <ToggleButton active={role === 'district-manager'} onClick={() => setRole('district-manager')}>District Manager</ToggleButton>
+              <ToggleButton active={role === 'regional-vp'} onClick={() => setRole('regional-vp')}>Regional VP</ToggleButton>
+              <ToggleButton active={role === 'national-retail'} onClick={() => setRole('national-retail')}>National Retail</ToggleButton>
+            </div>
+            <div style={{ marginTop: 12, color: 'rgba(255,255,255,0.96)', fontWeight: 700, fontSize: 14 }}>{roleSubtitle}</div>
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(16,32,51,0.08)', borderRadius: 22, boxShadow: '0 18px 44px rgba(16,32,51,0.10)', padding: 24, alignSelf: 'end' }}>
+            <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: '#728195', fontWeight: 800 }}>Execution summary</div>
+            <div style={{ marginTop: 10, fontSize: 30, fontWeight: 900, lineHeight: 1.04 }}>{district.store.name} → {district.store.shortageFruit}</div>
+            <div style={{ marginTop: 10, color: '#556579', fontSize: 16, lineHeight: 1.45 }}>{summary}</div>
+            <button onClick={runExecution} disabled={isRunning} style={{ marginTop: 18, border: 0, borderRadius: 16, padding: '14px 18px', background: isRunning ? '#6b7280' : '#102033', color: '#ffffff', fontWeight: 800, fontSize: 16, cursor: isRunning ? 'default' : 'pointer' }}>{buttonLabel}</button>
+          </div>
+        </section>
+
+        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 18, marginTop: 22 }}>
+          <StatCard label="Coverage" value={`${coverage}%`} sub="District route readiness" />
+          <StatCard label="Matched growers" value={String(matched)} sub="Suppliers matched to shortage" />
+          <StatCard label="ETA" value={eta} sub="Estimated route timing" />
+          <StatCard label="Suppliers notified" value={String(suppliersNotified)} sub="Growers alerted in sequence" />
+          <StatCard label="Units secured" value={String(unitsSecured)} sub="Committed local inventory" />
+        </section>
+
+        <section style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: 22, marginTop: 22 }}>
+          <div style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(16,32,51,0.08)', borderRadius: 22, boxShadow: '0 18px 44px rgba(16,32,51,0.08)', padding: 22 }}>
+            <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: '#728195', fontWeight: 800 }}>District map</div>
+            <div style={{ fontSize: 34, fontWeight: 900, marginTop: 10, lineHeight: 1.04 }}>{district.name}</div>
+            <div style={{ color: '#556579', marginTop: 8, fontSize: 16 }}>Watch growers connect to store shortage demand in a district execution flow.</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 16 }}>
+              {districts.map((d) => (
+                <DistrictButton key={d.id} active={d.id === districtId} onClick={() => setDistrictId(d.id)}>{d.name}</DistrictButton>
+              ))}
+            </div>
+            <MapDemo district={district} stage={stage} />
+          </div>
+
+          <div style={{ display: 'grid', gap: 18 }}>
+            <div style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(16,32,51,0.08)', borderRadius: 22, boxShadow: '0 18px 44px rgba(16,32,51,0.08)', padding: 22 }}>
+              <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: '#728195', fontWeight: 800 }}>Store shortage</div>
+              <div style={{ marginTop: 14, borderRadius: 18, padding: 16, background: '#f8fbff', border: '1px solid rgba(16,32,51,0.06)' }}>
+                <div style={{ fontWeight: 900, fontSize: 17 }}>{district.store.name}</div>
+                <div style={{ color: '#556579', marginTop: 4, fontSize: 14 }}>{district.store.city}</div>
+                <div style={{ marginTop: 8, fontWeight: 800 }}>{district.store.shortageFruit}</div>
+                <div style={{ marginTop: 6, fontWeight: 900 }}>{district.store.shortageQty} units short</div>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(16,32,51,0.08)', borderRadius: 22, boxShadow: '0 18px 44px rgba(16,32,51,0.08)', padding: 22 }}>
+              <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: '#728195', fontWeight: 800 }}>Matched growers</div>
+              <div style={{ display: 'grid', gap: 12, marginTop: 16 }}>
+                {district.growers.map((g) => (
+                  <div key={g.id} style={{ borderRadius: 18, padding: 16, background: '#f8fbff', border: '1px solid rgba(16,32,51,0.06)', display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 16 }}>{g.name}</div>
+                      <div style={{ color: colorForFruit(g.fruit), marginTop: 4, fontSize: 14 }}>{g.fruit}</div>
+                    </div>
+                    <div style={{ fontWeight: 900, whiteSpace: 'nowrap', fontSize: 15 }}>{g.units} units</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(16,32,51,0.08)', borderRadius: 22, boxShadow: '0 18px 44px rgba(16,32,51,0.08)', padding: 22 }}>
+              <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: '#728195', fontWeight: 800 }}>Execution status</div>
+              <div style={{ marginTop: 10, fontSize: 28, fontWeight: 900, lineHeight: 1.04 }}>
+                {stage === 'idle' ? 'Ready to execute' : stage === 'market-scan' ? 'Scanning market' : stage === 'supplier-match' ? 'Matching supply' : stage === 'store-execution' ? 'Executing routes' : 'Execution complete'}
+              </div>
+              <div style={{ marginTop: 10, color: '#556579', fontSize: 15, lineHeight: 1.45 }}>{summary}</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,311 @@
+import React, { useMemo, useState } from 'react'
+
+type TabKey = 'summary' | 'platform' | 'diligence' | 'integration'
+
+const regions = ['Greater Los Angeles', 'San Fernando Valley', 'South Bay', 'Pasadena', 'Orange County']
+const windows = ['This week', '30 days', 'Quarter']
+const categories = ['All produce', 'Citrus', 'Avocados', 'Stone fruit', 'Figs', 'Guavas']
+
+const flagship = {
+  title: 'Pluck flagship enterprise environment',
+  subtitle: 'Final presentation-ready platform mode',
+  thesis: 'Pluck can be positioned as the visibility layer for decentralized food economies — spanning marketplace energy, retail intelligence, ESG narrative, and strategic platform value.',
+}
+
+const topMetrics = [
+  { value: '148', label: 'Visible local growers' },
+  { value: '29', label: 'Neighborhood signal zones' },
+  { value: '12', label: 'Retail opportunity surfaces' },
+  { value: '82', label: 'Top zone readiness score' },
+]
+
+const executiveSummary = [
+  'Pluck has evolved into a credible enterprise narrative without losing its consumer marketplace identity.',
+  'Its strongest strategic value lies in surfacing hyperlocal supply, trust, and demand before larger systems can see the same terrain.',
+  'The platform now supports retail pilot framing, ESG / community storytelling, diligence review, and integration logic from one unified shell.',
+]
+
+const platformCards = [
+  {
+    title: 'Marketplace surface',
+    body: 'Consumer trust, neighborhood energy, and grower visibility remain the front door of the product.',
+  },
+  {
+    title: 'Enterprise intelligence',
+    body: 'Regional signals, pilot narratives, and supply-demand patterns now read as a strategic operating layer.',
+  },
+  {
+    title: 'Strategic asset',
+    body: 'The long-term value becomes the data and visibility surface around decentralized food activity.',
+  },
+]
+
+const diligenceItems = [
+  { label: 'Moat', value: 'Signal asymmetry + trust density + local demand convergence' },
+  { label: 'Pilot readiness', value: 'Pasadena citrus and South Bay avocados remain the strongest flagship narratives' },
+  { label: 'Risk posture', value: 'Category timing and execution complexity are manageable with disciplined sequencing' },
+  { label: 'Acquisition fit', value: 'Strongest fit is as infrastructure layer inside broader retail or local-commerce ecosystems' },
+]
+
+const integrationRows = [
+  { phase: '0–30 days', action: 'Unify narrative and preserve consumer charm', owner: 'Strategy + Product' },
+  { phase: '30–60 days', action: 'Launch flagship regional pilot stories', owner: 'Partnerships' },
+  { phase: '60–100 days', action: 'Formalize signal dashboards and executive reporting', owner: 'Product + Data' },
+  { phase: '100+ days', action: 'Scale partner surfaces without collapsing the core marketplace identity', owner: 'Leadership' },
+]
+
+const closingTakeaway = 'Pluck now reads as a serious platform story: consumer-legible on the surface, strategically valuable underneath.'
+
+export default function Enterprise() {
+  const [tab, setTab] = useState<TabKey>('summary')
+  const [region, setRegion] = useState(regions[0])
+  const [windowRange, setWindowRange] = useState(windows[0])
+  const [category, setCategory] = useState(categories[0])
+
+  const headline = useMemo(() => {
+    if (tab === 'summary') return 'Executive summary'
+    if (tab === 'platform') return 'Platform architecture'
+    if (tab === 'diligence') return 'Diligence readout'
+    return 'Integration roadmap'
+  }, [tab])
+
+  const downloadFlagshipBrief = () => {
+    const memo = [
+      'PLUCK FLAGSHIP ENTERPRISE BRIEF',
+      '',
+      `Title: ${flagship.title}`,
+      `Region: ${region}`,
+      `Window: ${windowRange}`,
+      `Category: ${category}`,
+      '',
+      'Executive summary:',
+      ...executiveSummary.map((x) => `- ${x}`),
+      '',
+      'Core thesis:',
+      flagship.thesis,
+      '',
+      'Closing:',
+      closingTakeaway,
+    ].join('\n')
+
+    const blob = new Blob([memo], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pluck-flagship-enterprise-brief.txt'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <section id="enterprise-shell" className="enterprise-dashboard v12">
+      <section className="enterprise-flagship-topbar section-card">
+        <div>
+          <p className="eyebrow">Flagship final polish</p>
+          <strong>{flagship.title}</strong>
+          <p className="subtle-copy">{flagship.subtitle}</p>
+        </div>
+
+        <div className="enterprise-investor-actions">
+          <button className="ghost" type="button" onClick={downloadFlagshipBrief}>
+            Download flagship brief
+          </button>
+          <button className="ghost" type="button" onClick={() => window.location.assign('/')}>
+            Back to marketplace
+          </button>
+        </div>
+      </section>
+
+      <section className="enterprise-flagship-hero section-card">
+        <div className="enterprise-flagship-copy">
+          <p className="eyebrow">Final enterprise mode</p>
+          <h1>Pluck is now presentation-ready as a premium enterprise platform.</h1>
+          <p className="enterprise-subcopy dark">
+            This flagship view unifies consumer marketplace energy, enterprise intelligence,
+            diligence framing, and integration logic into one clean strategic narrative.
+          </p>
+
+          <div className="enterprise-cta-row">
+            <button className="primary" type="button" onClick={() => document.getElementById('flagship-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              Open flagship view
+            </button>
+            <button className="ghost" type="button" onClick={downloadFlagshipBrief}>
+              Download brief
+            </button>
+          </div>
+        </div>
+
+        <div className="enterprise-flagship-thesis">
+          <span>Flagship thesis</span>
+          <strong>{flagship.thesis}</strong>
+        </div>
+      </section>
+
+      <section className="enterprise-kpi-grid flagship">
+        {topMetrics.map((item) => (
+          <article key={item.label} className="enterprise-kpi-card section-card">
+            <p className="enterprise-kpi-value">{item.value}</p>
+            <p className="enterprise-kpi-label">{item.label}</p>
+          </article>
+        ))}
+      </section>
+
+      <section id="flagship-workspace" className="section-card enterprise-workspace-shell flagship-shell">
+        <div className="enterprise-control-row">
+          <div className="enterprise-select-group">
+            <label>Region</label>
+            <select value={region} onChange={(e) => setRegion(e.target.value)}>
+              {regions.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Window</label>
+            <select value={windowRange} onChange={(e) => setWindowRange(e.target.value)}>
+              {windows.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Category</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {categories.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="enterprise-tab-row flagship-tabs">
+          <button className={tab === 'summary' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('summary')}>Executive Summary</button>
+          <button className={tab === 'platform' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('platform')}>Platform</button>
+          <button className={tab === 'diligence' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('diligence')}>Diligence</button>
+          <button className={tab === 'integration' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('integration')}>Integration</button>
+        </div>
+
+        <div className="enterprise-tab-head">
+          <div>
+            <p className="eyebrow">Flagship workspace</p>
+            <h2>{headline}</h2>
+          </div>
+          <p className="subtle-copy">
+            Context: <strong>{region}</strong> · <strong>{windowRange}</strong> · <strong>{category}</strong>
+          </p>
+        </div>
+
+        {tab === 'summary' && (
+          <div className="enterprise-panel-stack">
+            <section className="section-card enterprise-panel flagship-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Executive summary</p>
+                <h3>What Pluck has become</h3>
+              </div>
+
+              <div className="enterprise-takeaway-list">
+                {executiveSummary.map((item) => (
+                  <article key={item} className="enterprise-takeaway-card">
+                    <span>•</span>
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="section-card enterprise-panel flagship-panel closing-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Closing take</p>
+                <h3>Final flagship readout</h3>
+              </div>
+              <div className="enterprise-decision-card flagship-decision">
+                <strong>Conclusion:</strong>
+                <p>{closingTakeaway}</p>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {tab === 'platform' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-three-col">
+              {platformCards.map((item) => (
+                <article key={item.title} className="section-card enterprise-panel flagship-panel">
+                  <p className="eyebrow">Platform layer</p>
+                  <h3>{item.title}</h3>
+                  <p className="subtle-copy">{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'diligence' && (
+          <div className="enterprise-panel-stack">
+            <section className="section-card enterprise-panel flagship-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Diligence readout</p>
+                <h3>What now looks credible</h3>
+              </div>
+
+              <div className="enterprise-signal-summary">
+                {diligenceItems.map((item) => (
+                  <div key={item.label} className="enterprise-signal-summary-row">
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {tab === 'integration' && (
+          <div className="enterprise-panel-stack">
+            <section className="section-card enterprise-panel flagship-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Integration roadmap</p>
+                <h3>How the platform compounds after the deal</h3>
+              </div>
+
+              <div className="enterprise-table-wrap">
+                <table className="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Phase</th>
+                      <th>Action</th>
+                      <th>Owner</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {integrationRows.map((row) => (
+                      <tr key={row.phase}>
+                        <td>{row.phase}</td>
+                        <td>{row.action}</td>
+                        <td>{row.owner}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="section-card enterprise-cta-card investor-cta flagship-cta">
+              <div>
+                <p className="eyebrow">Flagship conclusion</p>
+                <h2>Pluck is ready to be presented as a finished strategic platform story.</h2>
+                <p className="subtle-copy">
+                  From consumer marketplace to enterprise shell, diligence room, and integration narrative,
+                  the product now has a complete high-end strategic arc.
+                </p>
+              </div>
+
+              <div className="enterprise-cta-actions">
+                <button className="primary" type="button" onClick={downloadFlagshipBrief}>Download flagship brief</button>
+                <button className="ghost" type="button">Presentation ready</button>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
+    </section>
+  )
+}

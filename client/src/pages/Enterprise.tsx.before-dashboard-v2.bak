@@ -1,0 +1,48 @@
+import React from 'react'
+
+export default function Enterprise() {
+  return (
+    <section id="enterprise-shell" className="stack enterprise-shell">
+      <div className="section-heading compact-heading no-top-gap">
+        <div>
+          <p className="eyebrow">Pluck for retail partners</p>
+          <h2>Hyperlocal supply intelligence for the next generation of food retail.</h2>
+        </div>
+      </div>
+
+      <section className="stack-list">
+        <article className="section-card">
+          <p className="eyebrow">Local supply signals</p>
+          <h3>See what is growing near your stores.</h3>
+          <p className="subtle-copy">
+            Track top crops, neighborhood supply pockets, and seasonal availability trends.
+          </p>
+        </article>
+
+        <article className="section-card">
+          <p className="eyebrow">ESG and impact</p>
+          <h3>Turn local food activity into measurable community value.</h3>
+          <p className="subtle-copy">
+            Show reduced food miles, local grower activation, and neighborhood participation.
+          </p>
+        </article>
+
+        <article className="section-card">
+          <p className="eyebrow">Customer demand</p>
+          <h3>Understand what high-intent local food shoppers want.</h3>
+          <p className="subtle-copy">
+            Learn what is trending, what is unavailable, and where demand is clustering.
+          </p>
+        </article>
+
+        <article className="section-card">
+          <p className="eyebrow">Local-to-retail pipeline</p>
+          <h3>Backyard supply → demand signals → retail opportunity</h3>
+          <p className="subtle-copy">
+            Pluck helps retailers surface decentralized food activity before it becomes mainstream supply data.
+          </p>
+        </article>
+      </section>
+    </section>
+  )
+}

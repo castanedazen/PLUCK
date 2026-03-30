@@ -1,0 +1,228 @@
+import React from 'react'
+
+const impactMetrics = [
+  { value: '148', label: 'Active local growers' },
+  { value: '3.2k', label: 'Estimated food miles saved' },
+  { value: '412', label: 'Community pickups completed' },
+  { value: '29', label: 'Neighborhood zones surfaced' },
+]
+
+const retailInsights = [
+  { label: 'Demand spike', value: 'Lemons', tone: 'gold' },
+  { label: 'Supply gap', value: 'Pasadena citrus', tone: 'slate' },
+  { label: 'High trust zone', value: 'South Bay', tone: 'blue' },
+  { label: 'Emerging category', value: 'Figs', tone: 'gold' },
+]
+
+const supplySignals = [
+  { label: 'Top crops this week', value: 'Citrus, avocados, strawberries', note: 'Highest active volume across local listings' },
+  { label: 'Grower hotspots', value: 'Mission Hills, Pasadena, South Bay', note: 'Neighborhoods with strongest active supply' },
+  { label: 'New local supply', value: '27 new listings', note: 'Fresh same-day and next-day harvest activity' },
+  { label: 'Fastest-moving produce', value: 'Lemons and avocados', note: 'Highest velocity between listing and pickup' },
+  { label: 'Emerging grower class', value: 'Backyard citrus clusters', note: 'Small-batch supply becoming regionally visible' },
+  { label: 'Retail watchlist', value: 'Stone fruit, guavas, figs', note: 'Categories with story value and seasonal lift' },
+]
+
+const demandSignals = [
+  { title: 'Most searched produce', body: 'Lemons, avocados, peaches, figs, and guavas continue to drive the strongest local shopper interest.' },
+  { title: 'Unmet demand pockets', body: 'Several neighborhoods show strong citrus intent but inconsistent same-day availability.' },
+  { title: 'Retail relevance', body: 'Shoppers signal strong interest in fresh, local, seasonal, and high-trust produce stories.' },
+]
+
+const partnerCards = [
+  {
+    title: 'Local supply intelligence',
+    body: 'See neighborhood-level grower activity, seasonal signals, and emerging produce categories before they become mainstream supply data.',
+  },
+  {
+    title: 'ESG and community value',
+    body: 'Translate local food activity into measurable grower activation, reduced food miles, and stronger community participation.',
+  },
+  {
+    title: 'Demand discovery',
+    body: 'Understand what high-intent local food shoppers are actively seeking, where supply is thin, and where retail opportunity begins.',
+  },
+]
+
+export default function Enterprise() {
+  return (
+    <section id="enterprise-shell" className="enterprise-dashboard">
+      <section className="enterprise-hero-card">
+        <div className="enterprise-hero-copy">
+          <p className="eyebrow">Retail partners</p>
+          <h1>Hyperlocal supply intelligence for food retail.</h1>
+          <p className="enterprise-subcopy">
+            Pluck helps retailers understand neighborhood-level grower signals, seasonal availability,
+            and local demand patterns through a new layer of decentralized food intelligence.
+          </p>
+
+          <div className="enterprise-cta-row">
+            <button
+              className="primary"
+              type="button"
+              onClick={() => document.getElementById('enterprise-supply-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            >
+              View supply signals
+            </button>
+            <button
+              className="ghost"
+              type="button"
+              onClick={() => window.location.assign('/')}
+            >
+              Back to marketplace
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="enterprise-insight-strip">
+        {retailInsights.map((item) => (
+          <article key={item.label} className={`enterprise-insight-pill tone-${item.tone}`}>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+          </article>
+        ))}
+      </section>
+
+      <section className="enterprise-kpi-grid">
+        {impactMetrics.map((item) => (
+          <article key={item.label} className="enterprise-kpi-card section-card">
+            <p className="enterprise-kpi-value">{item.value}</p>
+            <p className="enterprise-kpi-label">{item.label}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="enterprise-two-col">
+        <article className="section-card enterprise-panel" id="enterprise-supply-grid">
+          <div className="enterprise-panel-head">
+            <p className="eyebrow">Supply intelligence</p>
+            <h2>Local supply signals</h2>
+          </div>
+
+          <div className="enterprise-signal-grid enterprise-signal-grid-wide">
+            {supplySignals.map((item) => (
+              <div key={item.label} className="enterprise-signal-card">
+                <p className="enterprise-signal-label">{item.label}</p>
+                <h3>{item.value}</h3>
+                <p className="subtle-copy">{item.note}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="section-card enterprise-panel">
+          <div className="enterprise-panel-head">
+            <p className="eyebrow">Retail visibility map</p>
+            <h2>Regional signal surface</h2>
+          </div>
+
+          <div className="enterprise-map-mock">
+            <div className="enterprise-map-dot dot-a"></div>
+            <div className="enterprise-map-dot dot-b"></div>
+            <div className="enterprise-map-dot dot-c"></div>
+            <div className="enterprise-map-dot dot-d"></div>
+            <div className="enterprise-map-ring ring-a"></div>
+            <div className="enterprise-map-ring ring-b"></div>
+            <div className="enterprise-map-ring ring-c"></div>
+
+            <div className="enterprise-map-label label-a">Mission Hills citrus</div>
+            <div className="enterprise-map-label label-b">Pasadena demand pocket</div>
+            <div className="enterprise-map-label label-c">South Bay trust zone</div>
+
+            <div className="enterprise-map-legend">
+              <span><strong>High signal</strong> active grower density</span>
+              <span><strong>Demand zone</strong> shopper interest cluster</span>
+              <span><strong>Retail relevance</strong> sourcing and story opportunity</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section className="enterprise-three-col">
+        {partnerCards.map((item) => (
+          <article key={item.title} className="section-card enterprise-panel">
+            <p className="eyebrow">Enterprise value</p>
+            <h3>{item.title}</h3>
+            <p className="subtle-copy">{item.body}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="enterprise-two-col">
+        <article className="section-card enterprise-panel">
+          <div className="enterprise-panel-head">
+            <p className="eyebrow">Demand intelligence</p>
+            <h2>Where customer demand becomes retail insight</h2>
+          </div>
+
+          <div className="enterprise-demand-stack">
+            {demandSignals.map((item) => (
+              <div key={item.title} className="enterprise-demand-card">
+                <h3>{item.title}</h3>
+                <p className="subtle-copy">{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="section-card enterprise-panel">
+          <div className="enterprise-panel-head">
+            <p className="eyebrow">Local-to-retail pipeline</p>
+            <h2>From backyard supply to retailer opportunity</h2>
+          </div>
+
+          <div className="enterprise-flow">
+            <div className="enterprise-flow-step">
+              <span>1</span>
+              <div>
+                <h3>Growers list produce</h3>
+                <p className="subtle-copy">Backyard and small-batch supply enters the network.</p>
+              </div>
+            </div>
+
+            <div className="enterprise-flow-step">
+              <span>2</span>
+              <div>
+                <h3>Signals cluster locally</h3>
+                <p className="subtle-copy">Neighborhood-level availability and category patterns become visible.</p>
+              </div>
+            </div>
+
+            <div className="enterprise-flow-step">
+              <span>3</span>
+              <div>
+                <h3>Demand patterns emerge</h3>
+                <p className="subtle-copy">Shoppers reveal what is trending, missing, and worth watching.</p>
+              </div>
+            </div>
+
+            <div className="enterprise-flow-step">
+              <span>4</span>
+              <div>
+                <h3>Retail partners act</h3>
+                <p className="subtle-copy">Retailers gain a new layer of sourcing, marketing, and ESG visibility.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section className="section-card enterprise-cta-card">
+        <div>
+          <p className="eyebrow">Partner with Pluck</p>
+          <h2>Bring hyperlocal food intelligence into your retail strategy.</h2>
+          <p className="subtle-copy">
+            Pluck can evolve from marketplace to enterprise signal layer —
+            connecting growers, neighborhoods, and retail partners through decentralized food visibility.
+          </p>
+        </div>
+
+        <div className="enterprise-cta-actions">
+          <button className="primary" type="button">Request partner demo</button>
+          <button className="ghost" type="button">Explore pilot program</button>
+        </div>
+      </section>
+    </section>
+  )
+}

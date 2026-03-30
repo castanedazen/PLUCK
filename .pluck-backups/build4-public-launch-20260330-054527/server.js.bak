@@ -1,0 +1,158 @@
+const express = require("express")
+const cors = require("cors")
+const bodyParser = require("body-parser")
+const path = require("path")
+const fs = require("fs")
+
+const listingsRouter = require("./routes/listings")
+const favoritesRouter = require("./routes/favorites")
+const followsRouter = require("./routes/follows")
+const conversationsRouter = require("./routes/conversations")
+const messagesRouter = require("./routes/messages")
+const sellerRouter = require("./routes/seller")
+const socialRouter = require("./routes/social")
+const notificationsRouter = require("./routes/notifications")
+const alertsRouter = require("./routes/alerts")
+const uploadRouter = require("./routes/upload")
+const detectFruitRouter = require("./routes/detectFruit")
+const pickupsRouter = require("./routes/pickups")
+const reviewsRouter = require("./routes/reviews")
+const authRouter = require("./routes/auth")
+const buyerRouter = require("./routes/buyer")
+
+const app = express()
+const PORT = process.env.PORT || 4000
+
+app.use(
+  cors({
+    origin: true,
+    credentials: false,
+  }),
+)
+
+app.use(bodyParser.json({ limit: "10mb" }))
+app.use(bodyParser.urlencoded({ extended: true }))
+
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`)
+  next()
+})
+
+const uploadsDir = path.join(__dirname, "uploads")
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true })
+}
+app.use("/uploads", express.static(uploadsDir))
+
+app.get("/", (_req, res) => {
+  res.send("PLUCK backend is running")
+})
+
+app.get("/api/health", (_req, res) => {
+  res.json({
+    ok: true,
+    name: "PLUCK backend",
+    status: "running",
+    storage: "sqlite",
+    uploadEnabled: true,
+    aiDetectionEnabled: Boolean(process.env.OPENAI_API_KEY),
+    reviewsEnabled: true,
+    pickupCompletionEnabled: true,
+  })
+})
+
+app.use("/api/listings", listingsRouter)
+app.use("/api/favorites", favoritesRouter)
+app.use("/api/follows", followsRouter)
+app.use("/api/conversations", conversationsRouter)
+app.use("/api/messages", messagesRouter)
+app.use("/api/seller", sellerRouter)
+app.use("/api/sellers", sellerRouter)
+app.use("/api/social", socialRouter)
+app.use("/api/notifications", notificationsRouter)
+app.use("/api/alerts", alertsRouter)
+app.use("/api/upload", uploadRouter)
+app.use("/api/detect-fruit", detectFruitRouter)
+app.use("/api/pickups", pickupsRouter)
+app.use("/api/reviews", reviewsRouter)
+app.use("/api/auth", authRouter)
+app.use("/api/buyer", buyerRouter)
+
+app.use((err, _req, res, _next) => {
+  console.error("Unhandled backend error:", err)
+  res.status(500).json({ error: err.message || "Internal server error" })
+})
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`PLUCK backend running on http://localhost:${PORT}`)
+})
+// ===== BUILD 2 EXECUTION ENGINE =====
+
+let SUPPLY = []
+let SHORTAGES = []
+
+app.post('/api/supply', (req, res) => {
+  const { grower, item, units, lat, lng } = req.body
+  const entry = { id: Date.now(), grower, item, units, lat, lng }
+  SUPPLY.push(entry)
+  res.json({ ok: true, entry })
+})
+
+app.post('/api/shortage', (req, res) => {
+  const { store, item, units, lat, lng } = req.body
+  const entry = { id: Date.now(), store, item, units, lat, lng }
+  SHORTAGES.push(entry)
+  res.json({ ok: true, entry })
+})
+
+function distance(a, b) {
+  return Math.sqrt(
+    Math.pow(a.lat - b.lat, 2) + Math.pow(a.lng - b.lng, 2)
+  )
+}
+
+app.post('/api/execute', (req, res) => {
+  const { item } = req.body
+
+  const shortage = SHORTAGES.find(s => s.item === item)
+  if (!shortage) {
+    return res.status(404).json({ error: 'No shortage found' })
+  }
+
+  let remaining = shortage.units
+  const matches = []
+
+  const sorted = SUPPLY
+    .filter(s => s.item === item)
+    .sort((a, b) => distance(a, shortage) - distance(b, shortage))
+
+  for (const s of sorted) {
+    if (remaining <= 0) break
+
+    const used = Math.min(s.units, remaining)
+    remaining -= used
+
+    matches.push({
+      grower: s.grower,
+      units: used,
+      distance: distance(s, shortage).toFixed(2)
+    })
+  }
+
+  res.json({
+    shortage,
+    matches,
+    fulfilled: shortage.units - remaining,
+    remaining
+  })
+})
+
+app.get('/api/state', (req, res) => {
+  res.json({
+    supply: SUPPLY,
+    shortages: SHORTAGES
+  })
+})
+
+// ===== END BUILD 2 =====
+

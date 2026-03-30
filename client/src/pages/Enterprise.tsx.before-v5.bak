@@ -1,0 +1,349 @@
+import React, { useMemo, useState } from 'react'
+
+type TabKey = 'supply' | 'demand' | 'impact' | 'opportunities'
+
+const filters = ['This week', 'Citrus', 'Avocados', 'Stone fruit', 'Los Angeles', 'South Bay', 'Pasadena']
+
+const kpis = [
+  { value: '148', label: 'Active local growers' },
+  { value: '3.2k', label: 'Estimated food miles saved' },
+  { value: '412', label: 'Community pickups completed' },
+  { value: '29', label: 'Neighborhood zones surfaced' },
+]
+
+const supplyCards = [
+  { title: 'Top crops this week', value: 'Citrus, avocados, strawberries', note: 'Highest active local volume' },
+  { title: 'Grower hotspots', value: 'Mission Hills, Pasadena, South Bay', note: 'Strongest cluster activity' },
+  { title: 'New local supply', value: '27 new listings', note: 'Fresh same-day and next-day activity' },
+  { title: 'Fastest-moving produce', value: 'Lemons and avocados', note: 'Highest listing-to-pickup velocity' },
+]
+
+const demandCards = [
+  { title: 'Most searched produce', body: 'Lemons, avocados, peaches, figs, and guavas continue to drive the strongest shopper interest.' },
+  { title: 'Unmet demand pockets', body: 'Several neighborhoods show high citrus intent with inconsistent same-day availability.' },
+  { title: 'Retail relevance', body: 'Users signal strong interest in fresh, seasonal, local, and high-trust produce stories.' },
+]
+
+const impactCards = [
+  { title: 'Grower activation', body: 'Small-batch and backyard growers are becoming visible as real neighborhood food contributors.' },
+  { title: 'Food miles story', body: 'Local pickup and direct exchange create a compelling lower-distance community food narrative.' },
+  { title: 'Community trust', body: 'High-repeat neighborhoods are forming a pattern of localized produce exchange and credibility.' },
+]
+
+const opportunities = [
+  { zone: 'Pasadena', crop: 'Citrus', supply: 'Medium', demand: 'High', relevance: 'High', action: 'Pilot seasonal retail story' },
+  { zone: 'South Bay', crop: 'Avocados', supply: 'High', demand: 'High', relevance: 'High', action: 'Test local sourcing narrative' },
+  { zone: 'Mission Hills', crop: 'Stone fruit', supply: 'Medium', demand: 'Medium', relevance: 'Medium', action: 'Monitor summer lift' },
+  { zone: 'San Fernando Valley', crop: 'Figs', supply: 'Low', demand: 'Medium', relevance: 'Medium', action: 'Watch emerging category' },
+]
+
+const chartBars = [
+  { label: 'Citrus', supply: 88, demand: 96 },
+  { label: 'Avocados', supply: 82, demand: 86 },
+  { label: 'Stone fruit', supply: 54, demand: 68 },
+  { label: 'Figs', supply: 34, demand: 57 },
+  { label: 'Guavas', supply: 28, demand: 49 },
+]
+
+const sparklinePoints = [38, 44, 41, 53, 59, 63, 68, 72]
+
+export default function Enterprise() {
+  const [tab, setTab] = useState<TabKey>('supply')
+  const [activeFilter, setActiveFilter] = useState('This week')
+
+  const activeHeadline = useMemo(() => {
+    if (tab === 'supply') return 'Local supply signals'
+    if (tab === 'demand') return 'Demand insights'
+    if (tab === 'impact') return 'Impact and ESG value'
+    return 'Regional opportunities'
+  }, [tab])
+
+  return (
+    <section id="enterprise-shell" className="enterprise-dashboard v4">
+      <section className="enterprise-hero-card">
+        <div className="enterprise-hero-copy">
+          <p className="eyebrow">Retail partners</p>
+          <h1>Hyperlocal supply intelligence for food retail.</h1>
+          <p className="enterprise-subcopy">
+            Pluck helps retailers understand neighborhood-level grower signals, seasonal availability,
+            and local demand patterns through a decentralized food intelligence layer.
+          </p>
+
+          <div className="enterprise-cta-row">
+            <button className="primary" type="button" onClick={() => document.getElementById('enterprise-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              Explore dashboard
+            </button>
+            <button className="ghost" type="button" onClick={() => window.location.assign('/')}>
+              Back to marketplace
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="enterprise-kpi-grid">
+        {kpis.map((item) => (
+          <article key={item.label} className="enterprise-kpi-card section-card">
+            <p className="enterprise-kpi-value">{item.value}</p>
+            <p className="enterprise-kpi-label">{item.label}</p>
+          </article>
+        ))}
+      </section>
+
+      <section id="enterprise-tabs" className="section-card enterprise-tabs-shell">
+        <div className="enterprise-tab-row">
+          <button className={tab === 'supply' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('supply')}>Supply Signals</button>
+          <button className={tab === 'demand' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('demand')}>Demand Insights</button>
+          <button className={tab === 'impact' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('impact')}>Impact</button>
+          <button className={tab === 'opportunities' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('opportunities')}>Regional Opportunities</button>
+        </div>
+
+        <div className="enterprise-filter-row">
+          {filters.map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              className={activeFilter === filter ? 'enterprise-filter active' : 'enterprise-filter'}
+              onClick={() => setActiveFilter(filter)}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
+        <div className="enterprise-tab-head">
+          <div>
+            <p className="eyebrow">Enterprise dashboard</p>
+            <h2>{activeHeadline}</h2>
+          </div>
+          <p className="subtle-copy">Active filter: <strong>{activeFilter}</strong></p>
+        </div>
+
+        {tab === 'supply' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-two-col">
+              <article className="section-card enterprise-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Supply intelligence</p>
+                  <h3>Regional signal surface</h3>
+                </div>
+
+                <div className="enterprise-map-mock">
+                  <div className="enterprise-map-dot dot-a"></div>
+                  <div className="enterprise-map-dot dot-b"></div>
+                  <div className="enterprise-map-dot dot-c"></div>
+                  <div className="enterprise-map-dot dot-d"></div>
+                  <div className="enterprise-map-ring ring-a"></div>
+                  <div className="enterprise-map-ring ring-b"></div>
+                  <div className="enterprise-map-ring ring-c"></div>
+
+                  <div className="enterprise-map-label label-a">Mission Hills citrus</div>
+                  <div className="enterprise-map-label label-b">Pasadena demand pocket</div>
+                  <div className="enterprise-map-label label-c">South Bay trust zone</div>
+
+                  <div className="enterprise-map-legend">
+                    <span><strong>High signal</strong> active grower density</span>
+                    <span><strong>Demand zone</strong> shopper interest cluster</span>
+                    <span><strong>Retail relevance</strong> sourcing and story opportunity</span>
+                  </div>
+                </div>
+              </article>
+
+              <article className="section-card enterprise-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Category movement</p>
+                  <h3>Supply vs demand</h3>
+                </div>
+
+                <div className="enterprise-bar-chart">
+                  {chartBars.map((bar) => (
+                    <div key={bar.label} className="enterprise-bar-group">
+                      <div className="enterprise-bar-label">{bar.label}</div>
+                      <div className="enterprise-bar-track">
+                        <div className="enterprise-bar supply" style={{ width: `${bar.supply}%` }}></div>
+                      </div>
+                      <div className="enterprise-bar-track">
+                        <div className="enterprise-bar demand" style={{ width: `${bar.demand}%` }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="enterprise-legend-row">
+                  <span><i className="swatch supply"></i> Supply</span>
+                  <span><i className="swatch demand"></i> Demand</span>
+                </div>
+              </article>
+            </div>
+
+            <div className="enterprise-signal-grid enterprise-signal-grid-wide">
+              {supplyCards.map((item) => (
+                <div key={item.title} className="enterprise-signal-card">
+                  <p className="enterprise-signal-label">{item.title}</p>
+                  <h3>{item.value}</h3>
+                  <p className="subtle-copy">{item.note}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'demand' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-two-col">
+              <article className="section-card enterprise-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Demand trend</p>
+                  <h3>Search interest momentum</h3>
+                </div>
+
+                <div className="enterprise-sparkline-shell">
+                  <svg viewBox="0 0 400 140" className="enterprise-sparkline" aria-hidden="true">
+                    <polyline
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      points={sparklinePoints.map((v, i) => `${20 + i * 50},${120 - v}`).join(' ')}
+                    />
+                  </svg>
+                  <div className="enterprise-sparkline-labels">
+                    <span>Week 1</span>
+                    <span>Week 8</span>
+                  </div>
+                </div>
+              </article>
+
+              <article className="section-card enterprise-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Retail readout</p>
+                  <h3>What matters now</h3>
+                </div>
+
+                <div className="enterprise-insight-strip compact">
+                  <article className="enterprise-insight-pill tone-gold">
+                    <span>Demand spike</span>
+                    <strong>Lemons</strong>
+                  </article>
+                  <article className="enterprise-insight-pill tone-slate">
+                    <span>Supply gap</span>
+                    <strong>Pasadena citrus</strong>
+                  </article>
+                  <article className="enterprise-insight-pill tone-blue">
+                    <span>High trust zone</span>
+                    <strong>South Bay</strong>
+                  </article>
+                </div>
+              </article>
+            </div>
+
+            <div className="enterprise-three-col">
+              {demandCards.map((item) => (
+                <article key={item.title} className="section-card enterprise-panel">
+                  <p className="eyebrow">Demand intelligence</p>
+                  <h3>{item.title}</h3>
+                  <p className="subtle-copy">{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'impact' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-three-col">
+              {impactCards.map((item) => (
+                <article key={item.title} className="section-card enterprise-panel">
+                  <p className="eyebrow">Impact</p>
+                  <h3>{item.title}</h3>
+                  <p className="subtle-copy">{item.body}</p>
+                </article>
+              ))}
+            </div>
+
+            <article className="section-card enterprise-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Impact summary</p>
+                <h3>Why enterprise partners care</h3>
+              </div>
+              <div className="enterprise-flow">
+                <div className="enterprise-flow-step">
+                  <span>1</span>
+                  <div>
+                    <h3>Local grower visibility</h3>
+                    <p className="subtle-copy">Surface small-scale food contributors who are otherwise invisible to traditional retail systems.</p>
+                  </div>
+                </div>
+                <div className="enterprise-flow-step">
+                  <span>2</span>
+                  <div>
+                    <h3>Reduced distance narrative</h3>
+                    <p className="subtle-copy">Strengthen local sourcing and lower-mile storytelling with neighborhood-level proof points.</p>
+                  </div>
+                </div>
+                <div className="enterprise-flow-step">
+                  <span>3</span>
+                  <div>
+                    <h3>Community participation</h3>
+                    <p className="subtle-copy">Show meaningful local exchange and trust patterns that extend beyond generic marketplace activity.</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        )}
+
+        {tab === 'opportunities' && (
+          <div className="enterprise-panel-stack">
+            <article className="section-card enterprise-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Opportunity table</p>
+                <h3>Regional action view</h3>
+              </div>
+
+              <div className="enterprise-table-wrap">
+                <table className="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Zone</th>
+                      <th>Top crop</th>
+                      <th>Supply strength</th>
+                      <th>Demand strength</th>
+                      <th>Retail relevance</th>
+                      <th>Suggested action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {opportunities.map((row) => (
+                      <tr key={`${row.zone}-${row.crop}`}>
+                        <td>{row.zone}</td>
+                        <td>{row.crop}</td>
+                        <td>{row.supply}</td>
+                        <td>{row.demand}</td>
+                        <td>{row.relevance}</td>
+                        <td>{row.action}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <section className="section-card enterprise-cta-card">
+              <div>
+                <p className="eyebrow">Partner with Pluck</p>
+                <h2>Bring hyperlocal food intelligence into your retail strategy.</h2>
+                <p className="subtle-copy">
+                  Move from passive local storytelling to an active regional signal layer for sourcing, demand discovery, and community impact.
+                </p>
+              </div>
+
+              <div className="enterprise-cta-actions">
+                <button className="primary" type="button">Request partner demo</button>
+                <button className="ghost" type="button">Download pilot brief</button>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
+    </section>
+  )
+}

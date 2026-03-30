@@ -1,0 +1,704 @@
+import React, { useEffect, useMemo, useState } from 'react'
+
+type ScenarioKey = 'pasadena-citrus' | 'southbay-avocado' | 'seasonal-stonefruit'
+type RegionKey = 'los-angeles' | 'pasadena' | 'south-bay'
+type DemoStep = 'supply' | 'demand' | 'action' | 'impact'
+type StoreKey = 'store-184' | 'store-212' | 'store-305'
+
+const scenarioOptions: { key: ScenarioKey; label: string }[] = [
+  { key: 'pasadena-citrus', label: 'Pasadena Citrus Pilot' },
+  { key: 'southbay-avocado', label: 'South Bay Avocado Pilot' },
+  { key: 'seasonal-stonefruit', label: 'Seasonal Stone Fruit Pilot' },
+]
+
+const regionOptions: { key: RegionKey; label: string }[] = [
+  { key: 'los-angeles', label: 'Los Angeles Market' },
+  { key: 'pasadena', label: 'Pasadena Cluster' },
+  { key: 'south-bay', label: 'South Bay Cluster' },
+]
+
+const storeOptions: { key: StoreKey; label: string }[] = [
+  { key: 'store-184', label: 'Store 184 · Pasadena' },
+  { key: 'store-212', label: 'Store 212 · South Bay' },
+  { key: 'store-305', label: 'Store 305 · Los Angeles' },
+]
+
+const stepOrder: { key: DemoStep; label: string; sectionId: string }[] = [
+  { key: 'supply', label: '1. Local supply', sectionId: 'guided-supply' },
+  { key: 'demand', label: '2. Demand', sectionId: 'guided-demand' },
+  { key: 'action', label: '3. Action', sectionId: 'guided-action' },
+  { key: 'impact', label: '4. Impact', sectionId: 'guided-impact' },
+]
+
+const storeProfiles: Record<
+  StoreKey,
+  {
+    managerView: string
+    pilotStatus: string
+    readiness: string
+    topOpportunity: string
+    actionItems: string[]
+    tableRows: { metric: string; value: string; note: string }[]
+  }
+> = {
+  'store-184': {
+    managerView: 'Strong fit for Pasadena citrus merchandising pilot.',
+    pilotStatus: 'Pilot ready',
+    readiness: 'High',
+    topOpportunity: 'Launch local citrus story near produce entrance and tie into weekly freshness messaging.',
+    actionItems: [
+      'Approve Pasadena citrus pilot signage draft.',
+      'Review top nearby seller cluster for storytelling value.',
+      'Track conversion from local demo traffic into repeat produce visits.',
+    ],
+    tableRows: [
+      { metric: 'Pilot readiness', value: 'High', note: 'Store well aligned with Pasadena citrus demand pocket.' },
+      { metric: 'Local relevance', value: 'Very high', note: 'Best fit for citrus-first pilot narrative.' },
+      { metric: 'Community story strength', value: 'High', note: 'Strong local sourcing and neighborhood trust angle.' },
+    ],
+  },
+  'store-212': {
+    managerView: 'Strong fit for South Bay avocado pilot and trust-led merchandising.',
+    pilotStatus: 'Pilot ready',
+    readiness: 'High',
+    topOpportunity: 'Use avocados as the flagship local category for repeat-buyer trust and freshness positioning.',
+    actionItems: [
+      'Launch South Bay avocado pilot summary at store level.',
+      'Test local produce messaging around repeat buyer behavior.',
+      'Review same-day pickup and demand strength as a merchandising signal.',
+    ],
+    tableRows: [
+      { metric: 'Pilot readiness', value: 'High', note: 'Store aligned with South Bay trust and avocado density.' },
+      { metric: 'Local relevance', value: 'High', note: 'Clear avocado-led pilot opportunity.' },
+      { metric: 'Community story strength', value: 'High', note: 'Good local confidence and repeat engagement story.' },
+    ],
+  },
+  'store-305': {
+    managerView: 'Best used as broader Los Angeles pilot observation store.',
+    pilotStatus: 'Monitor',
+    readiness: 'Medium',
+    topOpportunity: 'Use as a comparison store to measure regional storytelling lift before deeper rollout.',
+    actionItems: [
+      'Monitor cross-category response before store-level launch.',
+      'Review category mix to decide whether citrus or stone fruit leads.',
+      'Use store as a benchmark against Pasadena and South Bay pilots.',
+    ],
+    tableRows: [
+      { metric: 'Pilot readiness', value: 'Medium', note: 'Stronger as a benchmark store than as the first launch site.' },
+      { metric: 'Local relevance', value: 'Moderate', note: 'Broader market visibility, less category concentration.' },
+      { metric: 'Community story strength', value: 'Moderate', note: 'Useful for comparison and regional narrative testing.' },
+    ],
+  },
+}
+
+const scenarioContent: Record<
+  ScenarioKey,
+  {
+    heroTitle: string
+    heroCopy: string
+    metrics: { label: string; value: string }[]
+    actions: string[]
+    whyKroger: { title: string; body: string }[]
+    hotspots: { label: string; top: string; left: string }[]
+    demandSignals: { label: string; value: string }[]
+    impactSignals: { label: string; value: string }[]
+    brief: string[]
+    recommendation: string
+  }
+> = {
+  'pasadena-citrus': {
+    heroTitle: 'Kroger Regional Pilot: Pasadena Citrus',
+    heroCopy:
+      'A guided demonstration of how Pluck can surface local citrus supply, shopper demand, and pilot readiness for Kroger merchandising teams.',
+    metrics: [
+      { label: 'Visible citrus growers', value: '42' },
+      { label: 'High-confidence pickup zones', value: '08' },
+      { label: 'Demand spike score', value: '91' },
+      { label: 'Estimated community impact', value: 'High' },
+    ],
+    actions: [
+      'Launch a Pasadena citrus pilot story across selected stores.',
+      'Review high-confidence pickup clusters for sourcing narrative value.',
+      'Package local seller trust signals into a pilot brief.',
+      'Track shopper demand and repeat engagement over the next 30 days.',
+    ],
+    whyKroger: [
+      {
+        title: 'Strategic value to Kroger',
+        body: 'Show shoppers a local citrus story Kroger competitors cannot easily replicate at the neighborhood level.',
+      },
+      {
+        title: 'Regional merchandising intelligence',
+        body: 'Use visible local supply signals to shape a smarter seasonal citrus pilot around real neighborhood activity.',
+      },
+      {
+        title: 'Community and ESG signal',
+        body: 'Translate local seller activation and lower-distance pickup into a credible community value narrative.',
+      },
+    ],
+    hotspots: [
+      { label: 'Pasadena demand pocket', top: '28%', left: '68%' },
+      { label: 'Citrus seller cluster', top: '44%', left: '58%' },
+      { label: 'High-confidence pickup zone', top: '62%', left: '72%' },
+    ],
+    demandSignals: [
+      { label: 'Top searched category', value: 'Citrus' },
+      { label: 'Repeat intent score', value: 'High' },
+      { label: 'Buyer urgency', value: 'Same-day strong' },
+    ],
+    impactSignals: [
+      { label: 'Local storytelling strength', value: 'Very high' },
+      { label: 'Community visibility', value: 'High' },
+      { label: 'Pilot narrative readiness', value: 'Ready now' },
+    ],
+    brief: [
+      'Pilot: Pasadena Citrus',
+      'Goal: Validate local citrus storytelling and neighborhood demand visibility.',
+      'Top insight: Pasadena shows strong citrus demand with enough local supply to support a Kroger pilot narrative.',
+      'Recommended next step: Launch a limited regional pilot brief for review.',
+    ],
+    recommendation: 'Proceed with a Pasadena citrus pilot brief and store-level merchandising test.',
+  },
+  'southbay-avocado': {
+    heroTitle: 'Kroger Regional Pilot: South Bay Avocados',
+    heroCopy:
+      'A guided demonstration of how Pluck can highlight avocado supply strength, buyer trust, and local sourcing opportunities for Kroger teams.',
+    metrics: [
+      { label: 'Visible avocado sellers', value: '36' },
+      { label: 'High-confidence pickup zones', value: '07' },
+      { label: 'Demand spike score', value: '88' },
+      { label: 'Estimated community impact', value: 'Strong' },
+    ],
+    actions: [
+      'Promote a South Bay avocado pilot story for local merchandising.',
+      'Highlight repeat-buyer trust and seller confidence in the pilot brief.',
+      'Track same-day pickup patterns as a proxy for buyer intent.',
+      'Use pilot results to support broader local sourcing conversations.',
+    ],
+    whyKroger: [
+      {
+        title: 'Strategic value to Kroger',
+        body: 'Avocados are visually strong, high-frequency produce for a local pilot customers understand immediately.',
+      },
+      {
+        title: 'Regional merchandising intelligence',
+        body: 'Pluck can help Kroger identify food-conscious local buyers who already care about freshness and source proximity.',
+      },
+      {
+        title: 'Community and ESG signal',
+        body: 'A South Bay avocado demo can become a repeatable local-value story for additional produce categories.',
+      },
+    ],
+    hotspots: [
+      { label: 'South Bay trust zone', top: '64%', left: '38%' },
+      { label: 'Avocado seller density', top: '56%', left: '46%' },
+      { label: 'Repeat-buyer cluster', top: '72%', left: '52%' },
+    ],
+    demandSignals: [
+      { label: 'Top searched category', value: 'Avocados' },
+      { label: 'Repeat intent score', value: 'Very high' },
+      { label: 'Buyer urgency', value: 'Weekend strong' },
+    ],
+    impactSignals: [
+      { label: 'Local storytelling strength', value: 'High' },
+      { label: 'Community visibility', value: 'High' },
+      { label: 'Pilot narrative readiness', value: 'Ready now' },
+    ],
+    brief: [
+      'Pilot: South Bay Avocados',
+      'Goal: Validate local avocado supply strength and trust-driven pickup behavior.',
+      'Top insight: South Bay shows clean avocado density with high local buyer confidence.',
+      'Recommended next step: Move into a store-level pilot narrative draft.',
+    ],
+    recommendation: 'Proceed with a South Bay avocado pilot and trust-led local merchandising story.',
+  },
+  'seasonal-stonefruit': {
+    heroTitle: 'Kroger Regional Pilot: Seasonal Stone Fruit',
+    heroCopy:
+      'A guided demonstration of how Pluck can frame emerging seasonal fruit as a regional discovery and sourcing signal for Kroger.',
+    metrics: [
+      { label: 'Visible stone fruit sellers', value: '24' },
+      { label: 'High-confidence pickup zones', value: '05' },
+      { label: 'Demand spike score', value: '79' },
+      { label: 'Estimated community impact', value: 'Moderate' },
+    ],
+    actions: [
+      'Monitor early seasonal lift before expanding pilot scope.',
+      'Use local stone fruit imagery and seller density to test discovery storytelling.',
+      'Track search and pickup engagement before deeper integration.',
+      'Pair the pilot with a seasonal marketing narrative rather than immediate scale.',
+    ],
+    whyKroger: [
+      {
+        title: 'Strategic value to Kroger',
+        body: 'Stone fruit creates a high-appeal seasonal narrative that feels fresh, limited, and worth exploring.',
+      },
+      {
+        title: 'Regional merchandising intelligence',
+        body: 'Pluck gives Kroger a low-risk way to see early seasonal movement before heavier investment.',
+      },
+      {
+        title: 'Community and ESG signal',
+        body: 'The pilot can frame Kroger as locally observant, not just operationally efficient.',
+      },
+    ],
+    hotspots: [
+      { label: 'Seasonal demand edge', top: '36%', left: '34%' },
+      { label: 'Seller visibility pocket', top: '48%', left: '44%' },
+      { label: 'Emerging pickup zone', top: '58%', left: '28%' },
+    ],
+    demandSignals: [
+      { label: 'Top searched category', value: 'Stone fruit' },
+      { label: 'Repeat intent score', value: 'Moderate' },
+      { label: 'Buyer urgency', value: 'Seasonal' },
+    ],
+    impactSignals: [
+      { label: 'Local storytelling strength', value: 'Moderate' },
+      { label: 'Community visibility', value: 'Emerging' },
+      { label: 'Pilot narrative readiness', value: 'Monitor' },
+    ],
+    brief: [
+      'Pilot: Seasonal Stone Fruit',
+      'Goal: Test a discovery-led local fruit narrative before wider rollout.',
+      'Top insight: Emerging supply is real enough to support a seasonal demo story.',
+      'Recommended next step: Keep this in monitored pilot mode with a lighter operational footprint.',
+    ],
+    recommendation: 'Keep this as a lighter seasonal observation pilot before deeper rollout.',
+  },
+}
+
+export default function Enterprise() {
+  const [scenario, setScenario] = useState<ScenarioKey>('pasadena-citrus')
+  const [region, setRegion] = useState<RegionKey>('los-angeles')
+  const [store, setStore] = useState<StoreKey>('store-184')
+  const [activeStep, setActiveStep] = useState<DemoStep>('supply')
+  const [exportMode, setExportMode] = useState(false)
+
+  const content = scenarioContent[scenario]
+  const storeProfile = storeProfiles[store]
+
+  const regionLabel = useMemo(
+    () => regionOptions.find((r) => r.key === region)?.label ?? 'Los Angeles Market',
+    [region],
+  )
+
+  const storeLabel = useMemo(
+    () => storeOptions.find((s) => s.key === store)?.label ?? 'Store 184 · Pasadena',
+    [store],
+  )
+
+  const guideCopy = useMemo(() => {
+    if (activeStep === 'supply') {
+      return 'This step shows Kroger where visible local seller density is strongest and where store-level pilot supply can already be narrated.'
+    }
+    if (activeStep === 'demand') {
+      return 'This step shows which categories are pulling the strongest buyer interest and how that translates into store-level relevance.'
+    }
+    if (activeStep === 'action') {
+      return 'This step turns the signals into store-level pilot actions and merchandising recommendations.'
+    }
+    return 'This step frames why the selected store matters strategically, including community value and internal pilot readiness.'
+  }, [activeStep])
+
+  useEffect(() => {
+    if (exportMode) return
+    const target = stepOrder.find((step) => step.key === activeStep)
+    if (!target) return
+    const node = document.getElementById(target.sectionId)
+    if (!node) return
+    const id = window.setTimeout(() => {
+      node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 60)
+    return () => window.clearTimeout(id)
+  }, [activeStep, exportMode])
+
+  function downloadBrief() {
+    const body = [
+      'PLUCK x KROGER PILOT BRIEF',
+      '',
+      `Scenario: ${scenarioOptions.find((s) => s.key === scenario)?.label ?? ''}`,
+      `Region: ${regionLabel}`,
+      `Store: ${storeLabel}`,
+      `Pilot status: ${storeProfile.pilotStatus}`,
+      `Readiness: ${storeProfile.readiness}`,
+      '',
+      ...content.brief,
+      '',
+      `Store view: ${storeProfile.managerView}`,
+      `Top opportunity: ${storeProfile.topOpportunity}`,
+      `Recommendation: ${content.recommendation}`,
+      '',
+      'Store actions:',
+      ...storeProfile.actionItems.map((x) => `- ${x}`),
+      '',
+      'Strategic value to Kroger:',
+      ...content.whyKroger.map((x) => `- ${x.title}: ${x.body}`),
+    ].join('\n')
+
+    const blob = new Blob([body], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pluck-kroger-pilot-brief.txt'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <section id="enterprise-shell" className={exportMode ? 'kroger-demo guided-demo store-level-demo export-mode' : 'kroger-demo guided-demo store-level-demo'}>
+      <div className="kroger-demo__banner">
+        <div>
+          <p className="kroger-demo__eyebrow">Kroger regional pilot demo</p>
+          <h1>{content.heroTitle}</h1>
+          <p>{content.heroCopy}</p>
+        </div>
+
+        <div className="kroger-demo__bannerActions">
+          <button className={exportMode ? 'ghost active-presentation-toggle' : 'ghost'} type="button" onClick={() => setExportMode(!exportMode)}>
+            {exportMode ? 'Exit export mode' : 'Enter export mode'}
+          </button>
+          <button className="primary" type="button" onClick={downloadBrief}>
+            Download pilot brief
+          </button>
+          <button className="ghost" type="button" onClick={() => window.location.assign('/')}>
+            Back to marketplace
+          </button>
+        </div>
+      </div>
+
+      {!exportMode && (
+        <>
+          <div className="guided-demo__rail section-card">
+            <div className="guided-demo__steps">
+              {stepOrder.map((step) => (
+                <button
+                  key={step.key}
+                  type="button"
+                  className={activeStep === step.key ? 'guided-demo__step active' : 'guided-demo__step'}
+                  onClick={() => setActiveStep(step.key)}
+                >
+                  {step.label}
+                </button>
+              ))}
+            </div>
+            <div className="guided-demo__copy">
+              <strong>Guided walkthrough</strong>
+              <p>{guideCopy}</p>
+            </div>
+          </div>
+
+          <div className="kroger-demo__controls section-card">
+            <div className="kroger-demo__field">
+              <label>Region</label>
+              <select value={region} onChange={(e) => setRegion(e.target.value as RegionKey)}>
+                {regionOptions.map((item) => (
+                  <option key={item.key} value={item.key}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="kroger-demo__field">
+              <label>Pilot scenario</label>
+              <select value={scenario} onChange={(e) => setScenario(e.target.value as ScenarioKey)}>
+                {scenarioOptions.map((item) => (
+                  <option key={item.key} value={item.key}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="kroger-demo__field">
+              <label>Store view</label>
+              <select value={store} onChange={(e) => setStore(e.target.value as StoreKey)}>
+                {storeOptions.map((item) => (
+                  <option key={item.key} value={item.key}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </>
+      )}
+
+      <section className="section-card store-level-summary">
+        <div className="store-level-summary__head">
+          <div>
+            <p className="kroger-demo__eyebrow">Store-level pilot summary</p>
+            <h2>{storeLabel}</h2>
+            <p>{storeProfile.managerView}</p>
+          </div>
+          <div className="store-level-summary__status">
+            <span>Pilot status</span>
+            <strong>{storeProfile.pilotStatus}</strong>
+            <small>Readiness: {storeProfile.readiness}</small>
+          </div>
+        </div>
+
+        <div className="store-level-summary__cards">
+          <article className="section-card store-summary-card">
+            <span>Top opportunity</span>
+            <strong>{storeProfile.topOpportunity}</strong>
+          </article>
+          <article className="section-card store-summary-card">
+            <span>Region</span>
+            <strong>{regionLabel}</strong>
+          </article>
+          <article className="section-card store-summary-card">
+            <span>Recommendation</span>
+            <strong>{content.recommendation}</strong>
+          </article>
+        </div>
+      </section>
+
+      {exportMode ? (
+        <section className="pilot-brief-export">
+          <section className="section-card export-brief-card">
+            <div className="export-brief-head">
+              <div>
+                <p className="kroger-demo__eyebrow">Pilot brief export</p>
+                <h2>{scenarioOptions.find((s) => s.key === scenario)?.label}</h2>
+                <p>{storeLabel} · {regionLabel}</p>
+              </div>
+              <div className="export-brief-status">
+                <span>Store status</span>
+                <strong>{storeProfile.pilotStatus}</strong>
+              </div>
+            </div>
+
+            <div className="export-brief-grid">
+              <div className="export-brief-block">
+                <h3>Pilot objective</h3>
+                <ul>
+                  {content.brief.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="export-brief-block">
+                <h3>Store recommendation</h3>
+                <p>{content.recommendation}</p>
+                <h3>Top opportunity</h3>
+                <p>{storeProfile.topOpportunity}</p>
+              </div>
+            </div>
+
+            <div className="export-metrics">
+              {content.metrics.map((item) => (
+                <article key={item.label} className="section-card kroger-demo__metricCard">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </article>
+              ))}
+            </div>
+
+            <div className="export-brief-grid">
+              <div className="export-brief-block">
+                <h3>Recommended store actions</h3>
+                <ol>
+                  {storeProfile.actionItems.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="export-brief-block">
+                <h3>Strategic value to Kroger</h3>
+                <ul>
+                  {content.whyKroger.map((item) => (
+                    <li key={item.title}>
+                      <strong>{item.title}:</strong> {item.body}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <section className="section-card store-performance-table">
+              <div className="kroger-demo__cardHead">
+                <p className="kroger-demo__eyebrow">Store performance view</p>
+                <h2>Store pilot fit summary</h2>
+              </div>
+
+              <div className="enterprise-table-wrap">
+                <table className="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Value</th>
+                      <th>Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {storeProfile.tableRows.map((row) => (
+                      <tr key={row.metric}>
+                        <td>{row.metric}</td>
+                        <td>{row.value}</td>
+                        <td>{row.note}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+        </section>
+      ) : (
+        <>
+          <section
+            id="guided-supply"
+            className={activeStep === 'supply' ? 'guided-section active section-card' : 'guided-section section-card'}
+          >
+            <div className="kroger-demo__cardHead">
+              <p className="kroger-demo__eyebrow">Step 1</p>
+              <h2>Local supply visibility</h2>
+            </div>
+
+            <div className="kroger-demo__metrics">
+              {content.metrics.map((item) => (
+                <article key={item.label} className="section-card kroger-demo__metricCard">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </article>
+              ))}
+            </div>
+
+            <div className="kroger-demo__grid">
+              <section className="section-card kroger-demo__mapCard">
+                <div className="kroger-demo__cardHead">
+                  <p className="kroger-demo__eyebrow">Regional merchandising signal layer</p>
+                  <h2>Neighborhood supply surface</h2>
+                </div>
+
+                <div className="kroger-demo__map">
+                  <div className="kroger-demo__ring kroger-demo__ring--a" />
+                  <div className="kroger-demo__ring kroger-demo__ring--b" />
+                  <div className="kroger-demo__ring kroger-demo__ring--c" />
+
+                  {content.hotspots.map((spot) => (
+                    <div
+                      key={spot.label}
+                      className="kroger-demo__hotspot"
+                      style={{ top: spot.top, left: spot.left }}
+                    >
+                      <span>{spot.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="section-card guided-side-card">
+                <div className="kroger-demo__cardHead">
+                  <p className="kroger-demo__eyebrow">Store interpretation</p>
+                  <h2>Why this store can matter</h2>
+                </div>
+                <p>{storeProfile.managerView}</p>
+              </section>
+            </div>
+          </section>
+
+          <section
+            id="guided-demand"
+            className={activeStep === 'demand' ? 'guided-section active section-card' : 'guided-section section-card'}
+          >
+            <div className="kroger-demo__cardHead">
+              <p className="kroger-demo__eyebrow">Step 2</p>
+              <h2>Demand visibility</h2>
+            </div>
+
+            <div className="guided-demand-grid">
+              {content.demandSignals.map((item) => (
+                <article key={item.label} className="section-card guided-demand-card">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section
+            id="guided-action"
+            className={activeStep === 'action' ? 'guided-section active section-card' : 'guided-section section-card'}
+          >
+            <div className="kroger-demo__cardHead">
+              <p className="kroger-demo__eyebrow">Step 3</p>
+              <h2>Recommended store actions</h2>
+            </div>
+
+            <div className="kroger-demo__actionList">
+              {storeProfile.actionItems.map((action, idx) => (
+                <div key={action} className="kroger-demo__actionItem">
+                  <span>{idx + 1}</span>
+                  <p>{action}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section
+            id="guided-impact"
+            className={activeStep === 'impact' ? 'guided-section active section-card' : 'guided-section section-card'}
+          >
+            <div className="kroger-demo__cardHead">
+              <p className="kroger-demo__eyebrow">Step 4</p>
+              <h2>Store-level strategic value</h2>
+            </div>
+
+            <div className="guided-demand-grid">
+              {content.impactSignals.map((item) => (
+                <article key={item.label} className="section-card guided-demand-card">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </article>
+              ))}
+            </div>
+
+            <section className="section-card store-performance-table">
+              <div className="kroger-demo__cardHead">
+                <p className="kroger-demo__eyebrow">Store performance view</p>
+                <h2>Store pilot fit summary</h2>
+              </div>
+
+              <div className="enterprise-table-wrap">
+                <table className="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Value</th>
+                      <th>Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {storeProfile.tableRows.map((row) => (
+                      <tr key={row.metric}>
+                        <td>{row.metric}</td>
+                        <td>{row.value}</td>
+                        <td>{row.note}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="kroger-demo__why">
+              {content.whyKroger.map((item) => (
+                <article key={item.title} className="section-card kroger-demo__whyCard">
+                  <p className="kroger-demo__eyebrow">Strategic value to Kroger</p>
+                  <h3>{item.title}</h3>
+                  <p>{item.body}</p>
+                </article>
+              ))}
+            </section>
+          </section>
+        </>
+      )}
+    </section>
+  )
+}

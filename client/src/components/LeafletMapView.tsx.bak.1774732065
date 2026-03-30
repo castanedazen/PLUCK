@@ -1,0 +1,136 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
+import L from 'leaflet'
+import type { Listing } from '../types'
+import 'leaflet/dist/leaflet.css'
+
+type Props = {
+  listings: Listing[]
+  searchQuery?: string
+  onOpenListing?: (listingId: string) => void
+}
+
+delete (L.Icon.Default.prototype as any)._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+})
+
+const US_CENTER: [number, number] = [39.5, -98.35]
+const US_ZOOM = 4
+
+function hasGeo(listing: Listing) {
+  return typeof listing.geo?.lat === 'number' && typeof listing.geo?.lng === 'number'
+}
+
+function SearchRecenter({ listings, query, locateSignal }: { listings: Listing[]; query?: string; locateSignal: number }) {
+  const map = useMap()
+
+  useEffect(() => {
+    const geoListings = listings.filter(hasGeo)
+    if (!geoListings.length) {
+      map.setView(US_CENTER, US_ZOOM)
+      return
+    }
+
+    const trimmed = (query || '').trim().toLowerCase()
+    const matched = trimmed
+      ? geoListings.filter((item) =>
+          [item.title, item.fruit, item.city || '', item.state || '', item.zip || '', item.location || '']
+            .join(' ')
+            .toLowerCase()
+            .includes(trimmed),
+        )
+      : geoListings
+
+    if (matched.length === 1) {
+      map.setView([matched[0].geo!.lat, matched[0].geo!.lng], 11)
+      return
+    }
+
+    if (matched.length > 1) {
+      const bounds = L.latLngBounds(matched.map((item) => [item.geo!.lat, item.geo!.lng] as [number, number]))
+      map.fitBounds(bounds.pad(0.35))
+      return
+    }
+
+    const allBounds = L.latLngBounds(geoListings.map((item) => [item.geo!.lat, item.geo!.lng] as [number, number]))
+    map.fitBounds(allBounds.pad(0.4))
+  }, [listings, query, map])
+
+  useEffect(() => {
+    if (!locateSignal) return
+    if (!navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (pos) => map.setView([pos.coords.latitude, pos.coords.longitude], 11),
+      () => {},
+      { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 },
+    )
+  }, [locateSignal, map])
+
+  return null
+}
+
+export function LeafletMapView({ listings, searchQuery, onOpenListing }: Props) {
+  const mapRef = useRef<L.Map | null>(null)
+  const [locateSignal, setLocateSignal] = useState(0)
+
+  const geoListings = useMemo(() => listings.filter(hasGeo), [listings])
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      mapRef.current?.invalidateSize()
+    }, 250)
+    return () => window.clearTimeout(t)
+  }, [geoListings.length])
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: 420, borderRadius: 24, overflow: 'hidden' }}>
+      <MapContainer
+        center={US_CENTER}
+        zoom={US_ZOOM}
+        scrollWheelZoom
+        style={{ width: '100%', height: '100%', minHeight: 420, borderRadius: 24 }}
+        whenReady={(evt) => {
+          mapRef.current = evt.target
+          window.setTimeout(() => evt.target.invalidateSize(), 300)
+        }}
+      >
+        <TileLayer
+          attribution='&copy; OpenStreetMap contributors'
+          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        />
+
+        <SearchRecenter listings={geoListings} query={searchQuery} locateSignal={locateSignal} />
+
+        {geoListings.map((item) => (
+          <Marker key={item.id} position={[item.geo!.lat, item.geo!.lng]}>
+            <Popup>
+              <div style={{ minWidth: 180 }}>
+                <strong>{item.title}</strong>
+                <div style={{ marginTop: 6 }}>{item.city || item.location}</div>
+                <div style={{ marginTop: 4 }}>${item.price}/{item.unit}</div>
+                {onOpenListing ? (
+                  <button
+                    style={{ marginTop: 10, border: 0, borderRadius: 10, padding: '8px 10px', background: '#102033', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+                    onClick={() => onOpenListing(item.id)}
+                  >
+                    Open listing
+                  </button>
+                ) : null}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+
+      <div style={{ position: 'absolute', right: 14, top: 14, display: 'grid', gap: 10, zIndex: 500 }}>
+        <button className='ghost compact-btn' onClick={() => mapRef.current?.zoomIn()}>Zoom in</button>
+        <button className='ghost compact-btn' onClick={() => mapRef.current?.zoomOut()}>Zoom out</button>
+        <button className='ghost compact-btn' onClick={() => mapRef.current?.setView(US_CENTER, US_ZOOM)}>Reset</button>
+        <button className='ghost compact-btn' onClick={() => setLocateSignal((v) => v + 1)}>Locate me</button>
+      </div>
+    </div>
+  )
+}

@@ -61,6 +61,8 @@ import type {
 } from './types'
 import { LeafletMapView } from './components/LeafletMapView'
 import CommunityBoard from './components/CommunityBoard'
+import Enterprise from './pages/Enterprise'
+import DistrictManagerMode from './DistrictManagerMode'
 
 type QuickFilter = 'all' | 'just-added' | 'under-5' | 'citrus' | 'high-stock'
 
@@ -77,7 +79,7 @@ const fallbackListings: Listing[] = [
     city: 'Los Angeles',
     state: 'CA',
     zip: '91345',
-    distance: 'Just added',
+    distance: 'Just added today today',
     inventory: 12,
     sellerId: 'seller-1',
     sellerName: "Maria's Garden",
@@ -105,7 +107,7 @@ const fallbackListings: Listing[] = [
     city: 'Pasadena',
     state: 'CA',
     zip: '91104',
-    distance: 'Just added',
+    distance: 'Just added today today',
     inventory: 20,
     sellerId: 'seller-2',
     sellerName: 'Green Grove',
@@ -190,7 +192,7 @@ const emptyForm: ListingFormState = {
 
 const quickFilters: { key: QuickFilter; label: string }[] = [
   { key: 'all', label: 'All harvests' },
-  { key: 'just-added', label: 'Just added' },
+  { key: 'just-added', label: 'Just added today today' },
   { key: 'under-5', label: 'Under $5' },
   { key: 'citrus', label: 'Citrus' },
   { key: 'high-stock', label: 'High stock' },
@@ -200,14 +202,20 @@ const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: stri
   {
     match: /^\/$/,
     eyebrow: 'PLUCK orchard market',
-    title: 'Build the local market they cannot own.',
-    subtitle: 'Direct harvests. Real pickup. Known growers.',
+    title: 'Find beautiful local fruit before everyone else does.',
+    subtitle: 'Fresh local harvests, trusted growers, and pickup that actually feels easy.',
+  },
+  {
+    match: /^\/enterprise/,
+    eyebrow: 'Retail partners',
+    title: 'Hyperlocal supply intelligence for food retail.',
+    subtitle: 'See neighborhood-level grower signals, seasonal availability, and local demand patterns.',
   },
   {
     match: /^\/map/,
     eyebrow: 'Field map',
-    title: 'See what is growing close enough to matter.',
-    subtitle: 'Fruit, growers, and pickup points worth leaving the house for.',
+    title: 'See the best nearby fruit on the map first.',
+    subtitle: 'Browse local harvests, trusted sellers, and pickup spots worth the drive.',
   },
   {
     match: /^\/board/,
@@ -224,20 +232,20 @@ const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: stri
   {
     match: /^\/messages/,
     eyebrow: 'Direct line',
-    title: 'Lock the details. Make the pickup happen.',
-    subtitle: 'Clear notes, real times, no crossed wires.',
+    title: 'Lock in the details and make pickup feel easy.',
+    subtitle: 'Clear seller messages, real pickup timing, and less back-and-forth.',
   },
   {
     match: /^\/alerts/,
     eyebrow: 'Signals',
-    title: 'Know when the next drop hits.',
-    subtitle: 'Quiet alerts. Fast action. No clutter.',
+    title: 'Know when the next great listing shows up.',
+    subtitle: 'Save the fruit you want, get notified fast, and skip the clutter.',
   },
   {
     match: /^\/store/,
     eyebrow: 'Your stand',
-    title: 'Make your stand worth stopping for.',
-    subtitle: 'List what is ripe. Set the terms. Build local demand.',
+    title: 'Run a seller storefront people actually want to buy from.',
+    subtitle: 'Publish great listings, manage pickup clearly, and build local trust over time.',
   },
   {
     match: /^\/profile/,
@@ -247,33 +255,33 @@ const routeMeta: { match: RegExp; eyebrow: string; title: string; subtitle: stri
   },
   {
     match: /^\/grower\//,
-    eyebrow: 'Grower',
-    title: 'Meet the grower before you move.',
-    subtitle: 'See the person, the fruit, and the signals that matter.',
+    eyebrow: 'Seller profile',
+    title: 'Meet the seller before you make the trip.',
+    subtitle: 'See the seller, the harvest, and the trust signals that matter most.',
   },
   {
     match: /^\/listing\//,
     eyebrow: 'Listing',
-    title: 'See the fruit. Decide in seconds.',
-    subtitle: 'Big photos. Clear pickup windows. No guesswork.',
+    title: 'See the fruit, trust the seller, and decide fast.',
+    subtitle: 'Big photos, clearer pickup windows, and trust signals that actually help.',
   },
   {
     match: /^\/login/,
     eyebrow: 'Welcome back',
-    title: 'Back to the orchard.',
-    subtitle: 'Saved fruit, alerts, and threads waiting.',
+    title: 'Welcome back to your local fruit market.',
+    subtitle: 'Your saved listings, seller messages, and alerts are waiting.',
   },
   {
     match: /^\/signup/,
-    eyebrow: 'Join local',
-    title: 'Start with what is near.',
-    subtitle: 'Buy, sell, trade, and stay in the loop.',
+    eyebrow: 'Join Pluck',
+    title: 'Start with the best local fruit near you.',
+    subtitle: 'Buy, sell, and stay close to the local harvests that matter.',
   },
   {
     match: /^\/reset-password/,
     eyebrow: 'Reset access',
-    title: 'Get back in without the runaround.',
-    subtitle: 'Set a new password and keep moving.',
+    title: 'Reset your password and get back in fast.',
+    subtitle: 'Create a new password and get back to your listings, alerts, and messages.',
   },
 ]
 
@@ -292,6 +300,7 @@ type ReviewItem = {
 }
 
 function routeTheme(pathname: string) {
+  if (/^\/enterprise/.test(pathname)) return 'route-theme-home'
   if (/^\/map/.test(pathname)) return 'route-theme-map'
   if (/^\/board/.test(pathname)) return 'route-theme-board'
   if (/^\/favorites/.test(pathname)) return 'route-theme-favorites'
@@ -371,19 +380,19 @@ function ReviewsPanel({
     <section className="review-panel">
       <div className="section-heading compact-heading no-top-gap">
         <div>
-          <p className="eyebrow">Pickup trust</p>
-          <h2>Reviews & grower confidence</h2>
+          <p className="eyebrow">Pickup confidence</p>
+          <h2>Reviews, trust, and pickup confidence</h2>
         </div>
         <div className="review-summary">
           <RatingStars value={listing.sellerRating ? Math.round(listing.sellerRating) : 5} />
-          <span>{listing.sellerRating ? listing.sellerRating.toFixed(1) : 'New'} {reviews.length ? `${reviews.length} reviews` : 'Be the first to review this pickup'}</span>
+          <span>{listing.sellerRating ? listing.sellerRating.toFixed(1) : 'New'} {reviews.length ? `${reviews.length} reviews` : 'Be the first to review this seller and pickup'}</span>
         </div>
       </div>
 
       <div className="review-compose">
         <div>
-          <strong>Rate this pickup</strong>
-          <p>Share fruit quality, pickup ease, and communication.</p>
+          <strong>Rate this seller and pickup</strong>
+          <p>Share fruit quality, pickup ease, seller communication, and overall confidence.</p>
         </div>
         <div className="review-rating-row">
           <RatingStars value={draftRating} onChange={setDraftRating} interactive />
@@ -393,7 +402,7 @@ function ReviewsPanel({
           value={draftComment}
           onChange={(e) => setDraftComment(e.target.value)}
           rows={3}
-          placeholder="How was the pickup?"
+          placeholder="How was the fruit, the seller, and the pickup experience?"
         />
         <div className="action-row">
           <button
@@ -429,7 +438,7 @@ function ReviewsPanel({
           ))}
         </div>
       ) : (
-        <div className="empty-panel">Be the first to review this pickup and help the next buyer feel confident.</div>
+        <div className="empty-panel">Be the first to review this seller and help the next buyer feel confident before pickup.</div>
       )}
     </section>
   )
@@ -492,7 +501,7 @@ function normalizeListing(listing: Listing): Listing {
     city,
     state,
     zip: listing.zip || '',
-    distance: listing.distance || 'Just added',
+    distance: listing.distance || 'Just added today today',
     inventory: Number.isFinite(listing.inventory) ? listing.inventory : 0,
     sellerId: listing.sellerId || 'seller-unknown',
     sellerName: listing.sellerName || 'Local Grower',
@@ -688,8 +697,8 @@ function AuthShell({
     <section className="auth-page">
       <div className="auth-hero">
         <p className="eyebrow">PLUCK account</p>
-        <h1>{mode === 'signup' ? 'Join local' : mode === 'reset' ? 'Reset password' : 'Welcome back'}</h1>
-        <p>{mode === 'reset' ? 'Get back in without the runaround.' : 'Build a local loop around what is growing nearby.'}</p>
+        <h1>{mode === 'signup' ? 'Join Pluck' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}</h1>
+        <p>{mode === 'reset' ? 'Reset access without the runaround.' : 'Join a cleaner way to buy and sell local fruit nearby.'}</p>
       </div>
 
       <form className="auth-card" onSubmit={handleSubmit}>
@@ -705,13 +714,13 @@ function AuthShell({
             {mode === 'signup' ? (
               <label className="full">
                 Full name
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Miller" />
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your full name" />
               </label>
             ) : null}
 
             <label className="full">
               Email
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" required />
             </label>
 
             <label className="full">
@@ -732,7 +741,7 @@ function AuthShell({
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
+                  placeholder="Confirm password"
                   required
                 />
               </label>
@@ -741,7 +750,7 @@ function AuthShell({
             {mode === 'reset' && resetTokenPreview ? (
               <label className="full">
                 Reset code
-                <input value={resetCode} onChange={(e) => setResetCode(e.target.value.toUpperCase())} placeholder="Paste the reset code" required />
+                <input value={resetCode} onChange={(e) => setResetCode(e.target.value.toUpperCase())} placeholder="Enter your reset code" required />
               </label>
             ) : null}
           </div>
@@ -751,17 +760,17 @@ function AuthShell({
 
           <div className="action-row auth-action-row">
             <button className="primary" type="submit" disabled={busy}>
-              {busy ? 'Please wait...' : mode === 'signup' ? 'Create account' : mode === 'reset' ? (resetTokenPreview ? 'Save new password' : 'Send reset code') : 'Log in'}
+              {busy ? 'Please wait...' : mode === 'signup' ? 'Create your account' : mode === 'reset' ? (resetTokenPreview ? 'Save new password' : 'Send reset code') : 'Sign in'}
             </button>
             {mode === 'login' ? (
               <>
-                <button type="button" className="ghost" onClick={() => navigate('/signup')}>Create account</button>
-                <button type="button" className="text-btn" onClick={() => navigate('/reset-password')}>Forgot password?</button>
+                <button type="button" className="ghost" onClick={() => navigate('/signup')}>Create your account</button>
+                <button type="button" className="text-btn" onClick={() => navigate('/reset-password')}>Forgot your password?</button>
               </>
             ) : mode === 'signup' ? (
-              <button type="button" className="ghost" onClick={() => navigate('/login')}>Have an account?</button>
+              <button type="button" className="ghost" onClick={() => navigate('/login')}>Already have an account?</button>
             ) : (
-              <button type="button" className="ghost" onClick={() => navigate('/login')}>Back to login</button>
+              <button type="button" className="ghost" onClick={() => navigate('/login')}>Back to sign in</button>
             )}
           </div>
         </div>
@@ -900,7 +909,7 @@ function ListingForm({
         city: form.city.trim(),
         state: form.state.trim(),
         zip: form.zip.trim(),
-        distance: initialValues?.distance || 'Just added',
+        distance: initialValues?.distance || 'Just added today today',
         inventory: Number(form.inventory) || 1,
         sellerId: seller.id,
         sellerName: seller.name,
@@ -1169,7 +1178,7 @@ function GrowerTrust({
         <div>
           <div className="grower-name-row">
             <h3>{seller.name}</h3>
-            {seller.verified ? <span className="trust-pill verified">Verified grower</span> : null}
+            {seller.verified ? <span className="trust-pill verified">Verified seller</span> : null}
           </div>
           <p className="meta">
             {seller.handle} • {[seller.city, seller.state].filter(Boolean).join(', ')}
@@ -1202,9 +1211,9 @@ function GrowerTrust({
 
       <div className="action-row action-row--grower">
         <button className="primary" onClick={onToggleFollow}>
-          {isFollowing ? 'Following' : 'Follow grower'}
+          {isFollowing ? 'Following seller' : 'Follow seller'}
         </button>
-        <button className="ghost">Message grower</button>
+        <button className="ghost">Message seller now</button>
       </div>
     </div>
   )
@@ -1408,7 +1417,7 @@ function ListingDetailRoute({
   if (!listing) {
     return (
       <section className="stack">
-        <h2>Listing not found</h2>
+        <h2>This listing is no longer available</h2>
       </section>
     )
   }
@@ -1431,13 +1440,13 @@ function ListingDetailRoute({
             {listing.harvestLabel ? <span className="trust-pill harvest">{listing.harvestLabel}</span> : null}
             {listing.freshnessLabel ? <span className="trust-pill freshness">{listing.freshnessLabel}</span> : null}
             {listing.availabilityLabel ? <span className="trust-pill available">{listing.availabilityLabel}</span> : null}
-            {hasGeo(listing) ? <span className="trust-pill verified">Map ready</span> : null}
+            {hasGeo(listing) ? <span className="trust-pill verified">Pickup map ready</span> : null}
           </div>
 
           <p className="desc">{listing.description}</p>
           <TrustStrip listing={listing} />
           <p className="meta">
-            {prettyLocation(listing)} • {listing.inventory} left • {sellerLabel(listing)}
+            {prettyLocation(listing)} • {listing.inventory} left today • {sellerLabel(listing)}
           </p>
 
           {listing.harvestNote ? <div className="harvest-note">“{listing.harvestNote}”</div> : null}
@@ -1462,16 +1471,16 @@ function ListingDetailRoute({
 
           <ActionGrid columns={2}>
             <button className="primary fill-btn" onClick={() => onOpenReserve(listing)} disabled={listing.inventory <= 0}>
-              {listing.inventory <= 0 ? 'Sold out' : 'Reserve pickup'}
+              {listing.inventory <= 0 ? 'Sold out' : 'Claim pickup window'}
             </button>
             <button className="ghost fill-btn" onClick={() => onStartConversation(listing)}>
               Message seller
             </button>
             <button className="ghost fill-btn" onClick={() => onToggleFavorite(listing.id)}>
-              {isFavorite ? 'Saved' : 'Save'}
+              {isFavorite ? 'Saved listing' : 'Save listing'}
             </button>
             <button className="ghost fill-btn" onClick={() => onToggleFollow(listing.sellerId)}>
-              {isFollowing ? 'Following' : 'Follow grower'}
+              {isFollowing ? 'Following seller' : 'Follow seller'}
             </button>
             <button className="ghost fill-btn" onClick={() => navigate('/grower/' + listing.sellerId)}>
               Grower profile
@@ -1517,8 +1526,8 @@ function MessagesPage({
       <aside className="messages-sidebar">
         <div className="section-heading compact-heading no-top-gap">
           <div>
-            <p className="eyebrow">Conversations</p>
-            <h2>Inbox</h2>
+            <p className="eyebrow">Seller conversations</p>
+            <h2>Your inbox</h2>
           </div>
           <span className="section-meta">{conversations.length} threads</span>
         </div>
@@ -1538,7 +1547,7 @@ function MessagesPage({
                     <span>{formatShortDate(conversation.updatedAt)}</span>
                   </div>
                   <div className="thread-card-title">{conversation.listingTitle}</div>
-                  <p>{conversation.lastMessage || 'No messages yet'}</p>
+                  <p>{conversation.lastMessage || 'No seller messages yet'}</p>
                 </button>
               )
             })
@@ -1551,7 +1560,7 @@ function MessagesPage({
       <section className="messages-main">
         <div className="section-heading compact-heading no-top-gap">
           <div>
-            <p className="eyebrow">Thread</p>
+            <p className="eyebrow">Active conversation</p>
             <h2>{activeConversation ? activeConversation.listingTitle : 'Select a conversation'}</h2>
           </div>
         </div>
@@ -1579,7 +1588,7 @@ function MessagesPage({
                     </div>
                   ))
                 ) : (
-                  <div className="empty-panel">No messages in this thread yet. Say hello and lock in pickup details.</div>
+                  <div className="empty-panel">No messages in this conversation yet. Say hello, confirm details, and lock in pickup.</div>
                 )}
               </div>
 
@@ -1587,7 +1596,7 @@ function MessagesPage({
                 <textarea
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Write a message..."
+                  placeholder="Write a clear pickup or fruit question..."
                   rows={3}
                 />
                 <button
@@ -1603,7 +1612,7 @@ function MessagesPage({
               </div>
             </>
           ) : (
-            <div className="empty-panel">Pick a grower conversation to see pickup details and replies here.</div>
+            <div className="empty-panel">Choose a seller conversation to see replies, pickup timing, and listing details here.</div>
           )}
         </div>
       </section>
@@ -1650,7 +1659,7 @@ function GrowerPage({
   if (loading) {
     return (
       <section className="stack">
-        <p>Loading grower...</p>
+        <p>Loading seller profile...</p>
       </section>
     )
   }
@@ -1658,7 +1667,7 @@ function GrowerPage({
   if (!grower) {
     return (
       <section className="stack">
-        <h2>Grower not found</h2>
+        <h2>Seller profile not found</h2>
       </section>
     )
   }
@@ -1698,7 +1707,7 @@ function GrowerPage({
         </div>
 
         <div className="trust-metrics">
-          {grower.verified ? <div className="metric-chip">Verified grower</div> : null}
+          {grower.verified ? <div className="metric-chip">Verified seller</div> : null}
           {grower.responseScore ? <div className="metric-chip">{grower.responseScore}</div> : null}
           {grower.repeatBuyerScore ? <div className="metric-chip">{grower.repeatBuyerScore}</div> : null}
           {grower.orchardName ? <div className="metric-chip">{grower.orchardName}</div> : null}
@@ -1719,7 +1728,7 @@ function GrowerPage({
         {grower.id !== currentSeller.id ? (
           <div className="action-row">
             <button className="primary" onClick={() => onToggleFollow(grower.id)}>
-              {isFollowing ? 'Following' : 'Follow grower'}
+              {isFollowing ? 'Following seller' : 'Follow seller'}
             </button>
           </div>
         ) : null}
@@ -1728,8 +1737,8 @@ function GrowerPage({
       <section>
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Grower listings</p>
-            <h2>Current harvests</h2>
+            <p className="eyebrow">Storefront listings</p>
+            <h2>Current local harvests</h2>
           </div>
           <span className="section-meta">{growerListings.length} live</span>
         </div>
@@ -1788,8 +1797,8 @@ function AlertsPage({
       <div className="stack">
         <div className="section-heading compact-heading no-top-gap">
           <div>
-            <p className="eyebrow">Saved alerts</p>
-            <h2>Watchlist</h2>
+            <p className="eyebrow">Saved fruit alerts</p>
+            <h2>Your watchlist</h2>
           </div>
           <span className="section-meta">{alerts.length} alerts</span>
         </div>
@@ -1814,11 +1823,11 @@ function AlertsPage({
           <div className="form-grid">
             <label>
               Fruit
-              <input value={fruit} onChange={(e) => setFruit(e.target.value)} placeholder="Peaches" />
+              <input value={fruit} onChange={(e) => setFruit(e.target.value)} placeholder="Lemons, peaches, avocados..." />
             </label>
             <label>
               Location
-              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Denver, CO" />
+              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, state, or ZIP" />
             </label>
             <label className="full">
               Radius miles
@@ -1849,7 +1858,7 @@ function AlertsPage({
                 </p>
               </div>
               <button className={alert.active ? 'ghost active-soft' : 'ghost'} onClick={() => onToggleAlert(alert.id)}>
-                {alert.active ? 'Active' : 'Paused'}
+                {alert.active ? 'Alert live' : 'Alert paused'}
               </button>
             </div>
           ))}
@@ -1859,8 +1868,8 @@ function AlertsPage({
       <div className="stack">
         <div className="section-heading compact-heading no-top-gap">
           <div>
-            <p className="eyebrow">Notifications</p>
-            <h2>Recent signals</h2>
+            <p className="eyebrow">Alert notifications</p>
+            <h2>Recent alert activity</h2>
           </div>
           <span className="section-meta">{notifications.filter((n) => !n.read).length} unread</span>
         </div>
@@ -1882,7 +1891,7 @@ function AlertsPage({
               </div>
             ))
           ) : (
-            <div className="empty-panel">Fresh drops, alerts, and pickup updates will appear here.</div>
+            <div className="empty-panel">Fresh listings, alert matches, and pickup updates will appear here.</div>
           )}
         </div>
       </div>
@@ -1950,7 +1959,7 @@ function AppLayout({
   const favoriteListingIds = new Set(favorites.map((fav) => fav.listingId))
   const favoriteListings = listings.filter((item) => favoriteListingIds.has(item.id))
   const myListings = listings.filter((item) => item.sellerName === seller.name)
-  const justAdded = listings.filter((item) => item.distance === 'Just added')
+  const justAdded = listings.filter((item) => item.distance === 'Just added today today')
   const totalInventory = myListings.reduce((sum, item) => sum + item.inventory, 0)
   const averagePrice =
     myListings.length > 0
@@ -1981,7 +1990,7 @@ function AppLayout({
     )
 
     if (activeFilter === 'just-added') {
-      result = result.filter((item) => item.distance === 'Just added')
+      result = result.filter((item) => item.distance === 'Just added today today')
     }
 
     if (activeFilter === 'under-5') {
@@ -2217,6 +2226,7 @@ function AppLayout({
   const currentRouteTheme = routeTheme(location.pathname)
 
   const routeAction = (() => {
+    if (/^\/enterprise/.test(location.pathname)) return { primary: ['View supply signals', () => scrollToId('enterprise-shell')], secondary: ['Back to marketplace', () => navigate('/')] } as const
     if (/^\/map/.test(location.pathname)) return { primary: ['Jump to map', () => scrollToId('map-panel')], secondary: ['Open board', () => goTo('/board', 'board-shell')] } as const
     if (/^\/board/.test(location.pathname)) return { primary: ['Post to the board', () => scrollToId('board-shell')], secondary: ['See the map', () => goTo('/map', 'map-panel')] } as const
     if (/^\/messages/.test(location.pathname)) return { primary: ['Open threads', () => scrollToId('messages-shell')], secondary: ['Browse listings', () => goTo('/', 'listing-feed')] } as const
@@ -2246,6 +2256,9 @@ function AppLayout({
         <div className="topbar-actions">
           {!authUser ? (
             <>
+              <button className="ghost district-entry-btn" onClick={() => navigate('/district')}>
+                District demo
+              </button>
               <button className="ghost" onClick={() => goTo('/login')}>
                 Log in
               </button>
@@ -2282,7 +2295,16 @@ function AppLayout({
             <div className="cinematic-overlay">
               <p className="eyebrow eyebrow--light">Pluck orchard market</p>
               <h2>{leadShowcase.title}</h2>
-              <p>Backyard harvests, orchard trust, and quick pickup plans—all surfaced in one beautiful place.</p>
+              <p>Discover the best nearby fruit with clearer trust, better photos, and pickup plans that feel simple from the start.</p>
+            <div className="first-time-note">
+              New to Pluck? Start by opening a fruit listing you like, check the pickup window, then message the seller or claim pickup.
+            </div>
+            <div className="first-time-steps">
+              <span>1. Browse local fruit</span>
+              <span>2. Open a listing</span>
+              <span>3. Check pickup</span>
+              <span>4. Message or claim</span>
+            </div>
               <div className="cinematic-pill-row">
                 <span className="cinematic-pill">{leadShowcase.fruit}</span>
                 <span className="cinematic-pill">${leadShowcase.price}/{leadShowcase.unit}</span>
@@ -2291,10 +2313,10 @@ function AppLayout({
               </div>
               <div className="hero-cta-row">
                 <button className="primary" onClick={() => scrollToId('live-picks')}>
-                  Shop featured fruit
+                  Browse best local fruit
                 </button>
                 <button className="ghost ghost--light" onClick={() => goTo('/map', 'map-panel')}>
-                  Explore nearby map
+                  Explore nearby harvests
                 </button>
               </div>
             </div>
@@ -2319,8 +2341,8 @@ function AppLayout({
         <section id="live-picks" className="hero-live-grid">
           <div className="section-heading section-heading--compact">
             <div>
-              <p className="eyebrow">Live orchard picks</p>
-              <h2>Tap any fruit to open the real listing.</h2>
+              <p className="eyebrow">Best local picks right now</p>
+              <h2>Open any listing to see pickup, seller trust, and availability fast.</h2>
             </div>
             <span className="section-meta">{fruitRibbon.length} live now</span>
           </div>
@@ -2438,9 +2460,10 @@ function AppLayout({
               <>
                 <section className="hero-card hero-card--gallery">
                   <div className="hero-card-copy">
-                    <p className="eyebrow">Curated fruit edit</p>
-                    <h2>Fresh picks worth opening, saving, and reserving.</h2>
-                    <p>Discover local fruit with richer photos, clearer trust, and faster pickup moves.</p>
+                    <p className="eyebrow">Curated local fruit</p>
+              <p className="first-time-subnote">A simple way to start: open one listing that looks great, confirm the pickup window, and message the seller if you need details.</p>
+                    <h2>Shop the local harvests worth opening right now.</h2>
+                    <p>Browse standout local fruit with stronger photos, clearer signals, and less guesswork before pickup.</p>
                   </div>
                   <div className="hero-card-gallery">
                     {(fruitRibbon.length ? fruitRibbon : listings.slice(0, 4)).slice(0, 4).map((item) => (
@@ -2464,8 +2487,8 @@ function AppLayout({
 
                 <section className="section-heading">
                   <div>
-                    <p className="eyebrow">Featured near you</p>
-                    <h2>Beautiful fruit worth opening</h2>
+                    <p className="eyebrow">Curated near you right now</p>
+                    <h2>Open the local listings actually worth your time</h2>
                   </div>
                   <span className="section-meta">{filtered.length} listings</span>
                 </section>
@@ -2536,10 +2559,10 @@ function AppLayout({
                               View
                             </button>
                             <button className="ghost fill-btn" onClick={() => handleToggleFavorite(item.id)}>
-                              {isFavorite ? 'Saved' : 'Save'}
+                              {isFavorite ? 'Saved listing' : 'Save listing'}
                             </button>
                             <button className="ghost fill-btn" onClick={() => handleToggleFollow(item.sellerId)}>
-                              {isFollowing ? 'Following' : 'Follow'}
+                              {isFollowing ? 'Following seller' : 'Follow seller'}
                             </button>
                           </ActionGrid>
                         </div>
@@ -2552,8 +2575,8 @@ function AppLayout({
                   <>
                     <section className="section-heading section-gap-top">
                       <div>
-                        <p className="eyebrow">Harvest feed</p>
-                        <h2>Grower signals</h2>
+                        <p className="eyebrow">Fresh from local sellers</p>
+                        <h2>What sellers are posting now</h2>
                       </div>
                     </section>
 
@@ -2578,7 +2601,7 @@ function AppLayout({
                             <p>{post.body}</p>
                             <ActionGrid columns={1}>
                               <button className="ghost fill-btn" onClick={() => navigate('/grower/' + post.sellerId)}>
-                                View grower
+                                View seller
                               </button>
                             </ActionGrid>
                           </div>
@@ -2590,8 +2613,8 @@ function AppLayout({
 
                 <section id="just-added" className="section-heading section-gap-top">
                   <div>
-                    <p className="eyebrow">Fresh activity</p>
-                    <h2>Just added</h2>
+                    <p className="eyebrow">Newest nearby</p>
+                    <h2>Just added today today</h2>
                   </div>
                 </section>
 
@@ -2619,17 +2642,17 @@ function AppLayout({
                 <div className="map-fallback premium-map">
                   <div className="map-header-row">
                     <div>
-                      <p className="eyebrow">Discovery map</p>
-                      <h3>Location-first neighborhood browsing</h3>
+                      <p className="eyebrow">Nearby harvest map</p>
+                      <h3>Browse local fruit by neighborhood first</h3>
                     </div>
                     <div className="map-header-actions">
-                      <button className="ghost" onClick={() => setMapExpanded((current) => !current)}>{mapExpanded ? 'Minimize map' : 'Expand map'}</button>
-                      <button className="ghost" onClick={() => goTo('/store/new')}>Add your harvest</button>
+                      <button className="ghost" onClick={() => setMapExpanded((current) => !current)}>{mapExpanded ? 'Shrink map view' : 'Expand map view'}</button>
+                      <button className="ghost" onClick={() => goTo('/store/new')}>Add a new listing</button>
                     </div>
                   </div>
 
                   <p>
-                    Zoom into any neighborhood, type a ZIP to recenter the map, and open live fruit listings directly from the pins or the list below.
+                    Zoom into any neighborhood, search by ZIP or city, and open live local fruit listings directly from the map or the list below.
                   </p>
 
                   <div className={mapExpanded ? 'leaflet-map-panel is-expanded' : 'leaflet-map-panel'}>
@@ -2642,31 +2665,42 @@ function AppLayout({
 
                   <div className="map-support-row">
                     <div className="map-support-copy">
-                      <strong>Search any ZIP, city, or neighborhood</strong>
-                      <span>The map now recenters to the place you typed, then keeps the nearby fruit cards underneath in sync.</span>
+                      <strong>Search any ZIP, city, or neighborhood fast</strong>
+                      <span>The map recenters to what you searched, then keeps the nearby local fruit listings below in sync.</span>
                     </div>
                     <button className="ghost" onClick={() => scrollToId('listing-feed')}>
                       Jump to matching fruit
                     </button>
                   </div>
 
-                  <div className="pin-list premium-pin-list">
+                  <div className="pin-list premium-pin-list premium-map-grid">
                     {filtered.map((item) => (
-                      <button className="pin-row premium-pin-row premium-pin-button" key={item.id} onClick={() => navigate('/listing/' + item.id)}>
-                        <div>
-                          <strong>{item.fruit}</strong>
-                          <p>
-                            {item.title} • {prettyLocation(item)}
-                          </p>
-                          <div className="listing-badge-row">
+                      <button className="premium-map-card" key={item.id} onClick={() => navigate('/listing/' + item.id)}>
+                        <div className="premium-map-card__image-wrap">
+                          <img className="premium-map-card__image" src={item.image} alt={item.title} />
+                        </div>
+                        <div className="premium-map-card__body">
+                          <div className="premium-map-card__top">
+                            <div className="premium-map-card__copy">
+                              <strong className="premium-map-card__fruit">{item.fruit}</strong>
+                              <p className="premium-map-card__title">
+                                {item.title} • {prettyLocation(item)}
+                              </p>
+                            </div>
+                            <strong className="premium-map-card__price">
+                              ${item.price}/{item.unit}
+                            </strong>
+                          </div>
+                          <div className="premium-map-card__pills">
                             {item.harvestLabel ? <span className="trust-pill harvest">{item.harvestLabel}</span> : null}
-                            {item.sellerVerified ? <span className="trust-pill verified">Verified grower</span> : null}
-                            {hasGeo(item) ? <span className="trust-pill available">Map ready</span> : null}
+                            {item.sellerVerified ? <span className="trust-pill verified">Verified seller</span> : null}
+                            {hasGeo(item) ? <span className="trust-pill available">Pickup map ready</span> : null}
+                          </div>
+                          <div className="premium-map-card__meta">
+                            <span>{item.inventory} left</span>
+                            {item.sellerRating ? <span>★ {item.sellerRating.toFixed(1)}</span> : null}
                           </div>
                         </div>
-                        <span>
-                          ${item.price}/{item.unit}
-                        </span>
                       </button>
                     ))}
                   </div>
@@ -2679,6 +2713,8 @@ function AppLayout({
             path="/board"
             element={<section id="board-shell" className="content-shell"><CommunityBoard /></section>}
           />
+
+          
 
           <Route
             path="/listing/:id"
@@ -2782,8 +2818,8 @@ function AppLayout({
               <section className="stack">
                 <div className="section-heading compact-heading no-top-gap">
                   <div>
-                    <p className="eyebrow">Seller dashboard</p>
-                    <h2>My Store</h2>
+                    <p className="eyebrow">Seller home base</p>
+                    <h2>Your seller storefront</h2>
                   </div>
                   <button className="primary" onClick={() => navigate('/store/new')}>
                     New listing
@@ -2807,20 +2843,20 @@ function AppLayout({
 
                 <div className="tool-grid">
                   <button className="tool-card" onClick={() => navigate('/store/new')}>
-                    <strong>+ New listing</strong>
-                    <span>Create a new product card</span>
+                    <strong>+ Add new listing</strong>
+                    <span>Create a polished new harvest listing</span>
                   </button>
                   <button className="tool-card" onClick={() => navigate('/store/listings')}>
-                    <strong>Manage listings</strong>
-                    <span>View and edit your active items</span>
+                    <strong>Manage your listings</strong>
+                    <span>View, edit, and tighten your active listings</span>
                   </button>
                   <button className="tool-card" onClick={() => navigate('/store/inventory')}>
-                    <strong>Inventory</strong>
-                    <span>Adjust stock across listings</span>
+                    <strong>Inventory overview</strong>
+                    <span>Track what is still available across listings</span>
                   </button>
                   <button className="tool-card" onClick={() => navigate('/store/analytics')}>
-                    <strong>Analytics</strong>
-                    <span>See pricing and seller metrics</span>
+                    <strong>Performance snapshot</strong>
+                    <span>See pricing, trust, and storefront performance</span>
                   </button>
                 </div>
 
@@ -2839,8 +2875,8 @@ function AppLayout({
               <section className="stack">
                 <div className="section-heading compact-heading no-top-gap">
                   <div>
-                    <p className="eyebrow">Seller listings</p>
-                    <h2>Manage Listings</h2>
+                    <p className="eyebrow">Storefront listings</p>
+                    <h2>Manage your storefront listings</h2>
                   </div>
                   <button className="primary" onClick={() => navigate('/store/new')}>
                     New listing
@@ -2879,7 +2915,7 @@ function AppLayout({
                     ))}
                   </div>
                 ) : (
-                  <div className="empty-panel">Add your first harvest and your storefront listings will appear here.</div>
+                  <div className="empty-panel">Add your first local harvest and your storefront listings will appear here.</div>
                 )}
               </section>
             }
@@ -2891,8 +2927,8 @@ function AppLayout({
               <section className="stack">
                 <div className="section-heading compact-heading no-top-gap">
                   <div>
-                    <p className="eyebrow">Inventory</p>
-                    <h2>Inventory Overview</h2>
+                    <p className="eyebrow">Inventory overview</p>
+                    <h2>Inventory and availability</h2>
                   </div>
                   <button className="ghost" onClick={() => navigate('/store/listings')}>
                     Back to listings
@@ -2908,7 +2944,7 @@ function AppLayout({
                       </div>
                     ))
                   ) : (
-                    <div className="empty-panel">Your active inventory will show up here once you publish a harvest.</div>
+                    <div className="empty-panel">Your active inventory will show up here once you publish a listing.</div>
                   )}
                 </div>
               </section>
@@ -2921,8 +2957,8 @@ function AppLayout({
               <section className="stack">
                 <div className="section-heading compact-heading no-top-gap">
                   <div>
-                    <p className="eyebrow">Seller analytics</p>
-                    <h2>Performance Snapshot</h2>
+                    <p className="eyebrow">Storefront analytics</p>
+                    <h2>Storefront performance snapshot</h2>
                   </div>
                 </div>
 
@@ -2942,8 +2978,8 @@ function AppLayout({
                 </div>
 
                 <div className="analytics-note">
-                  <strong>Next build target:</strong>
-                  <p>Live map pins, editable profiles, and richer pickup coordination flow.</p>
+                  <strong>Next improvement target:</strong>
+                  <p>Live map pins, richer seller profiles, and smoother pickup coordination.</p>
                 </div>
               </section>
             }
@@ -3018,7 +3054,7 @@ function AppLayout({
                     </div>
 
                     <div className="trust-metrics">
-                      {seller.verified ? <div className="metric-chip">Verified grower</div> : null}
+                      {seller.verified ? <div className="metric-chip">Verified seller</div> : null}
                       {seller.rating ? <div className="metric-chip">★ {seller.rating.toFixed(1)}</div> : null}
                       {seller.followers ? <div className="metric-chip">{seller.followers} followers</div> : null}
                       {seller.responseScore ? <div className="metric-chip">{seller.responseScore}</div> : null}
@@ -3053,6 +3089,7 @@ function AppLayout({
             }
           />
 
+                    <Route path="/district" element={<DistrictManagerMode listings={listings} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -3104,7 +3141,7 @@ function EditListingRoute({
   if (!listing) {
     return (
       <section className="stack">
-        <h2>Listing not found</h2>
+        <h2>This listing is no longer available</h2>
         <p>This listing may have been created before persistence was enabled. Create a fresh listing instead.</p>
       </section>
     )

@@ -1,0 +1,407 @@
+import React, { useMemo, useState } from 'react'
+
+type TabKey = 'workspace' | 'signals' | 'opportunities' | 'impact'
+
+const regions = ['Greater Los Angeles', 'San Fernando Valley', 'South Bay', 'Pasadena', 'Orange County']
+const windows = ['This week', '30 days', 'Quarter']
+const categories = ['All produce', 'Citrus', 'Avocados', 'Stone fruit', 'Figs', 'Guavas']
+
+const partner = {
+  name: 'Kroger Regional Innovation Team',
+  mode: 'Partner demo environment',
+  contact: 'Retail pilot lead',
+  meeting: 'Next working session: Tuesday, 10:00 AM',
+}
+
+const pilotMetrics = [
+  { value: '03', label: 'Pilot regions' },
+  { value: '148', label: 'Visible growers' },
+  { value: '27', label: 'Fresh supply events' },
+  { value: '12', label: 'Retail opportunity signals' },
+]
+
+const readiness = [
+  { zone: 'Pasadena', score: 82, note: 'Strong citrus demand and repeated shopper intent' },
+  { zone: 'South Bay', score: 88, note: 'High avocado trust and repeat local activity' },
+  { zone: 'Mission Hills', score: 71, note: 'Reliable citrus cluster with neighborhood pickup velocity' },
+]
+
+const alerts = [
+  { title: 'Pasadena citrus gap', level: 'High', body: 'Demand remains elevated while same-day local citrus availability stays inconsistent.' },
+  { title: 'South Bay avocado strength', level: 'High', body: 'Supply and trust are both strong enough for a pilot merchandising story.' },
+  { title: 'Figs watchlist', level: 'Medium', body: 'Low-volume but rising interest suggests a seasonal story opportunity.' },
+]
+
+const actionQueue = [
+  'Review top high-trust zones for regional pilot launch',
+  'Identify citrus storytelling opportunity for Pasadena cluster',
+  'Surface avocado demand-to-supply match in South Bay',
+  'Package ESG summary for retail partner conversation',
+]
+
+const watchlist = [
+  { category: 'Citrus', supply: 'High', demand: 'High', momentum: '+18%', status: 'Ready' },
+  { category: 'Avocados', supply: 'High', demand: 'High', momentum: '+11%', status: 'Ready' },
+  { category: 'Stone fruit', supply: 'Medium', demand: 'Medium', momentum: '+7%', status: 'Monitor' },
+  { category: 'Figs', supply: 'Low', demand: 'Medium', momentum: '+13%', status: 'Watch' },
+]
+
+const opportunityRows = [
+  { zone: 'Pasadena', crop: 'Citrus', readiness: 'High', action: 'Launch seasonal local sourcing story', owner: 'Retail pilot lead' },
+  { zone: 'South Bay', crop: 'Avocados', readiness: 'High', action: 'Test local trust and same-day merchandising', owner: 'Regional operator' },
+  { zone: 'Mission Hills', crop: 'Citrus', readiness: 'Medium', action: 'Expand grower verification and density', owner: 'Community ops' },
+  { zone: 'Orange County', crop: 'Stone fruit', readiness: 'Medium', action: 'Monitor seasonal lift before activation', owner: 'Partner strategy' },
+]
+
+const impactStats = [
+  { title: 'Local grower activation', body: 'Backyard and small-batch growers are becoming visible as a measurable neighborhood food layer.' },
+  { title: 'Reduced distance narrative', body: 'Community pickup patterns strengthen lower-mile fresh food storytelling.' },
+  { title: 'Regional trust formation', body: 'Repeat neighborhoods reveal where local produce exchange already has credibility.' },
+]
+
+export default function Enterprise() {
+  const [tab, setTab] = useState<TabKey>('workspace')
+  const [region, setRegion] = useState(regions[0])
+  const [windowRange, setWindowRange] = useState(windows[0])
+  const [category, setCategory] = useState(categories[0])
+
+  const headline = useMemo(() => {
+    if (tab === 'workspace') return 'Pilot workspace'
+    if (tab === 'signals') return 'Signal operations'
+    if (tab === 'opportunities') return 'Retail opportunities'
+    return 'Impact and ESG'
+  }, [tab])
+
+  const downloadBrief = () => {
+    const brief = [
+      'PLUCK PARTNER DEMO BRIEF',
+      '',
+      `Partner: ${partner.name}`,
+      `Mode: ${partner.mode}`,
+      `Region: ${region}`,
+      `Window: ${windowRange}`,
+      `Category: ${category}`,
+      '',
+      'Key takeaways:',
+      '- Hyperlocal grower and demand signals are visible by region.',
+      '- Pilot-ready categories currently include citrus and avocados.',
+      '- Pasadena and South Bay remain top regional opportunities.',
+      '- ESG story is strengthened by local grower activation and reduced distance narrative.',
+      '',
+      'Next recommended actions:',
+      '1. Review regional opportunity table.',
+      '2. Prioritize first pilot category by zone.',
+      '3. Package pilot narrative for partner discussion.',
+    ].join('\n')
+
+    const blob = new Blob([brief], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pluck-partner-demo-brief.txt'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <section id="enterprise-shell" className="enterprise-dashboard v6">
+      <section className="enterprise-demo-topbar section-card">
+        <div className="enterprise-demo-id">
+          <div className="enterprise-demo-badge">Demo mode</div>
+          <div>
+            <strong>{partner.name}</strong>
+            <p>{partner.mode}</p>
+          </div>
+        </div>
+
+        <div className="enterprise-demo-meta">
+          <span>{partner.contact}</span>
+          <span>{partner.meeting}</span>
+        </div>
+      </section>
+
+      <section className="enterprise-hero-card enterprise-hero-card-v6">
+        <div className="enterprise-hero-copy">
+          <p className="eyebrow">Partner demo mode</p>
+          <h1>Retail workspace for hyperlocal food intelligence.</h1>
+          <p className="enterprise-subcopy">
+            Demo mode turns Pluck into a partner-facing environment for regional food signals,
+            sourcing watchlists, unmet demand alerts, and executive pilot framing.
+          </p>
+
+          <div className="enterprise-cta-row">
+            <button className="primary" type="button" onClick={() => document.getElementById('pilot-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              Open workspace
+            </button>
+            <button className="ghost" type="button" onClick={downloadBrief}>
+              Download pilot brief
+            </button>
+            <button className="ghost" type="button" onClick={() => window.location.assign('/')}>
+              Back to marketplace
+            </button>
+          </div>
+        </div>
+
+        <aside className="enterprise-demo-rail">
+          <div className="enterprise-demo-rail-card">
+            <span>Active partner</span>
+            <strong>{partner.name}</strong>
+          </div>
+          <div className="enterprise-demo-rail-card">
+            <span>Current focus</span>
+            <strong>{region}</strong>
+          </div>
+          <div className="enterprise-demo-rail-card">
+            <span>Priority category</span>
+            <strong>{category}</strong>
+          </div>
+          <div className="enterprise-demo-rail-card">
+            <span>Readout window</span>
+            <strong>{windowRange}</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section className="enterprise-kpi-grid">
+        {pilotMetrics.map((item) => (
+          <article key={item.label} className="enterprise-kpi-card section-card">
+            <p className="enterprise-kpi-value">{item.value}</p>
+            <p className="enterprise-kpi-label">{item.label}</p>
+          </article>
+        ))}
+      </section>
+
+      <section id="pilot-workspace" className="section-card enterprise-workspace-shell">
+        <div className="enterprise-control-row">
+          <div className="enterprise-select-group">
+            <label>Region</label>
+            <select value={region} onChange={(e) => setRegion(e.target.value)}>
+              {regions.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Window</label>
+            <select value={windowRange} onChange={(e) => setWindowRange(e.target.value)}>
+              {windows.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Category</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {categories.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="enterprise-tab-row">
+          <button className={tab === 'workspace' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('workspace')}>Workspace</button>
+          <button className={tab === 'signals' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('signals')}>Signals</button>
+          <button className={tab === 'opportunities' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('opportunities')}>Opportunities</button>
+          <button className={tab === 'impact' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('impact')}>Impact</button>
+        </div>
+
+        <div className="enterprise-tab-head">
+          <div>
+            <p className="eyebrow">Partner workspace</p>
+            <h2>{headline}</h2>
+          </div>
+          <p className="subtle-copy">
+            Active demo: <strong>{partner.name}</strong> · <strong>{region}</strong> · <strong>{windowRange}</strong> · <strong>{category}</strong>
+          </p>
+        </div>
+
+        {tab === 'workspace' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-three-col">
+              <article className="section-card enterprise-panel enterprise-status-card">
+                <p className="eyebrow">Pilot status</p>
+                <h3>Regional launch readiness</h3>
+                <div className="enterprise-status-rail">
+                  <span className="done">Signals mapped</span>
+                  <span className="done">Demand readout</span>
+                  <span className="active">Retail prioritization</span>
+                  <span>Partner launch</span>
+                </div>
+              </article>
+
+              <article className="section-card enterprise-panel">
+                <p className="eyebrow">Executive summary</p>
+                <h3>Why this region matters</h3>
+                <p className="subtle-copy">
+                  {region} is showing credible local activity, category concentration, and a partnership narrative strong enough for pilot framing.
+                </p>
+              </article>
+
+              <article className="section-card enterprise-panel">
+                <p className="eyebrow">Next meeting</p>
+                <h3>{partner.meeting}</h3>
+                <p className="subtle-copy">Recommended review: regional readiness, category watchlist, and pilot brief package.</p>
+              </article>
+            </div>
+
+            <div className="enterprise-two-col">
+              <article className="section-card enterprise-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Action queue</p>
+                  <h3>What the partner team should do next</h3>
+                </div>
+                <div className="enterprise-action-list">
+                  {actionQueue.map((item, idx) => (
+                    <div key={item} className="enterprise-action-item">
+                      <span>{idx + 1}</span>
+                      <p>{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="section-card enterprise-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Unmet demand alerts</p>
+                  <h3>Signals that need attention</h3>
+                </div>
+                <div className="enterprise-alert-stack">
+                  {alerts.map((item) => (
+                    <div key={item.title} className="enterprise-alert-card">
+                      <div className="enterprise-alert-top">
+                        <strong>{item.title}</strong>
+                        <span>{item.level}</span>
+                      </div>
+                      <p className="subtle-copy">{item.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </div>
+
+            <div className="enterprise-three-col">
+              {readiness.map((item) => (
+                <article key={item.zone} className="section-card enterprise-panel enterprise-score-card">
+                  <p className="eyebrow">{item.zone}</p>
+                  <div className="enterprise-score-value">{item.score}</div>
+                  <p className="enterprise-score-label">Pilot readiness score</p>
+                  <p className="subtle-copy">{item.note}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'signals' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-two-col">
+              <article className="section-card enterprise-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Signal map</p>
+                  <h3>Regional visibility layer</h3>
+                </div>
+                <div className="enterprise-map-mock">
+                  <div className="enterprise-map-dot dot-a"></div>
+                  <div className="enterprise-map-dot dot-b"></div>
+                  <div className="enterprise-map-dot dot-c"></div>
+                  <div className="enterprise-map-dot dot-d"></div>
+                  <div className="enterprise-map-ring ring-a"></div>
+                  <div className="enterprise-map-ring ring-b"></div>
+                  <div className="enterprise-map-ring ring-c"></div>
+                  <div className="enterprise-map-label label-a">Mission Hills citrus</div>
+                  <div className="enterprise-map-label label-b">Pasadena demand pocket</div>
+                  <div className="enterprise-map-label label-c">South Bay trust zone</div>
+                </div>
+              </article>
+
+              <article className="section-card enterprise-panel">
+                <div className="enterprise-panel-head">
+                  <p className="eyebrow">Sourcing watchlist</p>
+                  <h3>Category movement</h3>
+                </div>
+                <div className="enterprise-watchlist-table">
+                  {watchlist.map((row) => (
+                    <div key={row.category} className="enterprise-watchlist-row">
+                      <div>
+                        <strong>{row.category}</strong>
+                        <p>{row.status}</p>
+                      </div>
+                      <div><span>Supply</span><strong>{row.supply}</strong></div>
+                      <div><span>Demand</span><strong>{row.demand}</strong></div>
+                      <div><span>Momentum</span><strong>{row.momentum}</strong></div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </div>
+          </div>
+        )}
+
+        {tab === 'opportunities' && (
+          <div className="enterprise-panel-stack">
+            <article className="section-card enterprise-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Regional opportunities</p>
+                <h3>Where partners should act</h3>
+              </div>
+
+              <div className="enterprise-table-wrap">
+                <table className="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Zone</th>
+                      <th>Top crop</th>
+                      <th>Readiness</th>
+                      <th>Suggested action</th>
+                      <th>Owner</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {opportunityRows.map((row) => (
+                      <tr key={row.zone + row.crop}>
+                        <td>{row.zone}</td>
+                        <td>{row.crop}</td>
+                        <td>{row.readiness}</td>
+                        <td>{row.action}</td>
+                        <td>{row.owner}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        )}
+
+        {tab === 'impact' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-three-col">
+              {impactStats.map((item) => (
+                <article key={item.title} className="section-card enterprise-panel">
+                  <p className="eyebrow">Impact</p>
+                  <h3>{item.title}</h3>
+                  <p className="subtle-copy">{item.body}</p>
+                </article>
+              ))}
+            </div>
+
+            <section className="section-card enterprise-cta-card">
+              <div>
+                <p className="eyebrow">Partner demo summary</p>
+                <h2>Move from marketplace visibility to regional pilot execution.</h2>
+                <p className="subtle-copy">
+                  Demo mode gives retail partners an executive-ready environment for local food signals,
+                  sourcing watchlists, unmet demand alerts, and community impact storytelling.
+                </p>
+              </div>
+
+              <div className="enterprise-cta-actions">
+                <button className="primary" type="button" onClick={downloadBrief}>Download pilot brief</button>
+                <button className="ghost" type="button">Request pilot access</button>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
+    </section>
+  )
+}

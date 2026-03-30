@@ -1,0 +1,329 @@
+import React, { useMemo, useState } from 'react'
+
+type TabKey = 'deal' | 'integration' | 'synergies' | 'roadmap'
+
+const regions = ['Greater Los Angeles', 'San Fernando Valley', 'South Bay', 'Pasadena', 'Orange County']
+const windows = ['This week', '30 days', 'Quarter']
+const categories = ['All produce', 'Citrus', 'Avocados', 'Stone fruit', 'Figs', 'Guavas']
+
+const deal = {
+  title: 'Deal narrative / integration mode',
+  subtitle: 'Post-acquisition strategy environment',
+  thesis: 'Pluck can be integrated as a hyperlocal food intelligence layer across retail, sourcing, ESG, and community experience.',
+}
+
+const topMetrics = [
+  { value: '100', label: 'Day integration horizon' },
+  { value: '4', label: 'Core synergy lanes' },
+  { value: '3', label: 'Pilot-ready narratives' },
+  { value: '1', label: 'Platform thesis' },
+]
+
+const dealNarrative = [
+  'The acquisition case is strongest when Pluck is positioned as infrastructure, not just as a niche marketplace.',
+  'Its value compounds when local supply visibility, customer demand, and community trust are unified inside a larger platform.',
+  'The post-deal story should focus on signal capture, regional pilots, and narrative expansion before heavy operational scaling.',
+]
+
+const synergyCards = [
+  {
+    title: 'Retail merchandising',
+    body: 'Use Pluck’s local signals to power seasonal sourcing stories, differentiated category merchandising, and neighborhood-specific messaging.',
+  },
+  {
+    title: 'Customer acquisition',
+    body: 'Convert high-intent local food users into a strategic retail audience through trusted produce discovery and adjacent offers.',
+  },
+  {
+    title: 'ESG / community layer',
+    body: 'Translate neighborhood food exchange into measurable community value, lower-distance stories, and local activation reporting.',
+  },
+  {
+    title: 'Long-term data asset',
+    body: 'Build a durable intelligence surface around decentralized food activity before competitors can map the same terrain.',
+  },
+]
+
+const integrationStreams = [
+  { phase: '0–30 days', title: 'Stabilize narrative', note: 'Unify product positioning, partner language, and executive story.' },
+  { phase: '30–60 days', title: 'Launch pilot surfaces', note: 'Activate Pasadena citrus and South Bay avocado as flagship pilot narratives.' },
+  { phase: '60–100 days', title: 'Instrument signal layer', note: 'Formalize internal dashboards, regional monitoring, and diligence proof points.' },
+]
+
+const roadmapRows = [
+  { workstream: 'Brand integration', owner: 'Strategy + Product', priority: 'High', goal: 'Preserve consumer charm while adding enterprise clarity' },
+  { workstream: 'Pilot deployment', owner: 'Partnerships', priority: 'High', goal: 'Operationalize first regional retail narratives' },
+  { workstream: 'Signal instrumentation', owner: 'Product + Data', priority: 'High', goal: 'Turn visible activity into repeatable internal insights' },
+  { workstream: 'ESG packaging', owner: 'Leadership', priority: 'Medium', goal: 'Translate local exchange into measurable partner language' },
+  { workstream: 'Acquirer story continuation', owner: 'Executive team', priority: 'Medium', goal: 'Extend from pilot proof to platform conviction' },
+]
+
+const operatingModel = [
+  {
+    title: 'Consumer surface remains intact',
+    body: 'Keep Pluck’s marketplace energy alive while gradually strengthening the intelligence and partner layers behind it.',
+  },
+  {
+    title: 'Enterprise layer becomes a strategic shell',
+    body: 'Use the enterprise route as the place where pilots, dashboards, diligence, and boardroom narratives live.',
+  },
+  {
+    title: 'Data layer becomes the long-term asset',
+    body: 'Over time, localized food visibility becomes more valuable than any single short-term transaction flow.',
+  },
+]
+
+export default function Enterprise() {
+  const [tab, setTab] = useState<TabKey>('deal')
+  const [region, setRegion] = useState(regions[0])
+  const [windowRange, setWindowRange] = useState(windows[0])
+  const [category, setCategory] = useState(categories[0])
+
+  const headline = useMemo(() => {
+    if (tab === 'deal') return 'Deal thesis'
+    if (tab === 'integration') return 'Integration plan'
+    if (tab === 'synergies') return 'Synergy map'
+    return '100-day roadmap'
+  }, [tab])
+
+  const downloadIntegrationMemo = () => {
+    const memo = [
+      'PLUCK DEAL NARRATIVE / INTEGRATION MEMO',
+      '',
+      `Mode: ${deal.title}`,
+      `Region: ${region}`,
+      `Window: ${windowRange}`,
+      `Category: ${category}`,
+      '',
+      'Deal thesis:',
+      ...dealNarrative.map((x) => `- ${x}`),
+      '',
+      '100-day plan:',
+      ...integrationStreams.map((x) => `- ${x.phase}: ${x.title} — ${x.note}`),
+      '',
+      'Core thesis:',
+      deal.thesis,
+    ].join('\n')
+
+    const blob = new Blob([memo], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pluck-deal-integration-memo.txt'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <section id="enterprise-shell" className="enterprise-dashboard v11">
+      <section className="enterprise-deal-topbar section-card">
+        <div>
+          <p className="eyebrow">Deal narrative mode</p>
+          <strong>{deal.title}</strong>
+          <p className="subtle-copy">{deal.subtitle}</p>
+        </div>
+
+        <div className="enterprise-investor-actions">
+          <button className="ghost" type="button" onClick={downloadIntegrationMemo}>
+            Download integration memo
+          </button>
+          <button className="ghost" type="button" onClick={() => window.location.assign('/')}>
+            Back to marketplace
+          </button>
+        </div>
+      </section>
+
+      <section className="enterprise-deal-hero section-card">
+        <div className="enterprise-investor-copy">
+          <p className="eyebrow">Post-acquisition strategy</p>
+          <h1>What happens after the deal is where Pluck becomes most valuable.</h1>
+          <p className="enterprise-subcopy dark">
+            Integration mode reframes Pluck as a strategic layer to be absorbed into a larger platform —
+            preserving consumer energy while expanding retail, ESG, sourcing, and intelligence value.
+          </p>
+
+          <div className="enterprise-cta-row">
+            <button className="primary" type="button" onClick={() => document.getElementById('integration-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              Open integration plan
+            </button>
+            <button className="ghost" type="button" onClick={downloadIntegrationMemo}>
+              Download memo
+            </button>
+          </div>
+        </div>
+
+        <div className="enterprise-deal-card">
+          <span>Core integration thesis</span>
+          <strong>{deal.thesis}</strong>
+        </div>
+      </section>
+
+      <section className="enterprise-kpi-grid">
+        {topMetrics.map((item) => (
+          <article key={item.label} className="enterprise-kpi-card section-card">
+            <p className="enterprise-kpi-value">{item.value}</p>
+            <p className="enterprise-kpi-label">{item.label}</p>
+          </article>
+        ))}
+      </section>
+
+      <section id="integration-workspace" className="section-card enterprise-workspace-shell">
+        <div className="enterprise-control-row">
+          <div className="enterprise-select-group">
+            <label>Region</label>
+            <select value={region} onChange={(e) => setRegion(e.target.value)}>
+              {regions.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Window</label>
+            <select value={windowRange} onChange={(e) => setWindowRange(e.target.value)}>
+              {windows.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Category</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {categories.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="enterprise-tab-row">
+          <button className={tab === 'deal' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('deal')}>Deal Thesis</button>
+          <button className={tab === 'integration' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('integration')}>Integration Plan</button>
+          <button className={tab === 'synergies' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('synergies')}>Synergies</button>
+          <button className={tab === 'roadmap' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('roadmap')}>100-Day Roadmap</button>
+        </div>
+
+        <div className="enterprise-tab-head">
+          <div>
+            <p className="eyebrow">Integration workspace</p>
+            <h2>{headline}</h2>
+          </div>
+          <p className="subtle-copy">
+            Context: <strong>{region}</strong> · <strong>{windowRange}</strong> · <strong>{category}</strong>
+          </p>
+        </div>
+
+        {tab === 'deal' && (
+          <div className="enterprise-panel-stack">
+            <section className="section-card enterprise-panel deal-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Deal thesis</p>
+                <h3>Why Pluck matters after acquisition</h3>
+              </div>
+
+              <div className="enterprise-takeaway-list">
+                {dealNarrative.map((item) => (
+                  <article key={item} className="enterprise-takeaway-card">
+                    <span>•</span>
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="enterprise-three-col">
+              {operatingModel.map((item) => (
+                <article key={item.title} className="section-card enterprise-panel deal-panel">
+                  <p className="eyebrow">Operating model</p>
+                  <h3>{item.title}</h3>
+                  <p className="subtle-copy">{item.body}</p>
+                </article>
+              ))}
+            </section>
+          </div>
+        )}
+
+        {tab === 'integration' && (
+          <div className="enterprise-panel-stack">
+            <article className="section-card enterprise-panel deal-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">100-day integration plan</p>
+                <h3>Sequencing after the deal</h3>
+              </div>
+
+              <div className="enterprise-stream-stack">
+                {integrationStreams.map((row) => (
+                  <div key={row.phase} className="enterprise-stream-card">
+                    <span>{row.phase}</span>
+                    <strong>{row.title}</strong>
+                    <p>{row.note}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </div>
+        )}
+
+        {tab === 'synergies' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-two-col">
+              {synergyCards.map((item) => (
+                <article key={item.title} className="section-card enterprise-panel deal-panel">
+                  <p className="eyebrow">Synergy lane</p>
+                  <h3>{item.title}</h3>
+                  <p className="subtle-copy">{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'roadmap' && (
+          <div className="enterprise-panel-stack">
+            <article className="section-card enterprise-panel deal-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Roadmap</p>
+                <h3>Priority workstreams</h3>
+              </div>
+
+              <div className="enterprise-table-wrap">
+                <table className="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Workstream</th>
+                      <th>Owner</th>
+                      <th>Priority</th>
+                      <th>Goal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roadmapRows.map((row) => (
+                      <tr key={row.workstream}>
+                        <td>{row.workstream}</td>
+                        <td>{row.owner}</td>
+                        <td>{row.priority}</td>
+                        <td>{row.goal}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <section className="section-card enterprise-cta-card investor-cta">
+              <div>
+                <p className="eyebrow">Integration conclusion</p>
+                <h2>The strongest post-deal outcome is a layered platform, not a forced merge.</h2>
+                <p className="subtle-copy">
+                  Pluck should remain consumer-legible on the surface while its enterprise, data, and pilot layers compound behind the scenes.
+                </p>
+              </div>
+
+              <div className="enterprise-cta-actions">
+                <button className="primary" type="button" onClick={downloadIntegrationMemo}>Download memo</button>
+                <button className="ghost" type="button">Open 100-day plan</button>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
+    </section>
+  )
+}

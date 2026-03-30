@@ -1,0 +1,357 @@
+import React, { useMemo, useState } from 'react'
+
+type TabKey = 'overview' | 'moat' | 'risks' | 'synergy'
+
+const regions = ['Greater Los Angeles', 'San Fernando Valley', 'South Bay', 'Pasadena', 'Orange County']
+const windows = ['This week', '30 days', 'Quarter']
+const categories = ['All produce', 'Citrus', 'Avocados', 'Stone fruit', 'Figs', 'Guavas']
+
+const diligence = {
+  title: 'Acquirer due diligence environment',
+  audience: 'Strategic review / platform diligence',
+  summary: 'Pluck can be evaluated as a hyperlocal food intelligence layer with marketplace, retail, ESG, and strategic acquisition upside.',
+  memo: 'Diligence review in progress',
+}
+
+const diligenceMetrics = [
+  { value: '4', label: 'Strategic value lanes' },
+  { value: '3', label: 'Primary moat vectors' },
+  { value: '5', label: 'Synergy surfaces' },
+  { value: '2', label: 'Pilot-ready zones' },
+]
+
+const overviewPoints = [
+  'Pluck is building visibility into decentralized food activity before the category fully institutionalizes.',
+  'Its value is not limited to transaction flow; the stronger long-term asset is localized signal density.',
+  'The same surface can support sourcing, ESG, community strategy, retail pilots, or acquisition logic.',
+]
+
+const moatRows = [
+  {
+    title: 'Signal asymmetry',
+    body: 'Pluck sees neighborhood-level grower and produce activity that larger systems typically do not capture early.',
+  },
+  {
+    title: 'Trust formation',
+    body: 'Localized exchange creates a credibility layer that is difficult to reproduce through generic marketplace mechanics.',
+  },
+  {
+    title: 'Demand + supply intelligence',
+    body: 'Combining shopper intent with visible micro-supply creates a rare strategic dataset over time.',
+  },
+]
+
+const riskRows = [
+  {
+    risk: 'Early category formation',
+    level: 'Medium',
+    note: 'The market is emerging, which creates both opportunity and narrative risk.',
+  },
+  {
+    risk: 'Supply fragmentation',
+    level: 'Medium',
+    note: 'Small-batch activity is valuable strategically, but operational consistency can vary.',
+  },
+  {
+    risk: 'Monetization timing',
+    level: 'Low',
+    note: 'Near-term monetization may trail long-term platform value if positioned too narrowly.',
+  },
+  {
+    risk: 'Execution complexity',
+    level: 'Medium',
+    note: 'Retail, ESG, and community narratives are powerful, but require disciplined sequencing.',
+  },
+]
+
+const synergyRows = [
+  {
+    lane: 'Retail partner integration',
+    fit: 'High',
+    rationale: 'Complements local sourcing, customer acquisition, and regional merchandising narratives.',
+  },
+  {
+    lane: 'Marketplace expansion',
+    fit: 'Medium',
+    rationale: 'Strengthens local commerce ecosystems through trusted food activity and community density.',
+  },
+  {
+    lane: 'ESG / impact intelligence',
+    fit: 'High',
+    rationale: 'Adds measurable community and lower-distance food storytelling to larger platforms.',
+  },
+  {
+    lane: 'Acquisition narrative',
+    fit: 'High',
+    rationale: 'Offers a category-defining visibility layer before broader market standardization occurs.',
+  },
+]
+
+const diligenceChecklist = [
+  'Validate strongest pilot-ready zones',
+  'Package moat narrative around signal density',
+  'Pressure-test monetization sequencing',
+  'Map retail / ESG / community synergy surfaces',
+  'Define post-acquisition integration thesis',
+]
+
+export default function Enterprise() {
+  const [tab, setTab] = useState<TabKey>('overview')
+  const [region, setRegion] = useState(regions[0])
+  const [windowRange, setWindowRange] = useState(windows[0])
+  const [category, setCategory] = useState(categories[0])
+
+  const headline = useMemo(() => {
+    if (tab === 'overview') return 'Diligence overview'
+    if (tab === 'moat') return 'Strategic moat'
+    if (tab === 'risks') return 'Risk review'
+    return 'Synergy and acquisition fit'
+  }, [tab])
+
+  const downloadDiligenceMemo = () => {
+    const memo = [
+      'PLUCK ACQUIRER DUE DILIGENCE MEMO',
+      '',
+      `Audience: ${diligence.audience}`,
+      `Region: ${region}`,
+      `Window: ${windowRange}`,
+      `Category: ${category}`,
+      '',
+      'Overview:',
+      ...overviewPoints.map((x) => `- ${x}`),
+      '',
+      'Top diligence checks:',
+      ...diligenceChecklist.map((x) => `- ${x}`),
+      '',
+      'Conclusion:',
+      diligence.summary,
+    ].join('\n')
+
+    const blob = new Blob([memo], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pluck-due-diligence-memo.txt'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <section id="enterprise-shell" className="enterprise-dashboard v9">
+      <section className="enterprise-diligence-topbar section-card">
+        <div>
+          <p className="eyebrow">Acquirer due diligence mode</p>
+          <strong>{diligence.title}</strong>
+          <p className="subtle-copy">{diligence.memo}</p>
+        </div>
+
+        <div className="enterprise-investor-actions">
+          <button className="ghost" type="button" onClick={downloadDiligenceMemo}>
+            Download diligence memo
+          </button>
+          <button className="ghost" type="button" onClick={() => window.location.assign('/')}>
+            Back to marketplace
+          </button>
+        </div>
+      </section>
+
+      <section className="enterprise-diligence-hero section-card">
+        <div className="enterprise-investor-copy">
+          <p className="eyebrow">Strategic diligence</p>
+          <h1>Pluck can be evaluated as infrastructure, not only as marketplace.</h1>
+          <p className="enterprise-subcopy dark">
+            In diligence mode, the focus shifts from product demo to acquisition-fit review:
+            moat, risks, synergy, and the long-term value of a decentralized food visibility layer.
+          </p>
+
+          <div className="enterprise-cta-row">
+            <button className="primary" type="button" onClick={() => document.getElementById('diligence-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              Open diligence review
+            </button>
+            <button className="ghost" type="button" onClick={downloadDiligenceMemo}>
+              Download memo
+            </button>
+          </div>
+        </div>
+
+        <div className="enterprise-diligence-summary-card">
+          <span>Diligence summary</span>
+          <strong>{diligence.summary}</strong>
+        </div>
+      </section>
+
+      <section className="enterprise-kpi-grid">
+        {diligenceMetrics.map((item) => (
+          <article key={item.label} className="enterprise-kpi-card section-card">
+            <p className="enterprise-kpi-value">{item.value}</p>
+            <p className="enterprise-kpi-label">{item.label}</p>
+          </article>
+        ))}
+      </section>
+
+      <section id="diligence-workspace" className="section-card enterprise-workspace-shell">
+        <div className="enterprise-control-row">
+          <div className="enterprise-select-group">
+            <label>Region</label>
+            <select value={region} onChange={(e) => setRegion(e.target.value)}>
+              {regions.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Window</label>
+            <select value={windowRange} onChange={(e) => setWindowRange(e.target.value)}>
+              {windows.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+
+          <div className="enterprise-select-group">
+            <label>Category</label>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {categories.map((item) => <option key={item}>{item}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="enterprise-tab-row">
+          <button className={tab === 'overview' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('overview')}>Overview</button>
+          <button className={tab === 'moat' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('moat')}>Moat</button>
+          <button className={tab === 'risks' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('risks')}>Risks</button>
+          <button className={tab === 'synergy' ? 'enterprise-tab active' : 'enterprise-tab'} type="button" onClick={() => setTab('synergy')}>Synergy</button>
+        </div>
+
+        <div className="enterprise-tab-head">
+          <div>
+            <p className="eyebrow">Diligence workspace</p>
+            <h2>{headline}</h2>
+          </div>
+          <p className="subtle-copy">
+            Review context: <strong>{region}</strong> · <strong>{windowRange}</strong> · <strong>{category}</strong>
+          </p>
+        </div>
+
+        {tab === 'overview' && (
+          <div className="enterprise-panel-stack">
+            <section className="section-card enterprise-panel investor-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Overview</p>
+                <h3>How an acquirer should think about Pluck</h3>
+              </div>
+
+              <div className="enterprise-takeaway-list">
+                {overviewPoints.map((item) => (
+                  <article key={item} className="enterprise-takeaway-card">
+                    <span>•</span>
+                    <p>{item}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="section-card enterprise-panel diligence-checklist-card">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Checklist</p>
+                <h3>Top diligence questions</h3>
+              </div>
+
+              <div className="enterprise-checklist">
+                {diligenceChecklist.map((item, idx) => (
+                  <div key={item} className="enterprise-check-row">
+                    <span>{idx + 1}</span>
+                    <p>{item}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {tab === 'moat' && (
+          <div className="enterprise-panel-stack">
+            <div className="enterprise-three-col">
+              {moatRows.map((item) => (
+                <article key={item.title} className="section-card enterprise-panel investor-panel">
+                  <p className="eyebrow">Moat</p>
+                  <h3>{item.title}</h3>
+                  <p className="subtle-copy">{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {tab === 'risks' && (
+          <div className="enterprise-panel-stack">
+            <article className="section-card enterprise-panel investor-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Risk review</p>
+                <h3>Principal diligence risks</h3>
+              </div>
+
+              <div className="enterprise-risk-stack">
+                {riskRows.map((row) => (
+                  <div key={row.risk} className="enterprise-risk-card">
+                    <div className="enterprise-risk-top">
+                      <strong>{row.risk}</strong>
+                      <span>{row.level}</span>
+                    </div>
+                    <p className="subtle-copy">{row.note}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </div>
+        )}
+
+        {tab === 'synergy' && (
+          <div className="enterprise-panel-stack">
+            <article className="section-card enterprise-panel investor-panel">
+              <div className="enterprise-panel-head">
+                <p className="eyebrow">Synergy review</p>
+                <h3>Where the platform could fit</h3>
+              </div>
+
+              <div className="enterprise-table-wrap">
+                <table className="enterprise-table">
+                  <thead>
+                    <tr>
+                      <th>Lane</th>
+                      <th>Fit</th>
+                      <th>Rationale</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {synergyRows.map((row) => (
+                      <tr key={row.lane}>
+                        <td>{row.lane}</td>
+                        <td>{row.fit}</td>
+                        <td>{row.rationale}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <section className="section-card enterprise-cta-card investor-cta">
+              <div>
+                <p className="eyebrow">Diligence conclusion</p>
+                <h2>Pluck’s strategic value may exceed its immediate marketplace revenue profile.</h2>
+                <p className="subtle-copy">
+                  The strongest case is not only transaction growth, but control of an emerging intelligence surface around decentralized food activity.
+                </p>
+              </div>
+
+              <div className="enterprise-cta-actions">
+                <button className="primary" type="button" onClick={downloadDiligenceMemo}>Download memo</button>
+                <button className="ghost" type="button">Open integration thesis</button>
+              </div>
+            </section>
+          </div>
+        )}
+      </section>
+    </section>
+  )
+}
