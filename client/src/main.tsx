@@ -5,6 +5,13 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import forcedCss from './styles.css?raw'
 
+if (typeof window !== 'undefined') {
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual'
+  }
+  window.scrollTo(0, 0)
+}
+
 const STYLE_ID = '__pluck_forced_css__'
 
 if (!document.getElementById(STYLE_ID)) {

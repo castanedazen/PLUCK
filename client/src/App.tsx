@@ -2238,7 +2238,7 @@ function AppLayout({
   useEffect(() => {
     window.requestAnimationFrame(() => {
       setTimeout(() => {
-        document.getElementById('route-start')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
       }, 20)
     })
   }, [location.pathname])
