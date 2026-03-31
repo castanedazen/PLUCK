@@ -6554,3 +6554,265 @@ button.ghost,
   background: rgba(15, 23, 42, 0.55) !important;
 }
 
+
+
+/* === MOBILE CLEANUP PATCH: hero CTA + enterprise/district readability === */
+@media (max-width: 768px) {
+
+  /* ---------------------------------
+     1) HOME HERO: remove bulky note/step UI
+  --------------------------------- */
+  .cinematic-hero .first-time-note,
+  .cinematic-hero .first-time-steps {
+    display: none !important;
+  }
+
+  .cinematic-hero {
+    padding-bottom: 10px !important;
+  }
+
+  .cinematic-hero .hero-cta-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    margin-top: 10px !important;
+    width: 100% !important;
+    align-items: center !important;
+  }
+
+  .cinematic-hero .hero-cta-row .primary,
+  .cinematic-hero .hero-cta-row .ghost,
+  .cinematic-hero .hero-cta-row .ghost--light,
+  .cinematic-hero .hero-cta-row button {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 10px 14px !important;
+    min-height: 42px !important;
+    border-radius: 999px !important;
+    font-size: 0.98rem !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* tighten the lower fruit hero card */
+  .cinematic-hero .cinematic-copy,
+  .cinematic-hero .cinematic-overlay,
+  .cinematic-hero .hero-card-copy {
+    padding-bottom: 6px !important;
+  }
+
+  /* ---------------------------------
+     2) DISTRICT / ENTERPRISE HERO TYPOGRAPHY
+  --------------------------------- */
+  .enterprise-hero-card,
+  .enterprise-hero-card-v5,
+  .enterprise-hero-card-v6,
+  .enterprise-investor-hero,
+  .enterprise-diligence-hero,
+  .enterprise-dataroom-hero,
+  .enterprise-deal-hero,
+  .enterprise-flagship-hero,
+  .board-hero-card {
+    border-radius: 26px !important;
+    padding: 20px 18px 24px !important;
+    overflow: hidden !important;
+  }
+
+  .enterprise-hero-copy,
+  .board-hero-card,
+  [class*="enterprise-hero-copy"] {
+    gap: 12px !important;
+  }
+
+  .enterprise-hero-copy h1,
+  .enterprise-hero-card h1,
+  .enterprise-hero-card-v5 h1,
+  .enterprise-hero-card-v6 h1,
+  .enterprise-investor-hero h1,
+  .enterprise-diligence-hero h1,
+  .enterprise-dataroom-hero h1,
+  .enterprise-deal-hero h1,
+  .enterprise-flagship-hero h1,
+  .board-hero-card h1 {
+    font-size: clamp(2.2rem, 11vw, 3.7rem) !important;
+    line-height: 0.95 !important;
+    letter-spacing: -0.04em !important;
+    margin: 0 0 10px !important;
+    max-width: 100% !important;
+    word-break: normal !important;
+  }
+
+  .enterprise-hero-copy p,
+  .enterprise-hero-card p,
+  .enterprise-hero-card-v5 p,
+  .enterprise-hero-card-v6 p,
+  .enterprise-investor-hero p,
+  .enterprise-diligence-hero p,
+  .enterprise-dataroom-hero p,
+  .enterprise-deal-hero p,
+  .enterprise-flagship-hero p,
+  .board-hero-card p {
+    font-size: 1rem !important;
+    line-height: 1.32 !important;
+    max-width: 100% !important;
+  }
+
+  /* pills / segment controls in hero */
+  .enterprise-insight-pill,
+  .enterprise-hero-card .pill,
+  .enterprise-hero-card-v5 .pill,
+  .enterprise-hero-card-v6 .pill,
+  .enterprise-investor-hero .pill,
+  .enterprise-diligence-hero .pill,
+  .enterprise-dataroom-hero .pill,
+  .enterprise-deal-hero .pill,
+  .enterprise-flagship-hero .pill,
+  .board-hero-card .pill,
+  .enterprise-hero-card button,
+  .enterprise-hero-card-v5 button,
+  .enterprise-hero-card-v6 button,
+  .enterprise-investor-hero button,
+  .enterprise-diligence-hero button,
+  .enterprise-dataroom-hero button,
+  .enterprise-deal-hero button,
+  .enterprise-flagship-hero button,
+  .board-hero-card button {
+    min-height: 42px !important;
+    padding: 10px 14px !important;
+    font-size: 0.96rem !important;
+    line-height: 1.12 !important;
+  }
+
+  /* ---------------------------------
+     3) METRIC / STATS BLOCKS: stop overlap and clipping
+  --------------------------------- */
+  .enterprise-metric-grid,
+  .metrics-grid,
+  .district-metrics,
+  .board-metrics,
+  .stats-grid,
+  [class*="metric-grid"],
+  [class*="stats-grid"] {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .enterprise-metric-grid > *,
+  .metrics-grid > *,
+  .district-metrics > *,
+  .board-metrics > *,
+  .stats-grid > *,
+  [class*="metric-grid"] > *,
+  [class*="stats-grid"] > * {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 16px 14px !important;
+    border-radius: 22px !important;
+    overflow: hidden !important;
+  }
+
+  .enterprise-metric-grid strong,
+  .metrics-grid strong,
+  .district-metrics strong,
+  .board-metrics strong,
+  .stats-grid strong,
+  [class*="metric-grid"] strong,
+  [class*="stats-grid"] strong {
+    font-size: clamp(2rem, 8vw, 2.8rem) !important;
+    line-height: 0.95 !important;
+    display: block !important;
+    margin-bottom: 6px !important;
+  }
+
+  .enterprise-metric-grid span,
+  .metrics-grid span,
+  .district-metrics span,
+  .board-metrics span,
+  .stats-grid span,
+  [class*="metric-grid"] span,
+  [class*="stats-grid"] span {
+    font-size: 0.92rem !important;
+    line-height: 1.18 !important;
+    display: block !important;
+    white-space: normal !important;
+  }
+
+  /* ---------------------------------
+     4) DISTRICT CONTENT CARDS: force clean stacking
+  --------------------------------- */
+  .district-shell,
+  .district-grid,
+  .enterprise-grid,
+  .board-grid,
+  [class*="district-grid"],
+  [class*="enterprise-grid"] {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .district-map-card,
+  .district-shortage-card,
+  .district-grower-card,
+  .execution-status-card,
+  .enterprise-card,
+  .board-card,
+  [class*="district-map"],
+  [class*="shortage"],
+  [class*="matched-growers"],
+  [class*="execution-status"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    border-radius: 24px !important;
+  }
+
+  .district-map-card h2,
+  .district-shortage-card h2,
+  .district-grower-card h2,
+  .execution-status-card h2,
+  .enterprise-card h2,
+  .board-card h2,
+  [class*="district-map"] h2,
+  [class*="shortage"] h2,
+  [class*="matched-growers"] h2,
+  [class*="execution-status"] h2 {
+    font-size: clamp(1.8rem, 9vw, 3rem) !important;
+    line-height: 0.96 !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* map labels / chips inside small phone cards */
+  .district-map-card .pill,
+  .district-map-card button,
+  [class*="district-map"] .pill,
+  [class*="district-map"] button {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    min-height: 44px !important;
+  }
+
+  /* ---------------------------------
+     5) BOTTOM NAV SAFE SPACE
+  --------------------------------- */
+  body,
+  #root,
+  .app-shell,
+  main,
+  .content {
+    padding-bottom: 110px !important;
+  }
+
+  .bottom-nav,
+  .mobile-tabbar,
+  .route-tabs,
+  nav[aria-label="Primary"],
+  [class*="bottom-nav"] {
+    z-index: 50 !important;
+  }
+}
