@@ -540,6 +540,15 @@ function normalizeListing(listing: Listing): Listing {
   }
 }
 
+
+function getPublicGrowerUrl(sellerId: string) {
+  return `${window.location.origin}/grower/${sellerId}`
+}
+
+async function copyText(value: string) {
+  await navigator.clipboard.writeText(value)
+}
+
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -2877,6 +2886,20 @@ function AppLayout({
                     <strong>Performance snapshot</strong>
                     <span>See pricing, trust, and storefront performance</span>
                   </button>
+                  <button
+                    className="tool-card"
+                    onClick={async () => {
+                      await copyText(getPublicGrowerUrl(seller.id))
+                      window.alert('Store link copied')
+                    }}
+                  >
+                    <strong>Copy my store link</strong>
+                    <span>{getPublicGrowerUrl(seller.id)}</span>
+                  </button>
+                  <button className="tool-card" onClick={() => navigate('/grower/' + seller.id)}>
+                    <strong>View my public store</strong>
+                    <span>Open the storefront buyers can share and visit</span>
+                  </button>
                 </div>
 
                 <GrowerTrust
@@ -3040,6 +3063,23 @@ function AppLayout({
                     </p>
                   </div>
                 </div>
+
+                {authUser ? (
+                  <div className="action-row">
+                    <button
+                      className="primary"
+                      onClick={async () => {
+                        await copyText(getPublicGrowerUrl(seller.id))
+                        window.alert('Store link copied')
+                      }}
+                    >
+                      Copy my store link
+                    </button>
+                    <button className="ghost" onClick={() => navigate('/grower/' + seller.id)}>
+                      View my public store
+                    </button>
+                  </div>
+                ) : null}
 
                 {!authUser ? (
                   <>
