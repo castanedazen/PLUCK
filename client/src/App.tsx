@@ -3163,7 +3163,10 @@ function AppLayout({
               <ListingForm
                 seller={seller}
                 submitLabel="Save listing"
-                onSubmitListing={async (payload) => handleCreate(payload)}
+                onSubmitListing={async (payload) => {
+  const created = await createListing(payload)
+  navigate(`/listing-success/${created.id}`)
+}}
               />
             }
           />
