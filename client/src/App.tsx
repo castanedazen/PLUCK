@@ -661,6 +661,34 @@ function ReserveModal({
 
 
 
+
+
+// === VIRAL SHARE HELPERS ===
+function openSMS(url: string) {
+  window.open(`sms:?&body=Check out my fresh harvest on PLUCK: ${url}`)
+}
+
+function openWhatsApp(url: string) {
+  window.open(`https://wa.me/?text=Check out my fresh harvest on PLUCK: ${encodeURIComponent(url)}`)
+}
+
+function openNativeShare(url: string) {
+  if (navigator.share) {
+    navigator.share({
+      title: "PLUCK listing",
+      text: "Check out my fresh harvest",
+      url,
+    })
+  } else {
+    alert("Sharing not supported on this device")
+  }
+}
+
+function generateQR(url: string) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`
+}
+
+
 function ListingSuccess({ listingId, sellerId }: { listingId: string, sellerId: string }) {
   const navigate = useNavigate()
 
@@ -672,13 +700,15 @@ function ListingSuccess({ listingId, sellerId }: { listingId: string, sellerId: 
     alert("Copied")
   }
 
+  const qr = generateQR(listingUrl)
+
   return (
     <div className="page">
       <section className="hero-card">
         <div className="hero-card-copy">
           <p className="eyebrow">Success</p>
           <h2>Your listing is live.</h2>
-          <p>Buyers can now view your harvest and contact you directly.</p>
+          <p>Share your harvest and start getting messages immediately.</p>
 
           <div className="action-row">
             <button className="primary" onClick={() => navigate('/listing/' + listingId)}>
@@ -695,6 +725,20 @@ function ListingSuccess({ listingId, sellerId }: { listingId: string, sellerId: 
           </div>
 
           <div className="action-row">
+            <button className="primary" onClick={() => openSMS(listingUrl)}>
+              Text neighbors
+            </button>
+
+            <button className="ghost" onClick={() => openWhatsApp(listingUrl)}>
+              WhatsApp
+            </button>
+
+            <button className="ghost" onClick={() => openNativeShare(listingUrl)}>
+              Share
+            </button>
+          </div>
+
+          <div className="action-row">
             <button className="primary" onClick={() => navigate('/store/new')}>
               Add another listing
             </button>
@@ -703,11 +747,17 @@ function ListingSuccess({ listingId, sellerId }: { listingId: string, sellerId: 
               View my store
             </button>
           </div>
+
+          <div style={{ marginTop: 24 }}>
+            <p className="eyebrow">Scan to view listing</p>
+            <img src={qr} alt="QR code" style={{ borderRadius: 12 }} />
+          </div>
         </div>
       </section>
     </div>
   )
 }
+
 
 function AuthShell({
   mode,
