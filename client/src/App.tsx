@@ -3429,8 +3429,10 @@ export default App
 
 
 function ListingSuccessWrapper() {
+  const authUser = JSON.parse(localStorage.getItem('user') || 'null')
+  // authUser comes from parent scope
   const { id } = useParams()
-  const seller = useSeller()
+  const seller = authUser
 
   if (!id || !seller) return null
 
