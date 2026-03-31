@@ -7059,3 +7059,69 @@ button.ghost,
     box-sizing: border-box !important;
   }
 }
+
+
+/* === SLIM CTA STRIP: replaces old strawberry listing hero on all views === */
+.slim-cta-strip{
+  margin: 10px 0 16px !important;
+  display: flex !important;
+  justify-content: flex-start !important;
+}
+
+.slim-cta-row{
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 6px !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,0.72) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(17,24,39,0.08) !important;
+  box-shadow: 0 8px 20px rgba(15,23,42,0.08) !important;
+  max-width: 100% !important;
+}
+
+.slim-cta-row .primary,
+.slim-cta-row .ghost,
+.slim-cta-row .ghost--light,
+.slim-cta-row button{
+  min-height: 38px !important;
+  height: 38px !important;
+  padding: 0 16px !important;
+  border-radius: 999px !important;
+  font-size: 0.96rem !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 768px){
+  .slim-cta-strip{
+    margin: 8px 0 14px !important;
+  }
+
+  .slim-cta-row{
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 4px !important;
+  }
+
+  .slim-cta-row .primary,
+  .slim-cta-row .ghost,
+  .slim-cta-row .ghost--light,
+  .slim-cta-row button{
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    padding: 0 10px !important;
+    font-size: 0.88rem !important;
+  }
+}

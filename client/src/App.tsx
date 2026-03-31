@@ -2289,50 +2289,14 @@ function AppLayout({
       </header>
 
       {leadShowcase ? (
-        <section className="cinematic-hero">
-          <div className="cinematic-backdrop">
-            <img src={leadShowcase.image} alt={leadShowcase.title} />
-            <div className="cinematic-overlay">
-              <p className="eyebrow eyebrow--light">Pluck orchard market</p>
-              <h2>{leadShowcase.title}</h2>
-              <p>Discover the best nearby fruit with clearer trust, better photos, and pickup plans that feel simple from the start.</p>
-            <div className="first-time-note">
-              New to Pluck? Start by opening a fruit listing you like, check the pickup window, then message the seller or claim pickup.
-            </div>
-            <div className="first-time-steps">
-              <span>1. Browse local fruit</span>
-              <span>2. Open a listing</span>
-              <span>3. Check pickup</span>
-              <span>4. Message or claim</span>
-            </div>
-              <div className="cinematic-pill-row">
-                <span className="cinematic-pill">{leadShowcase.fruit}</span>
-                <span className="cinematic-pill">${leadShowcase.price}/{leadShowcase.unit}</span>
-                <span className="cinematic-pill">{prettyLocation(leadShowcase)}</span>
-                {leadShowcase.sellerRating ? <span className="cinematic-pill">★ {leadShowcase.sellerRating.toFixed(1)}</span> : null}
-              </div>
-              <div className="hero-cta-row">
-                <button className="primary" onClick={() => scrollToId('live-picks')}>
-                  Browse best local fruit
-                </button>
-                <button className="ghost ghost--light" onClick={() => goTo('/map', 'map-panel')}>
-                  Explore nearby harvests
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="cinematic-side-rail">
-            {(sideShowcase.length ? sideShowcase : listings.slice(1, 4)).slice(0, 3).map((item) => (
-              <button className="cinematic-fruit-card cinematic-link-card" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
-                <img src={item.image} alt={item.title} />
-                <div className="cinematic-fruit-card-copy">
-                  <strong>{item.title}</strong>
-                  <span>${item.price}/{item.unit}</span>
-                  <TrustStrip listing={item} />
-                </div>
-              </button>
-            ))}
+        <section className="slim-cta-strip">
+          <div className="hero-cta-row slim-cta-row">
+            <button className="primary" onClick={() => scrollToId('live-picks')}>
+              Browse best local fruit
+            </button>
+            <button className="ghost ghost--light" onClick={() => goTo('/map', 'map-panel')}>
+              Explore nearby harvests
+            </button>
           </div>
         </section>
       ) : null}
