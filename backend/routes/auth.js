@@ -1,3 +1,7 @@
+function createSlug(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')
+}
+
 const express = require("express")
 const { randomUUID, scryptSync, timingSafeEqual } = require("crypto")
 const { db } = require("../db")
@@ -152,3 +156,24 @@ router.post('/reset-password', (req, res) => {
 })
 
 module.exports = router
+
+
+// === PUBLIC STORE ===
+router.get("/store/:slug", (req, res) => {
+  const { slug } = req.params
+
+  const user = buyers.find(u => u.storeSlug === slug)
+
+  if (!user) return res.status(404).json({ error: "Store not found" })
+
+  const listings = ALL_LISTINGS.filter(l => l.sellerId === user.id)
+
+  res.json({
+    seller: {
+      id: user.id,
+      name: user.name,
+      slug: user.storeSlug,
+    },
+    listings
+  })
+})
