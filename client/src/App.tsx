@@ -662,9 +662,11 @@ function ReserveModal({
 function AuthShell({
   mode,
   onAuthSuccess,
+  signupRole = 'buyer',
 }: {
   mode: 'login' | 'signup' | 'reset'
   onAuthSuccess: (user: AuthUser) => void
+  signupRole?: 'buyer' | 'grower'
 }) {
   const navigate = useNavigate()
   const [name, setName] = useState('')
@@ -691,14 +693,14 @@ function AuthShell({
         const user = await signup({
           name: name.trim() || 'User',
           email: email.trim(),
-          role: 'buyer',
+          role: signupRole,
           password,
         })
 
         setError('')
         setInfo('')
         onAuthSuccess(user)
-        navigate('/profile')
+        navigate(signupRole === 'grower' ? '/store/new' : '/profile')
         return
       }
 
@@ -711,7 +713,7 @@ function AuthShell({
         setError('')
         setInfo('')
         onAuthSuccess(user)
-        navigate('/profile')
+        navigate(signupRole === 'grower' ? '/store/new' : '/profile')
         return
       }
 
@@ -2326,6 +2328,9 @@ function AppLayout({
               <button className="ghost" onClick={() => goTo('/login')}>
                 Log in
               </button>
+              <button className="ghost" onClick={() => goTo('/signup-grower')}>
+                Sell your fruit
+              </button>
               <button className="primary" onClick={() => goTo('/signup')}>
                 Create account
               </button>
@@ -2479,7 +2484,8 @@ function AppLayout({
       <main id="listing-feed" className="content">
         <Routes>
           <Route path="/login" element={<AuthShell mode="login" onAuthSuccess={onAuthSuccess} />} />
-          <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} />} />
+          <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} signupRole="buyer" />} />
+          <Route path="/signup-grower" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} signupRole="grower" />} />
           <Route path="/reset-password" element={<AuthShell mode="reset" onAuthSuccess={onAuthSuccess} />} />
 
           <Route
@@ -2496,6 +2502,30 @@ function AppLayout({
                   <div className="hero-card-gallery">
                     {(fruitRibbon.length ? fruitRibbon : listings.slice(0, 4)).slice(0, 4).map((item) => (
                       <button className="hero-fruit-tile" key={item.id} onClick={() => goTo('/listing/' + item.id)}>
+                        <img src={item.image} alt={item.title} />
+                        <span>{item.fruit}</span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="hero-card hero-card--gallery">
+                  <div className="hero-card-copy">
+                    <p className="eyebrow">Grower onboarding</p>
+                    <h2>Sell your fruit in minutes.</h2>
+                    <p>Create your grower account, publish your first listing, and share your storefront link with neighbors right away.</p>
+                    <div className="action-row">
+                      <button className="primary" onClick={() => goTo('/signup-grower')}>
+                        Become a grower
+                      </button>
+                      <button className="ghost" onClick={() => goTo('/store/new')}>
+                        Create first listing
+                      </button>
+                    </div>
+                  </div>
+                  <div className="hero-card-gallery">
+                    {(fruitRibbon.length ? fruitRibbon : listings.slice(0, 4)).slice(0, 4).map((item) => (
+                      <button className="hero-fruit-tile" key={item.id + '-grower-cta'} onClick={() => goTo('/listing/' + item.id)}>
                         <img src={item.image} alt={item.title} />
                         <span>{item.fruit}</span>
                       </button>
