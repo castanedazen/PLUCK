@@ -7125,3 +7125,10 @@ button.ghost,
     font-size: 0.88rem !important;
   }
 }
+
+/* === HOME MOBILE CLEANUP: remove floating strip cards between CTA and listings === */
+@media (max-width: 768px) {
+  .fruit-ribbon {
+    display: none !important;
+  }
+}

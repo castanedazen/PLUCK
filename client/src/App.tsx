@@ -289,6 +289,24 @@ function getRouteMeta(pathname: string) {
   return routeMeta.find((item) => item.match.test(pathname)) || routeMeta[0]
 }
 
+
+function getRouteScrollTarget(pathname: string) {
+  if (pathname === '/') return '__TOP__'
+  if (/^\/map/.test(pathname)) return 'map-panel'
+  if (/^\/messages/.test(pathname)) return 'messages-shell'
+  if (/^\/store/.test(pathname)) return 'store-shell'
+  if (/^\/profile/.test(pathname)) return 'profile-shell'
+  if (/^\/favorites/.test(pathname)) return 'favorites-shell'
+  if (/^\/alerts/.test(pathname)) return 'alerts-shell'
+  if (/^\/board/.test(pathname)) return 'board-shell'
+  if (/^\/enterprise/.test(pathname)) return 'enterprise-shell'
+  if (/^\/listing\//.test(pathname)) return 'route-start'
+  if (/^\/grower\//.test(pathname)) return 'route-start'
+  if (/^\/login|^\/signup|^\/reset-password/.test(pathname)) return 'route-start'
+  return 'route-start'
+}
+
+
 type ReviewItem = {
   id: string
   listingId: string
@@ -801,6 +819,15 @@ function AuthShell({
       </form>
     </section>
   )
+}
+
+
+type ListingFormProps = {
+  seller: SellerProfile
+  initialValues?: Listing
+  submitLabel: string
+  onSubmitListing: (payload: Omit<Listing, 'id'>, existingId?: string) => Promise<void>
+  existingId?: string
 }
 
 function ListingForm({
@@ -1693,7 +1720,7 @@ function GrowerPage({
 
   return (
     <section className="stack">
-      <section className="profile-card premium-profile">
+      <section id="profile-shell" className="profile-card premium-profile">
         <img className="hero-fruit" src={grower.heroFruit} alt="Grower orchard" />
         <div className="profile-row">
           <img className="avatar" src={grower.avatar} alt={grower.name} />
@@ -1809,7 +1836,7 @@ function AlertsPage({
   const [radiusMiles, setRadiusMiles] = useState('25')
 
   return (
-    <section className="alerts-layout">
+    <section id="alerts-shell" className="alerts-layout">
       <div className="stack">
         <div className="section-heading compact-heading no-top-gap">
           <div>
@@ -2252,10 +2279,22 @@ function AppLayout({
   })()
 
   useEffect(() => {
+    const target = getRouteScrollTarget(location.pathname)
+
     window.requestAnimationFrame(() => {
       setTimeout(() => {
-        window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-      }, 20)
+        if (target === '__TOP__') {
+          window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+          return
+        }
+
+        const el = document.getElementById(target)
+        if (el) {
+          el.scrollIntoView({ behavior: 'auto', block: 'start' })
+        } else {
+          window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+        }
+      }, 30)
     })
   }, [location.pathname])
 
@@ -2990,7 +3029,7 @@ function AppLayout({
           <Route
             path="/profile"
             element={
-              <section className="profile-card premium-profile">
+              <section id="profile-shell" className="profile-card premium-profile">
                 <img className="hero-fruit" src={seller.heroFruit} alt="Lead fruit" />
                 <div className="profile-row">
                   <img className="avatar" src={seller.avatar} alt={seller.name} />
