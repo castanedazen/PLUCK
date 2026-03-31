@@ -660,33 +660,57 @@ function AuthShell({
       if (mode === 'signup') {
         if (password.length < 6) throw new Error('Password must be at least 6 characters.')
         if (password !== confirmPassword) throw new Error('Passwords do not match.')
+
         const user = await signup({
           name: name.trim() || 'User',
           email: email.trim(),
           role: 'buyer',
           password,
         })
+
+        setError('')
+        setInfo('')
         onAuthSuccess(user)
         navigate('/profile')
-      } else if (mode === 'login') {
-        const user = await login({ email: email.trim(), password })
-        onAuthSuccess(user)
-        navigate('/profile')
-      } else {
-        if (!resetTokenPreview) {
-          const result = await requestPasswordReset({ email: email.trim() })
-          setResetTokenPreview(result.resetToken)
-          setInfo(`Reset code: ${result.resetToken}`)
-        } else {
-          if (password.length < 6) throw new Error('Password must be at least 6 characters.')
-          if (password !== confirmPassword) throw new Error('Passwords do not match.')
-          await resetPassword({ email: email.trim(), resetToken: resetCode.trim(), password })
-          setInfo('Password updated. You can log in now.')
-          setTimeout(() => navigate('/login'), 700)
-        }
+        return
       }
+
+      if (mode === 'login') {
+        const user = await login({
+          email: email.trim(),
+          password,
+        })
+
+        setError('')
+        setInfo('')
+        onAuthSuccess(user)
+        navigate('/profile')
+        return
+      }
+
+      if (!resetTokenPreview) {
+        const result = await requestPasswordReset({ email: email.trim() })
+        setResetTokenPreview(result.resetToken)
+        setError('')
+        setInfo(`Reset code: ${result.resetToken}`)
+        return
+      }
+
+      if (password.length < 6) throw new Error('Password must be at least 6 characters.')
+      if (password !== confirmPassword) throw new Error('Passwords do not match.')
+
+      await resetPassword({
+        email: email.trim(),
+        resetToken: resetCode.trim(),
+        password,
+      })
+
+      setError('')
+      setInfo('Password updated. You can log in now.')
+      setTimeout(() => navigate('/login'), 700)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to continue.'
+      setInfo('')
       setError(message)
     } finally {
       setBusy(false)
@@ -777,14 +801,6 @@ function AuthShell({
       </form>
     </section>
   )
-}
-
-type ListingFormProps = {
-  seller: SellerProfile
-  initialValues?: Listing
-  submitLabel: string
-  onSubmitListing: (payload: Omit<Listing, 'id'>, existingId?: string) => Promise<void>
-  existingId?: string
 }
 
 function ListingForm({
