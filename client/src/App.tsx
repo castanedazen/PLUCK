@@ -1785,6 +1785,7 @@ function GrowerPage({
   follows: Follow[]
   onToggleFollow: (sellerId: string) => Promise<void>
 }) {
+  const navigate = useNavigate()
   const { id } = useParams()
   const [grower, setGrower] = useState<SellerProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -1900,13 +1901,13 @@ function GrowerPage({
         <section className="grid">
           {growerListings.map((item) => (
             <article className="card premium-card" key={item.id}>
-              <div className="card-image-wrap">
+              <button className="card-image-wrap card-image-button" onClick={() => navigate('/listing/' + item.id)}>
                 <img src={item.image} alt={item.title} />
                 <span className="card-badge">{item.distance}</span>
-              </div>
+              </button>
               <div className="card-body">
                 <div className="price-row">
-                  <h3>{item.title}</h3>
+                  <button className="listing-title-link" onClick={() => navigate('/listing/' + item.id)}>{item.title}</button>
                   <span>
                     ${item.price}/{item.unit}
                   </span>
@@ -2180,6 +2181,7 @@ function AppLayout({
   async function handleCreate(payload: Omit<Listing, 'id'>) {
     const saved = normalizeListing(await createListing(payload))
     setListings((current) => [saved, ...current])
+    navigate(`/listing-success/${saved.id}`)
   }
 
   async function handleUpdate(payload: Omit<Listing, 'id'>, listingId?: string) {
@@ -2350,6 +2352,7 @@ function AppLayout({
   }
 
   function clearSearch() {
+  const navigate = useNavigate()
     setDraftQuery('')
     setAppliedQuery('')
     setSearchFeedback('')
@@ -2587,6 +2590,7 @@ function AppLayout({
           <Route path="/signup" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} signupRole="buyer" />} />
           <Route path="/signup-grower" element={<AuthShell mode="signup" onAuthSuccess={onAuthSuccess} signupRole="grower" />} />
           <Route path="/reset-password" element={<AuthShell mode="reset" onAuthSuccess={onAuthSuccess} />} />
+          <Route path="/listing-success/:id" element={<ListingSuccessWrapper />} />
 
           <Route
             path="/"
@@ -3163,10 +3167,7 @@ function AppLayout({
               <ListingForm
                 seller={seller}
                 submitLabel="Save listing"
-                onSubmitListing={async (payload) => {
-  const created = await createListing(payload)
-  navigate(`/listing-success/${created.id}`)
-}}
+                onSubmitListing={async (payload) => handleCreate(payload)}
               />
             }
           />
