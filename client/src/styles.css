@@ -6984,3 +6984,78 @@ button.ghost,
     padding-bottom: 110px !important;
   }
 }
+
+
+/* === MOBILE FIX ROUND 3: collapse listing strawberry block to 2 slim CTAs only === */
+@media (max-width: 768px) {
+  .cinematic-hero {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 8px 0 14px !important;
+    min-height: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* remove all visual content from this block except the CTA row */
+  .cinematic-hero .eyebrow,
+  .cinematic-hero h2,
+  .cinematic-hero p,
+  .cinematic-hero .first-time-note,
+  .cinematic-hero .first-time-steps,
+  .cinematic-hero .cinematic-pill-row,
+  .cinematic-hero img,
+  .cinematic-hero::before,
+  .cinematic-hero::after,
+  .cinematic-hero .hero-fruit,
+  .cinematic-hero .cinematic-copy > :not(.hero-cta-row),
+  .cinematic-hero .hero-card-copy > :not(.hero-cta-row),
+  .cinematic-hero .cinematic-overlay > :not(.hero-cta-row) {
+    display: none !important;
+  }
+
+  .cinematic-hero .cinematic-copy,
+  .cinematic-hero .hero-card-copy,
+  .cinematic-hero .cinematic-overlay {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+  }
+
+  /* only show the 2 buttons in one slim row */
+  .cinematic-hero .hero-cta-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+  }
+
+  .cinematic-hero .hero-cta-row button,
+  .cinematic-hero .hero-cta-row .primary,
+  .cinematic-hero .hero-cta-row .ghost,
+  .cinematic-hero .hero-cta-row .ghost--light {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    padding: 0 10px !important;
+    margin: 0 !important;
+    border-radius: 999px !important;
+    font-size: 0.88rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+}
