@@ -659,6 +659,56 @@ function ReserveModal({
   )
 }
 
+
+
+function ListingSuccess({ listingId, sellerId }: { listingId: string, sellerId: string }) {
+  const navigate = useNavigate()
+
+  const listingUrl = `${window.location.origin}/listing/${listingId}`
+  const storeUrl = `${window.location.origin}/grower/${sellerId}`
+
+  const copy = async (text: string) => {
+    await navigator.clipboard.writeText(text)
+    alert("Copied")
+  }
+
+  return (
+    <div className="page">
+      <section className="hero-card">
+        <div className="hero-card-copy">
+          <p className="eyebrow">Success</p>
+          <h2>Your listing is live.</h2>
+          <p>Buyers can now view your harvest and contact you directly.</p>
+
+          <div className="action-row">
+            <button className="primary" onClick={() => navigate('/listing/' + listingId)}>
+              View listing
+            </button>
+
+            <button className="ghost" onClick={() => copy(listingUrl)}>
+              Copy listing link
+            </button>
+
+            <button className="ghost" onClick={() => copy(storeUrl)}>
+              Copy my store link
+            </button>
+          </div>
+
+          <div className="action-row">
+            <button className="primary" onClick={() => navigate('/store/new')}>
+              Add another listing
+            </button>
+
+            <button className="ghost" onClick={() => navigate('/grower/' + sellerId)}>
+              View my store
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function AuthShell({
   mode,
   onAuthSuccess,
@@ -3326,3 +3376,13 @@ function App() {
 }
 
 export default App
+
+
+function ListingSuccessWrapper() {
+  const { id } = useParams()
+  const seller = useSeller()
+
+  if (!id || !seller) return null
+
+  return <ListingSuccess listingId={id} sellerId={seller.id} />
+}
